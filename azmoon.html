@@ -23,18 +23,17 @@
         #examArea, #reportCard { display: none; }
         .timer-box { font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 20px; width: 100px; }
         
-        /* استایل هوشمند گزینه‌ها (متن یا عکس) */
         .option { display: flex; align-items: center; justify-content: start; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; min-height: 40px; }
         .option:hover { background: #e8f5e9; border-color: #a5d6a7; }
         .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; }
         .option img { max-width: 100%; max-height: 120px; border-radius: 8px; margin: 5px 0; border: 1px solid #ddd; }
         
-        /* استایل تصویر سوال */
         #questionImage { width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px; margin-bottom: 15px; display: none; border: 1px solid #eee; }
 
         .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem; color: #2ecc71; font-weight: bold; }
         .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        #loading { color: #7f8c8d; margin-top: 20px; }
+        #loading { color: #7f8c8d; margin-top: 20px; font-weight: bold; }
+        #errorBox { color: red; background: #fee; padding: 10px; border-radius: 10px; display: none; margin-top: 10px; font-size: 0.9rem; text-align: right; direction: ltr; }
     </style>
 </head>
 <body>
@@ -44,7 +43,8 @@
         <h3 id="welcomeText">سالن امتحانات</h3>
         <p style="font-size: 0.9rem; color: #777;">آزمون مورد نظر را انتخاب کنید:</p>
         <div id="examList"></div>
-        <div id="loading">⏳ در حال دریافت لیست آزمون‌ها...</div>
+        <div id="loading">⏳ در حال اتصال به سرور...</div>
+        <div id="errorBox"></div>
         <button class="btn btn-back" onclick="window.location.href='index.html'">🔙 بازگشت به کلاس</button>
     </div>
 
@@ -53,12 +53,9 @@
             <span id="qProgress" style="font-size: 0.9rem; color: #7f8c8d;">سوال ۱ از ۱۰</span>
             <div id="timer" class="timer-box">00:00</div>
         </div>
-        
         <img id="questionImage" src="" alt="تصویر سوال">
-        
         <h3 id="questionText" style="text-align: right; line-height: 1.6; margin-bottom: 20px;">...</h3>
         <div id="optionsContainer"></div>
-        
         <button id="btnNext" class="btn btn-next" onclick="nextQuestion()">سوال بعدی ➜</button>
         <button id="btnFinish" class="btn btn-finish" onclick="finishExam()">ثبت نهایی آزمون ✅</button>
     </div>
@@ -70,19 +67,16 @@
         <div class="stat-row"><span>✅ پاسخ صحیح:</span><span id="statCorrect">0</span></div>
         <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
         <div class="stat-row"><span>⚪ بدون پاسخ:</span><span id="statEmpty">0</span></div>
-        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem;">نمره شما ذخیره شد. این دستگاه دیگر مجاز به شرکت در این آزمون نیست. 🔒</div>
+        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem;">نمره شما ذخیره شد. خسته نباشید! 🔒</div>
         <button class="btn btn-back" onclick="location.reload()">بازگشت</button>
     </div>
 
     <script>
         // ***********************************************
-        // تنظیمات (لینک جدید CSV شما در خط زیر قرار گرفت 👇)
+        // تنظیمات (لینک‌های شما)
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
-        
-        // لینک وب‌اپ (نمره دهی):
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxVVIW_zDCoieNZZmXCkuflTksvQstGIg6rIHREpIpJoZLeGkKV0vMioTvM_hdkJXt2vA/exec"; 
-        
         const DB_KEY = "chamran_db_v19_"; 
         // ***********************************************
 
@@ -91,33 +85,47 @@
         document.getElementById('welcomeText').innerText = `سلام ${currentUser} 👋`;
 
         let examsMap = {}; 
-        let currentExamId = null;
-        let currentQuestions = [];
-        let currentQIndex = 0;
+        let currentExamId = null; 
+        let currentQuestions = []; 
+        let currentQIndex = 0; 
         let userAnswers = {}; 
-        let timerInterval;
+        let timerInterval; 
         let timeRemaining = 0;
 
         function getDeviceSignature() { return navigator.userAgent + "||" + window.screen.width + "x" + window.screen.height; }
 
+        // --- بخش عیب‌یابی و دریافت آزمون ---
         async function loadExams() {
             try {
-                // اضافه کردن پارامتر زمان برای جلوگیری از کش شدن اطلاعات قدیمی
-                const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
-                if(!res.ok) throw new Error("Network error");
+                // پارامتر زمان برای جلوگیری از کش
+                const url = SHEET_CSV_URL + '&t=' + Date.now();
+                const res = await fetch(url);
+                
+                if(!res.ok) throw new Error(`خطای شبکه: ${res.status}`);
+                
                 const text = await res.text();
+                
+                // چک کردن خالی بودن فایل
+                if(!text || text.length < 10) {
+                    throw new Error("فایل آزمون خالی است! لطفاً از پنل مدیریت یک آزمون بسازید.");
+                }
+
+                console.log("Data received:", text.substring(0, 100) + "..."); // نمایش در کنسول
                 parseExamCSV(text);
+                
             } catch(e) {
                 console.error(e);
-                document.getElementById('loading').innerHTML = "خطا در دریافت آزمون‌ها.<br>لطفا اتصال اینترنت را چک کنید.";
+                document.getElementById('loading').style.display = 'none';
+                const errBox = document.getElementById('errorBox');
+                errBox.style.display = 'block';
+                errBox.innerHTML = `❌ <b>مشکل در دریافت آزمون:</b><br>${e.message}<br><br>لطفاً مطمئن شوید در پنل مدیریت حداقل یک آزمون ساخته‌اید.`;
             }
         }
         
-        // پارسر هوشمند با پشتیبانی از عکس و رمز
         function parseExamCSV(text) {
             const rows = text.split('\n');
             examsMap = {};
-            // تابع کمکی برای خواندن صحیح CSV (حتی با ویرگول در متن)
+            
             const parseLine = (line) => {
                 const result = []; let current = ''; let inQuote = false;
                 for (let i = 0; i < line.length; i++) {
@@ -134,7 +142,7 @@
                 if(!rowStr) continue;
                 const col = parseLine(rowStr);
                 
-                // فیلتر کردن هدرها و خطوط نامعتبر (فقط خطوطی که با EX- شروع میشوند معتبرند)
+                // مهم: فقط خطوطی که شناسه EX- دارند را بخوان
                 if(col[0] && !col[0].includes('EX-')) continue;
                 if(col.length < 11) continue; 
 
@@ -151,8 +159,8 @@
                 }
                 
                 examsMap[exId].questions.push({
-                    img: col[5].trim(), // ستون عکس
-                    q: col[6].trim(),   // متن سوال
+                    img: col[5].trim(),
+                    q: col[6].trim(),
                     options: [col[7].trim(), col[8].trim(), col[9].trim(), col[10].trim()],
                     correct: parseInt(col[11].trim())
                 });
@@ -165,11 +173,16 @@
             document.getElementById('loading').style.display = 'none';
             list.innerHTML = "";
             const ids = Object.keys(examsMap);
-            if(ids.length === 0) { list.innerHTML = "<p>آزمونی یافت نشد.</p>"; return; }
+            
+            if(ids.length === 0) {
+                // اگر فایل دانلود شد اما هیچ خطی با EX- نداشت
+                list.innerHTML = "<p style='color:red'>فایل دریافت شد اما هیچ آزمونی داخل آن نیست.<br>لطفاً در پنل مدیریت یک آزمون جدید بسازید.</p>";
+                return;
+            }
 
             ids.forEach(id => {
                 const exam = examsMap[id];
-                const isLocked = localStorage.getItem('taken_' + id); // بررسی قفل دستگاه
+                const isLocked = localStorage.getItem('taken_' + id);
                 
                 const btn = document.createElement('div');
                 btn.className = 'exam-item';
@@ -189,9 +202,7 @@
 
         function checkAndStart(id) {
             const exam = examsMap[id];
-            // 1. چک کردن قفل
             if(localStorage.getItem('taken_' + id)) return alert("⛔ شما قبلاً شرکت کرده‌اید.");
-            // 2. چک کردن رمز
             if(exam.password && exam.password.length > 0) {
                 const userPass = prompt("🔒 رمز آزمون را وارد کنید:");
                 if(userPass !== exam.password) return alert("❌ رمز اشتباه است.");
@@ -222,7 +233,6 @@
             }, 1000);
         }
 
-        // تابع تشخیص محتوا (نمایش عکس در گزینه‌ها)
         function renderContent(content) {
             if(content && (content.startsWith('http') || content.startsWith('data:image')) && 
               (content.includes('.jpg') || content.includes('.png') || content.includes('.jpeg') || content.includes('uupload'))) {
@@ -236,7 +246,6 @@
             document.getElementById('qProgress').innerText = `سوال ${currentQIndex + 1} از ${currentQuestions.length}`;
             document.getElementById('questionText').innerText = q.q;
             
-            // نمایش تصویر سوال
             const qImg = document.getElementById('questionImage');
             if(q.img && q.img.length > 5) {
                 qImg.src = q.img;
@@ -251,7 +260,7 @@
                 const div = document.createElement('div');
                 div.className = 'option';
                 if(userAnswers[currentQIndex] === idx + 1) div.classList.add('selected');
-                div.innerHTML = renderContent(opt); // اگر لینک عکس باشد، تصویر نشان می‌دهد
+                div.innerHTML = renderContent(opt);
                 div.onclick = () => selectOption(idx + 1, div);
                 cont.appendChild(div);
             });
@@ -272,7 +281,6 @@
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
             
-            // فعال کردن قفل برای این آزمون
             localStorage.setItem('taken_' + currentExamId, getDeviceSignature());
 
             let correct = 0; let wrong = 0; let empty = 0;
