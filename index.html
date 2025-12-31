@@ -8,46 +8,33 @@
     <style>
         :root { --primary: #2c3e50; --accent: #e67e22; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
         .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; }
         .active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .video-item { background: #fff; border: 2px solid #f1f2f6; border-radius: 15px; margin-bottom: 15px; padding: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; text-align: right; }
         .video-item:active { transform: scale(0.98); border-color: var(--accent); }
         .video-item.done { border-color: var(--success); background: #f0fdf4; }
         .video-icon { font-size: 1.5rem; background: #f1f2f6; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--primary); }
-        
         .logout-btn { font-size: 0.75rem; color: var(--danger); background: #ffebee; padding: 4px 10px; border-radius: 8px; cursor: pointer; border: 1px solid var(--danger); display: inline-block; margin-top: 5px; }
         input { width: 100%; padding: 15px; margin: 20px 0; border: 2px solid #dfe6e9; border-radius: 15px; text-align: center; font-family: inherit; font-size: 1rem; outline: none; box-sizing: border-box; }
         input:focus { border-color: var(--accent); }
         .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        
         video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; max-height: 80vh; outline: none; }
-        
         .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; display: none; font-size: 0.9rem; width: max-content; }
         .progress-bar { width: 100%; background: #dfe6e9; height: 8px; border-radius: 4px; margin-top: 15px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
         .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; }
-        
         #downloadContainer { margin-top: 20px; display: grid; gap: 10px; }
-        .download-btn {
-            background: #fff; color: #34495e; text-decoration: none;
-            padding: 12px 15px; border-radius: 12px;
-            font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between;
-            border: 2px solid #ecf0f1; transition: 0.3s;
-        }
+        .download-btn { background: #fff; color: #34495e; text-decoration: none; padding: 12px 15px; border-radius: 12px; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; border: 2px solid #ecf0f1; transition: 0.3s; }
         .download-btn:hover { border-color: var(--primary); background: #f8f9fa; transform: translateY(-2px); }
         .dl-icon { font-size: 1.2rem; margin-left: 10px; }
         .dl-text { font-weight: bold; }
         .dl-arrow { color: var(--accent); font-size: 0.8rem; }
-
         #securityModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column; }
         .security-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; border: 4px solid var(--primary); }
         .math-question { font-size: 2rem; font-weight: bold; color: var(--primary); margin: 20px 0; direction: ltr; font-family: 'Vazirmatn', sans-serif; }
         .wrong-ans { border-color: red !important; background: #ffebee; }
         .timer-circle { width: 70px; height: 70px; background: var(--danger); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 10px auto; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); padding-top: 5px; }
-        
         #loading { margin-top: 20px; display:none; color: #7f8c8d; }
         .retry-btn { margin-top: 10px; background: #95a5a6; font-size: 0.9rem; padding: 10px 20px; }
     </style>
@@ -110,10 +97,16 @@
 
     <script>
         // ***********************************************
-        // تنظیمات معلم
+        // تنظیمات پنل (لینک‌های متصل شده)
         // ***********************************************
+        
+        // 1. لینک CSV لیست درس‌ها (برای خواندن اطلاعات)
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
-        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxz6rDvxlp41o0bIeHIRA7VKa06WphDiYfzeiORg-vsHBVvHR4uqWlcRrcazhIKct1aXQ/exec"; 
+        
+        // 2. لینک Web App جدید شما (برای ثبت گزارش‌ها)
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyTA9hNsiL9KPtq5u9Pav209AFvC6BVCiYfz3LEAqIbpNBaYju_zm_V_O8bjJjDP8FgDw/exec"; 
+        
+        // ***********************************************
         
         const CHECK_INTERVAL = 300; 
         const ANSWER_TIMEOUT = 60;
@@ -121,7 +114,7 @@
         const BACKGROUND_TIMEOUT = 120;
 
         let playlist = []; 
-        const DB_KEY = "chamran_db_v17_"; 
+        const DB_KEY = "chamran_db_v19_"; 
         let user = "";
         let activeVid = null;
         let maxTime = 0;
@@ -140,7 +133,7 @@
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
         
         function getDeviceInfo() {
-            return navigator.userAgent + " | Screen: " + window.screen.width + "x" + window.screen.height;
+            return navigator.userAgent + " | " + window.screen.width + "x" + window.screen.height;
         }
 
         async function fetchPlaylist() {
@@ -304,14 +297,13 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ******* سیستم امنیتی و نظارتی (Updated for Exit Detection) *******
+        // ******* سیستم امنیتی و نظارتی (نسخه ضد ضربه) *******
         
-        // 1. تشخیص بستن تب یا مرورگر (این بخش جدید است)
+        // گزارش بستن تب یا مرورگر (تضمینی با keepalive)
         window.addEventListener('pagehide', () => {
              checkAndReport("⛔ خروج ناگهانی (بستن مرورگر)", true);
         });
 
-        // 2. تشخیص رفتن به برنامه دیگر (Minimize)
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
 
@@ -321,9 +313,7 @@
                 const percent = parseInt(toEnglishNum(pText).replace('٪', ''));
                 
                 if(percent > 5 && percent < 98) {
-                    // ارسال فوری گزارش خروج موقت (Beacon)
                     checkAndReport("خروج موقت (Minimize) ⏸️", true);
-                    
                     backgroundTimer = setTimeout(() => {
                         checkAndReport("⛔ خروج از کلاس (بیش از ۲ دقیقه)", true);
                     }, BACKGROUND_TIMEOUT * 1000); 
@@ -425,14 +415,13 @@
             }
         }
         
-        // تابع هوشمند ارسال گزارش (پشتیبانی از Beacon برای خروج)
+        // تابع گزارش‌دهی نهایی (با قابلیت ارسال در لحظه مرگ صفحه)
         function checkAndReport(statusOverride, force = false) {
             if(!activeVid) return;
             
             let pText = document.getElementById('viewPercent').innerText;
             const percent = parseInt(toEnglishNum(pText).replace('٪', ''));
             
-            // جلوگیری از اسپم، مگر اینکه فورس باشد (مثل خروج)
             if(!force && (percent < 10 || percent === lastReportedPercent)) return;
             if(!force) lastReportedPercent = percent;
 
@@ -446,9 +435,13 @@
                 deviceInfo: getDeviceInfo()
             };
             
-            // استفاده از sendBeacon برای اطمینان از ارسال هنگام مرگ صفحه
-            const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
-            navigator.sendBeacon(REPORT_WEBAPP_URL, blob);
+            fetch(REPORT_WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors', // حیاتی برای جلوگیری از خطای CORS
+                body: JSON.stringify(data),
+                keepalive: true, // حیاتی برای ارسال هنگام بسته شدن صفحه
+                headers: { 'Content-Type': 'text/plain' }
+            }).catch(err => console.log("Report attempt failed"));
         }
     </script>
 </body>
