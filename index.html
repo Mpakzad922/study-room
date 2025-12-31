@@ -23,13 +23,14 @@
         input:focus { border-color: var(--accent); }
         .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
-        video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; max-height: 70vh; }
+        /* پلیر ویدیو - عرض و ارتفاع مناسب برای دیده شدن کنترل‌ها */
+        video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; max-height: 80vh; outline: none; }
+        
         .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; display: none; font-size: 0.9rem; width: max-content; }
         .progress-bar { width: 100%; background: #dfe6e9; height: 8px; border-radius: 4px; margin-top: 15px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
         .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; }
         
-        /* استایل دکمه‌های دانلود */
         #downloadContainer { margin-top: 20px; display: grid; gap: 10px; }
         .download-btn {
             background: #fff; color: #34495e; text-decoration: none;
@@ -42,7 +43,6 @@
         .dl-text { font-weight: bold; }
         .dl-arrow { color: var(--accent); font-size: 0.8rem; }
 
-        /* مودال امنیتی */
         #securityModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column; }
         .security-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; border: 4px solid var(--primary); }
         .math-question { font-size: 2rem; font-weight: bold; color: var(--primary); margin: 20px 0; direction: ltr; font-family: 'Vazirmatn', sans-serif; }
@@ -98,7 +98,7 @@
             <strong id="videoTitle" style="font-size: 0.9rem;"></strong>
         </div>
         
-        <video id="myVideo" playsinline controls controlsList="nodownload"></video>
+        <video id="myVideo" playsinline controls controlsList="nodownload noplaybackrate"></video>
         
         <div id="downloadContainer"></div>
 
@@ -114,14 +114,16 @@
         // تنظیمات معلم
         // ***********************************************
         const TEACHER_EMAIL = "mpakzad529@gmail.com"; 
-        const CHECK_INTERVAL = 300; // 5 دقیقه
-        const ANSWER_TIMEOUT = 60;  // 1 دقیقه
-        // لینک گوگل شیت شما 👇
+        const CHECK_INTERVAL = 300; 
+        const ANSWER_TIMEOUT = 60;
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
+        
+        // زمان مجاز عدم فعالیت (۲ دقیقه = ۱۲۰ ثانیه)
+        const IDLE_TIMEOUT = 120;
         // ***********************************************
 
         let playlist = []; 
-        const DB_KEY = "chamran_db_v12_"; 
+        const DB_KEY = "chamran_db_v13_"; 
         let user = "";
         let activeVid = null;
         let maxTime = 0;
@@ -130,6 +132,11 @@
         let nextCheckTime = CHECK_INTERVAL;
         let correctAnswer = 0;
         let timerInterval = null;
+        
+        // متغیرهای سیستم توقف طولانی
+        let lastActivityTime = Date.now();
+        let idleReportSent = false;
+
         const vid = document.getElementById('myVideo');
 
         function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
@@ -170,21 +177,13 @@
                     const id = row[0].trim();
                     const title = row[1].trim(); 
                     const file = row[2].trim();
-                    
-                    // استخراج ستون فایل‌های ضمیمه (ستون چهارم به بعد)
                     let attachment = "";
                     if(row.length > 3) {
-                        // گرفتن کل متن بعد از ستون سوم تا آخر خط
-                        // این روش امن است حتی اگر در متن لینک‌ها کاما باشد
                         const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
-                        // حذف جداکننده اول
                         if(remaining.trim().startsWith(',')) attachment = remaining.trim().substring(1).trim();
                         else attachment = remaining.trim();
                     }
-                    
-                    if(id && title && file) {
-                        playlist.push({ id, title, file, attachment });
-                    }
+                    if(id && title && file) playlist.push({ id, title, file, attachment });
                 }
             }
         }
@@ -220,7 +219,7 @@
                 const isCompleted = progress >= 98;
                 const icon = isCompleted ? '✅' : '▶️';
                 const hasFile = (item.attachment && item.attachment.length > 3);
-                const attachIcon = hasFile ? '<span style="font-size:0.7rem; background:#eee; padding:2px 5px; border-radius:4px; margin-right:5px;">📎 فایل دارد</span>' : '';
+                const attachIcon = hasFile ? '<span style="font-size:0.7rem; background:#eee; padding:2px 5px; border-radius:4px; margin-right:5px;">📎 فایل</span>' : '';
 
                 const el = document.createElement('div');
                 el.className = `video-item ${isCompleted ? 'done' : ''}`;
@@ -248,28 +247,24 @@
             lastReportedPercent = 0;
             vid.src = item.file;
             
-            // --- نمایش فایل‌های ضمیمه ---
+            // ریست کردن سیستم توقف طولانی
+            lastActivityTime = Date.now();
+            idleReportSent = false;
+            
             const dlContainer = document.getElementById('downloadContainer');
             dlContainer.innerHTML = ""; 
-            
             if(item.attachment && item.attachment.length > 3) {
-                // جدا کردن فایل‌ها با کاما (که توسط پنل مدیریت ساخته شده)
                 const files = item.attachment.split(',');
-                
                 files.forEach((fileEntry, index) => {
                     fileEntry = fileEntry.trim();
                     if(!fileEntry) return;
-
-                    // جدا کردن اسم و لینک با علامت |
                     let fileName = `فایل ضمیمه ${toPersianNum(index + 1)}`;
                     let fileLink = fileEntry;
-
                     if(fileEntry.includes('|')) {
                         const parts = fileEntry.split('|');
                         fileName = parts[0].trim();
                         fileLink = parts[1].trim();
                     }
-
                     const btn = document.createElement('a');
                     btn.className = 'download-btn';
                     btn.href = fileLink;
@@ -284,7 +279,6 @@
                     dlContainer.appendChild(btn);
                 });
             }
-            // -----------------------------
 
             const savedTime = localStorage.getItem(`${DB_KEY}${user}_time_${item.id}`);
             maxTime = savedTime ? parseFloat(savedTime) : 0;
@@ -308,6 +302,27 @@
             document.getElementById(id).classList.add('active');
         }
 
+        // --- مانیتورینگ عدم فعالیت (Idle Check) ---
+        // این تابع هر ۵ ثانیه چک میکند
+        setInterval(() => {
+            if (!activeVid || isDone || vid.paused) return; // اگر ویدیو پخش نمی‌شود کاری نداشته باش
+            
+            const timeDiff = (Date.now() - lastActivityTime) / 1000;
+            
+            if (timeDiff > IDLE_TIMEOUT && !idleReportSent) {
+                // اگر ۲ دقیقه گذشت و فعالیتی ثبت نشد
+                let pText = document.getElementById('viewPercent').innerText;
+                pText = toEnglishNum(pText).replace('٪', '');
+                const percent = parseInt(pText);
+                
+                // فقط اگر پیشرفت بالای ۵ درصد باشد گزارش بده
+                if(percent > 5) {
+                    sendEmailReport("⚠️ توقف طولانی (۲ دقیقه عدم پیشرفت)", percent);
+                    idleReportSent = true; // جلوگیری از ارسال تکراری
+                }
+            }
+        }, 5000);
+
         vid.addEventListener('seeking', () => {
             if(vid.currentTime > maxTime + 3) {
                 vid.currentTime = maxTime;
@@ -320,7 +335,12 @@
             if(!vid.seeking && vid.currentTime > maxTime) {
                 maxTime = vid.currentTime;
                 localStorage.setItem(`${DB_KEY}${user}_time_${activeVid.id}`, maxTime);
+                
+                // *** آپدیت: فعالیت جدید ثبت شد ***
+                lastActivityTime = Date.now();
+                idleReportSent = false; // پرچم ریست می‌شود چون کاربر فعال است
             }
+            
             if(vid.currentTime > nextCheckTime) triggerSecurityCheck();
             if(vid.duration) {
                 const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
@@ -368,6 +388,7 @@
             localStorage.setItem(`${DB_KEY}${user}_${activeVid.id}`, 0);
             document.getElementById('progressBar').style.width = "0%";
             document.getElementById('viewPercent').innerText = "۰٪";
+            lastActivityTime = Date.now(); // ریست تایمر توقف
         }
 
         function checkSecurityAnswer() {
@@ -378,6 +399,7 @@
                 document.getElementById('securityModal').style.display = 'none';
                 nextCheckTime = vid.currentTime + CHECK_INTERVAL; 
                 vid.play();
+                lastActivityTime = Date.now(); // ریست تایمر توقف
             } else {
                 document.getElementById('mathAns').classList.add('wrong-ans');
             }
