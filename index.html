@@ -6,7 +6,7 @@
     <title>میز مطالعه هوشمند چمران</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
-        :root { --primary: #2c3e50; --accent: #d35400; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; }
+        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; }
@@ -29,16 +29,20 @@
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
         .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; }
         
-        /* دکمه دانلود فایل ضمیمه */
+        /* استایل دکمه‌های دانلود */
+        #downloadContainer { margin-top: 20px; display: grid; gap: 10px; }
         .download-btn {
-            display: none; /* پیش‌فرض مخفی */
-            background: #34495e; color: white; text-decoration: none;
-            padding: 12px; border-radius: 12px; margin-top: 15px;
-            font-size: 0.95rem; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.3s;
+            background: #fff; color: #34495e; text-decoration: none;
+            padding: 12px 15px; border-radius: 12px;
+            font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between;
+            border: 2px solid #ecf0f1; transition: 0.3s;
         }
-        .download-btn:hover { background: #2c3e50; transform: translateY(-2px); }
+        .download-btn:hover { border-color: var(--primary); background: #f8f9fa; transform: translateY(-2px); }
+        .dl-icon { font-size: 1.2rem; margin-left: 10px; }
+        .dl-text { font-weight: bold; }
+        .dl-arrow { color: var(--accent); font-size: 0.8rem; }
 
+        /* مودال امنیتی */
         #securityModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column; }
         .security-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; border: 4px solid var(--primary); }
         .math-question { font-size: 2rem; font-weight: bold; color: var(--primary); margin: 20px 0; direction: ltr; font-family: 'Vazirmatn', sans-serif; }
@@ -70,10 +74,7 @@
         <p style="color: #7f8c8d;">برای شروع نام و نام خانوادگی خود را بنویسید:</p>
         <input type="text" id="inpName" placeholder="مثال: محمد احمدی">
         <button class="btn-main" onclick="login()">ورود</button>
-        
-        <div id="loading">
-            <p>⏳ در حال دریافت لیست درس‌ها از پنل...</p>
-        </div>
+        <div id="loading"><p>⏳ در حال دریافت لیست درس‌ها...</p></div>
         <div id="error-msg" style="display:none; color:#c0392b; margin-top:10px;">
             <p>خطا در اتصال به پنل!</p>
             <button class="btn-main retry-btn" onclick="location.reload()">تلاش مجدد 🔄</button>
@@ -99,9 +100,7 @@
         
         <video id="myVideo" playsinline controls controlsList="nodownload"></video>
         
-        <a id="attachmentBtn" class="download-btn" href="#" target="_blank">
-            📥 دانلود فایل درس (PDF/عکس)
-        </a>
+        <div id="downloadContainer"></div>
 
         <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
         <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem;">
@@ -115,13 +114,14 @@
         // تنظیمات معلم
         // ***********************************************
         const TEACHER_EMAIL = "mpakzad529@gmail.com"; 
-        const CHECK_INTERVAL = 300; 
-        const ANSWER_TIMEOUT = 60;
+        const CHECK_INTERVAL = 300; // 5 دقیقه
+        const ANSWER_TIMEOUT = 60;  // 1 دقیقه
+        // لینک گوگل شیت شما 👇
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
         // ***********************************************
 
         let playlist = []; 
-        const DB_KEY = "chamran_db_v10_"; // ورژن جدید برای آپدیت ساختار
+        const DB_KEY = "chamran_db_v12_"; 
         let user = "";
         let activeVid = null;
         let maxTime = 0;
@@ -131,7 +131,6 @@
         let correctAnswer = 0;
         let timerInterval = null;
         const vid = document.getElementById('myVideo');
-        const attachBtn = document.getElementById('attachmentBtn');
 
         function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
@@ -171,8 +170,17 @@
                     const id = row[0].trim();
                     const title = row[1].trim(); 
                     const file = row[2].trim();
-                    // ستون چهارم: فایل ضمیمه (ممکن است خالی باشد)
-                    const attachment = (row.length > 3) ? row[3].trim() : "";
+                    
+                    // استخراج ستون فایل‌های ضمیمه (ستون چهارم به بعد)
+                    let attachment = "";
+                    if(row.length > 3) {
+                        // گرفتن کل متن بعد از ستون سوم تا آخر خط
+                        // این روش امن است حتی اگر در متن لینک‌ها کاما باشد
+                        const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
+                        // حذف جداکننده اول
+                        if(remaining.trim().startsWith(',')) attachment = remaining.trim().substring(1).trim();
+                        else attachment = remaining.trim();
+                    }
                     
                     if(id && title && file) {
                         playlist.push({ id, title, file, attachment });
@@ -211,9 +219,8 @@
                 const progress = localStorage.getItem(`${DB_KEY}${user}_${item.id}`) || 0;
                 const isCompleted = progress >= 98;
                 const icon = isCompleted ? '✅' : '▶️';
-                
-                // نشانگر داشتن فایل ضمیمه در لیست
-                const attachIcon = item.attachment ? '<span style="font-size:0.7rem; background:#eee; padding:2px 5px; border-radius:4px; margin-right:5px;">📎 فایل دارد</span>' : '';
+                const hasFile = (item.attachment && item.attachment.length > 3);
+                const attachIcon = hasFile ? '<span style="font-size:0.7rem; background:#eee; padding:2px 5px; border-radius:4px; margin-right:5px;">📎 فایل دارد</span>' : '';
 
                 const el = document.createElement('div');
                 el.className = `video-item ${isCompleted ? 'done' : ''}`;
@@ -241,13 +248,43 @@
             lastReportedPercent = 0;
             vid.src = item.file;
             
-            // مدیریت دکمه دانلود فایل
-            if(item.attachment && item.attachment.length > 5) {
-                attachBtn.style.display = 'flex'; // نمایش دکمه
-                attachBtn.href = item.attachment;
-            } else {
-                attachBtn.style.display = 'none'; // مخفی کردن
+            // --- نمایش فایل‌های ضمیمه ---
+            const dlContainer = document.getElementById('downloadContainer');
+            dlContainer.innerHTML = ""; 
+            
+            if(item.attachment && item.attachment.length > 3) {
+                // جدا کردن فایل‌ها با کاما (که توسط پنل مدیریت ساخته شده)
+                const files = item.attachment.split(',');
+                
+                files.forEach((fileEntry, index) => {
+                    fileEntry = fileEntry.trim();
+                    if(!fileEntry) return;
+
+                    // جدا کردن اسم و لینک با علامت |
+                    let fileName = `فایل ضمیمه ${toPersianNum(index + 1)}`;
+                    let fileLink = fileEntry;
+
+                    if(fileEntry.includes('|')) {
+                        const parts = fileEntry.split('|');
+                        fileName = parts[0].trim();
+                        fileLink = parts[1].trim();
+                    }
+
+                    const btn = document.createElement('a');
+                    btn.className = 'download-btn';
+                    btn.href = fileLink;
+                    btn.target = "_blank";
+                    btn.innerHTML = `
+                        <div style="display:flex; align-items:center;">
+                            <span class="dl-icon">📥</span>
+                            <span class="dl-text">${fileName}</span>
+                        </div>
+                        <span class="dl-arrow">دریافت ➜</span>
+                    `;
+                    dlContainer.appendChild(btn);
+                });
             }
+            // -----------------------------
 
             const savedTime = localStorage.getItem(`${DB_KEY}${user}_time_${item.id}`);
             maxTime = savedTime ? parseFloat(savedTime) : 0;
