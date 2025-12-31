@@ -6,44 +6,297 @@
     <title>سالن امتحانات چمران</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
-        body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
-        .card { background: white; width: 100%; max-width: 500px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; margin-top: 50px; }
-        h2 { color: #2c3e50; margin-bottom: 10px; }
-        .status { background: #e8f5e9; color: #2e7d32; padding: 10px; border-radius: 10px; margin: 20px 0; border: 1px solid #c8e6c9; }
-        .btn-back { background: #34495e; color: white; border: none; padding: 15px 30px; border-radius: 15px; font-size: 1rem; cursor: pointer; width: 100%; margin-top: 10px; font-family: inherit; }
-        .btn-back:hover { background: #2c3e50; }
+        body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; }
+        .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; }
+        h2 { color: #2c3e50; margin: 0 0 15px 0; }
+        
+        /* دکمه‌ها */
+        .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn-start { background: #8e44ad; color: white; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3); }
+        .btn-start:hover { transform: translateY(-2px); }
+        .btn-next { background: #2980b9; color: white; }
+        .btn-finish { background: #27ae60; color: white; display: none; }
+        .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
+
+        /* استایل لیست آزمون‌ها */
+        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
+        .exam-info h4 { margin: 0; color: #4a148c; }
+        .exam-info small { color: #7f8c8d; font-size: 0.8rem; }
+        
+        /* محیط آزمون */
+        #examArea { display: none; }
+        .timer-box { font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 20px; width: 100px; }
+        
+        .option { display: block; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; position: relative; }
+        .option:hover { background: #e8f5e9; border-color: #a5d6a7; }
+        .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; }
+        
+        /* کارنامه */
+        #reportCard { display: none; }
+        .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem; color: #2ecc71; font-weight: bold; }
+        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+
+        #loading { color: #7f8c8d; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div style="font-size: 4rem;">📝</div>
-        <h2>سالن امتحانات</h2>
+    <div id="lobby" class="card">
+        <div style="font-size: 3rem; margin-bottom: 10px;">📝</div>
+        <h3 id="welcomeText">سالن امتحانات</h3>
+        <p style="font-size: 0.9rem; color: #777;">آزمون مورد نظر را انتخاب کنید:</p>
+        <div id="examList"></div>
+        <div id="loading">⏳ در حال دریافت لیست آزمون‌ها...</div>
+        <button class="btn btn-back" onclick="window.location.href='index.html'">🔙 بازگشت به کلاس</button>
+    </div>
+
+    <div id="examArea" class="card" style="max-width: 600px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span id="qProgress" style="font-size: 0.9rem; color: #7f8c8d;">سوال ۱ از ۱۰</span>
+            <div id="timer" class="timer-box">00:00</div>
+        </div>
         
-        <div id="welcomeMsg" style="color: #7f8c8d; margin-bottom: 20px;">
-            در حال شناسایی دانش‌آموز...
+        <h3 id="questionText" style="text-align: right; line-height: 1.6; margin-bottom: 20px;">متن سوال اینجا...</h3>
+        
+        <div id="optionsContainer"></div>
+
+        <button id="btnNext" class="btn btn-next" onclick="nextQuestion()">سوال بعدی ➜</button>
+        <button id="btnFinish" class="btn btn-finish" onclick="finishExam()">ثبت نهایی آزمون ✅</button>
+    </div>
+
+    <div id="reportCard" class="card">
+        <h2>📊 کارنامه آزمون</h2>
+        <h3 id="reportTitle" style="color:#8e44ad;"></h3>
+        
+        <div class="score-circle">
+            <span id="scoreNum">0</span>
+            <span style="font-size:0.8rem;">نمره نهایی</span>
         </div>
 
-        <div class="status">
-            <p>در حال حاضر آزمون فعالی وجود ندارد.</p>
+        <div class="stat-row"><span>✅ پاسخ صحیح:</span><span id="statCorrect">0</span></div>
+        <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
+        <div class="stat-row"><span>⚪ بدون پاسخ:</span><span id="statEmpty">0</span></div>
+        
+        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem;">
+            نمره شما در پرونده ذخیره شد.
         </div>
 
-        <button class="btn-back" onclick="window.location.href='index.html'">🔙 بازگشت به کلاس درس</button>
+        <button class="btn btn-back" onclick="location.reload()">بازگشت به لیست آزمون‌ها</button>
     </div>
 
     <script>
-        // کلید دیتابیس (باید با فایل اصلی یکی باشد)
+        // ***********************************************
+        // تنظیمات (لینک‌های شما جاگذاری شد)
+        // ***********************************************
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=943392939&single=true&output=csv";
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzncm2r3lXIKYqGATa0sq0YzctNRbOyoNbcaTVlJdxBeNf4vFPulqVppR_X5SLOEdGXlA/exec"; 
         const DB_KEY = "chamran_db_v19_"; 
-        
-        const savedName = localStorage.getItem(DB_KEY + 'name');
+        // ***********************************************
 
-        if(savedName) {
-            document.getElementById('welcomeMsg').innerHTML = `دانش‌آموز عزیز: <b>${savedName}</b><br>خوش آمدید!`;
-        } else {
-            alert("شما وارد کلاس نشده‌اید! لطفاً ابتدا وارد شوید.");
-            window.location.href = 'index.html';
+        let currentUser = localStorage.getItem(DB_KEY + 'name');
+        if(!currentUser) { 
+            // اگر کاربر لاگین نکرده بود، برگردد به صفحه اصلی
+            alert("لطفا ابتدا وارد کلاس شوید!"); 
+            window.location.href = 'index.html'; 
         }
-    </script>
+        
+        document.getElementById('welcomeText').innerText = `سلام ${currentUser} 👋`;
 
+        let examsMap = {}; 
+        let currentExamId = null;
+        let currentQuestions = [];
+        let currentQIndex = 0;
+        let userAnswers = {}; 
+        let timerInterval;
+        let timeRemaining = 0;
+
+        async function loadExams() {
+            try {
+                // اضافه کردن پارامتر زمان برای جلوگیری از کش شدن
+                const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
+                if(!res.ok) throw new Error("Network response was not ok");
+                const text = await res.text();
+                parseExamCSV(text);
+            } catch(e) {
+                console.error(e);
+                document.getElementById('loading').innerHTML = "خطا در دریافت آزمون‌ها.<br>لطفا اتصال اینترنت را چک کنید.";
+            }
+        }
+        
+        function parseExamCSV(text) {
+            const rows = text.split('\n');
+            examsMap = {};
+            
+            for(let i=1; i<rows.length; i++) {
+                const col = rows[i].split(',');
+                if(col.length < 9) continue;
+                
+                // ستون‌ها طبق خروجی Apps Script:
+                // exam_id, exam_title, duration, start_time, question, opt1, opt2, opt3, opt4, correct_ans
+                const exId = col[0].trim();
+                const title = col[1].trim();
+                const duration = col[2].trim();
+                const startStr = col[3].trim();
+                
+                if(!examsMap[exId]) {
+                    examsMap[exId] = { id: exId, title, duration, start: startStr, questions: [] };
+                }
+                
+                examsMap[exId].questions.push({
+                    q: col[4],
+                    options: [col[5], col[6], col[7], col[8]],
+                    correct: parseInt(col[9])
+                });
+            }
+            renderExamList();
+        }
+
+        function renderExamList() {
+            const list = document.getElementById('examList');
+            document.getElementById('loading').style.display = 'none';
+            list.innerHTML = "";
+            
+            const ids = Object.keys(examsMap);
+            if(ids.length === 0) {
+                list.innerHTML = "<p>آزمونی یافت نشد (لطفا از پنل مدیریت آزمون بسازید)</p>";
+                return;
+            }
+
+            ids.forEach(id => {
+                const exam = examsMap[id];
+                const btn = document.createElement('div');
+                btn.className = 'exam-item';
+                btn.innerHTML = `
+                    <div class="exam-info">
+                        <h4>${exam.title}</h4>
+                        <small>⏱️ ${exam.duration} دقیقه | 📅 شروع: ${exam.start}</small>
+                    </div>
+                    <button style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:bold;" 
+                            onclick="checkAndStart('${id}')">شروع آزمون</button>
+                `;
+                list.appendChild(btn);
+            });
+        }
+
+        function checkAndStart(id) {
+            const exam = examsMap[id];
+            if(confirm(`آیا آماده شروع آزمون "${exam.title}" هستید؟\nزمان: ${exam.duration} دقیقه`)) {
+                startExam(id);
+            }
+        }
+
+        function startExam(id) {
+            currentExamId = id;
+            currentQuestions = examsMap[id].questions;
+            timeRemaining = parseInt(examsMap[id].duration) * 60;
+            currentQIndex = 0;
+            userAnswers = {};
+
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('examArea').style.display = 'block';
+            
+            startTimer();
+            showQuestion();
+        }
+
+        function startTimer() {
+            const timerDiv = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                const m = Math.floor(timeRemaining / 60);
+                const s = timeRemaining % 60;
+                timerDiv.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                
+                if(timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏰ زمان آزمون به پایان رسید!");
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function showQuestion() {
+            const q = currentQuestions[currentQIndex];
+            document.getElementById('qProgress').innerText = `سوال ${currentQIndex + 1} از ${currentQuestions.length}`;
+            document.getElementById('questionText').innerText = q.q;
+            
+            const cont = document.getElementById('optionsContainer');
+            cont.innerHTML = "";
+            
+            q.options.forEach((opt, idx) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                if(userAnswers[currentQIndex] === idx + 1) div.classList.add('selected');
+                div.innerText = opt;
+                div.onclick = () => selectOption(idx + 1, div);
+                cont.appendChild(div);
+            });
+
+            if(currentQIndex === currentQuestions.length - 1) {
+                document.getElementById('btnNext').style.display = 'none';
+                document.getElementById('btnFinish').style.display = 'block';
+            } else {
+                document.getElementById('btnNext').style.display = 'block';
+                document.getElementById('btnFinish').style.display = 'none';
+            }
+        }
+
+        function selectOption(optIndex, el) {
+            document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            userAnswers[currentQIndex] = optIndex;
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            showQuestion();
+        }
+
+        function finishExam() {
+            clearInterval(timerInterval);
+            document.getElementById('examArea').style.display = 'none';
+            document.getElementById('reportCard').style.display = 'block';
+            
+            let correct = 0;
+            let wrong = 0;
+            let empty = 0;
+            
+            currentQuestions.forEach((q, idx) => {
+                const ans = userAnswers[idx];
+                if(!ans) empty++;
+                else if(ans == q.correct) correct++; 
+                else wrong++;
+            });
+            
+            const score = (correct / currentQuestions.length) * 20; 
+            
+            document.getElementById('reportTitle').innerText = examsMap[currentExamId].title;
+            document.getElementById('scoreNum').innerText = score.toFixed(1);
+            document.getElementById('statCorrect').innerText = correct;
+            document.getElementById('statWrong').innerText = wrong;
+            document.getElementById('statEmpty').innerText = empty;
+            
+            sendReport(examsMap[currentExamId].title, score.toFixed(1));
+        }
+
+        function sendReport(examTitle, score) {
+            const data = {
+                studentName: currentUser,
+                lesson: `آزمون: ${examTitle}`,
+                status: `شرکت در آزمون (نمره: ${score})`,
+                percent: `نمره: ${score}/20`,
+                deviceInfo: navigator.userAgent
+            };
+            
+            fetch(REPORT_WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(data),
+                headers: { 'Content-Type': 'text/plain' }
+            });
+        }
+        
+        loadExams();
+    </script>
 </body>
 </html>
