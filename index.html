@@ -112,22 +112,16 @@
         // ***********************************************
         // تنظیمات معلم
         // ***********************************************
-        
-        // 1. لینک لیست درس‌ها (Google Sheet CSV)
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
-        
-        // 2. لینک گزارش‌دهی (Google Apps Script Web App)
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxz6rDvxlp41o0bIeHIRA7VKa06WphDiYfzeiORg-vsHBVvHR4uqWlcRrcazhIKct1aXQ/exec"; 
         
-        // ***********************************************
-        
-        const CHECK_INTERVAL = 300; // سوال ریاضی هر 5 دقیقه
-        const ANSWER_TIMEOUT = 60; // مهلت پاسخ 1 دقیقه
-        const IDLE_TIMEOUT = 120; // 2 دقیقه توقف در صفحه بدون فعالیت
-        const BACKGROUND_TIMEOUT = 120; // 2 دقیقه رفتن به برنامه دیگر
+        const CHECK_INTERVAL = 300; 
+        const ANSWER_TIMEOUT = 60;
+        const IDLE_TIMEOUT = 120;
+        const BACKGROUND_TIMEOUT = 120;
 
         let playlist = []; 
-        const DB_KEY = "chamran_db_v16_"; 
+        const DB_KEY = "chamran_db_v17_"; 
         let user = "";
         let activeVid = null;
         let maxTime = 0;
@@ -145,7 +139,6 @@
         function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
         
-        // دریافت مشخصات دستگاه برای گزارش
         function getDeviceInfo() {
             return navigator.userAgent + " | Screen: " + window.screen.width + "x" + window.screen.height;
         }
@@ -299,7 +292,7 @@
         }
 
         function backToLib() {
-            checkAndReport("خروج از درس 🔙"); 
+            checkAndReport("خروج از درس 🔙", true); 
             vid.pause();
             if(backgroundTimer) clearTimeout(backgroundTimer);
             renderList();
@@ -311,7 +304,14 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ******* سیستم امنیتی و نظارتی *******
+        // ******* سیستم امنیتی و نظارتی (Updated for Exit Detection) *******
+        
+        // 1. تشخیص بستن تب یا مرورگر (این بخش جدید است)
+        window.addEventListener('pagehide', () => {
+             checkAndReport("⛔ خروج ناگهانی (بستن مرورگر)", true);
+        });
+
+        // 2. تشخیص رفتن به برنامه دیگر (Minimize)
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
 
@@ -320,10 +320,12 @@
                 let pText = document.getElementById('viewPercent').innerText;
                 const percent = parseInt(toEnglishNum(pText).replace('٪', ''));
                 
-                // اگر درصد مشاهده بین ۵ تا ۹۸ درصد است و کاربر خارج شده، تایمر ۲ دقیقه‌ای شروع می‌شود
                 if(percent > 5 && percent < 98) {
+                    // ارسال فوری گزارش خروج موقت (Beacon)
+                    checkAndReport("خروج موقت (Minimize) ⏸️", true);
+                    
                     backgroundTimer = setTimeout(() => {
-                        checkAndReport("⛔ خروج از کلاس (برنامه دیگر) - ۲ دقیقه");
+                        checkAndReport("⛔ خروج از کلاس (بیش از ۲ دقیقه)", true);
                     }, BACKGROUND_TIMEOUT * 1000); 
                 }
             } else {
@@ -331,7 +333,6 @@
             }
         });
 
-        // چک کردن عدم فعالیت (توقف روی ویدیو بدون پلی کردن)
         setInterval(() => {
             if (!activeVid || isDone || vid.paused) return; 
             const timeDiff = (Date.now() - lastActivityTime) / 1000;
@@ -339,7 +340,7 @@
                 let pText = document.getElementById('viewPercent').innerText;
                 const percent = parseInt(toEnglishNum(pText).replace('٪', ''));
                 if(percent > 5) {
-                    checkAndReport("⚠️ توقف طولانی (عدم پیشرفت)");
+                    checkAndReport("⚠️ توقف طولانی (عدم پیشرفت)", true);
                     idleReportSent = true; 
                 }
             }
@@ -369,7 +370,7 @@
                 if(percent >= 98 && !isDone) {
                     isDone = true;
                     document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
-                    checkAndReport("تکمیل کامل درس ✅");
+                    checkAndReport("تکمیل کامل درس ✅", true);
                 }
             }
         });
@@ -424,14 +425,16 @@
             }
         }
         
-        function checkAndReport(statusOverride) {
+        // تابع هوشمند ارسال گزارش (پشتیبانی از Beacon برای خروج)
+        function checkAndReport(statusOverride, force = false) {
             if(!activeVid) return;
             
             let pText = document.getElementById('viewPercent').innerText;
             const percent = parseInt(toEnglishNum(pText).replace('٪', ''));
             
-            if(!statusOverride && (percent < 10 || percent === lastReportedPercent)) return;
-            if(!statusOverride) lastReportedPercent = percent;
+            // جلوگیری از اسپم، مگر اینکه فورس باشد (مثل خروج)
+            if(!force && (percent < 10 || percent === lastReportedPercent)) return;
+            if(!force) lastReportedPercent = percent;
 
             const finalStatus = statusOverride || "در حال مشاهده 👀";
             
@@ -443,13 +446,9 @@
                 deviceInfo: getDeviceInfo()
             };
             
-            fetch(REPORT_WEBAPP_URL, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            }).then(() => console.log("Report sent"))
-              .catch(err => console.error("Report failed", err));
+            // استفاده از sendBeacon برای اطمینان از ارسال هنگام مرگ صفحه
+            const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+            navigator.sendBeacon(REPORT_WEBAPP_URL, blob);
         }
     </script>
 </body>
