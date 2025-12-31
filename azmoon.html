@@ -86,7 +86,7 @@
 
     <script>
         // ***********************************************
-        // تنظیمات (لینک‌های شما جاگذاری شد)
+        // تنظیمات با لینک‌های اختصاصی شما
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=943392939&single=true&output=csv";
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzncm2r3lXIKYqGATa0sq0YzctNRbOyoNbcaTVlJdxBeNf4vFPulqVppR_X5SLOEdGXlA/exec"; 
@@ -95,7 +95,6 @@
 
         let currentUser = localStorage.getItem(DB_KEY + 'name');
         if(!currentUser) { 
-            // اگر کاربر لاگین نکرده بود، برگردد به صفحه اصلی
             alert("لطفا ابتدا وارد کلاس شوید!"); 
             window.location.href = 'index.html'; 
         }
@@ -112,27 +111,49 @@
 
         async function loadExams() {
             try {
-                // اضافه کردن پارامتر زمان برای جلوگیری از کش شدن
+                // پارامتر t برای جلوگیری از کش شدن قدیمی
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
-                if(!res.ok) throw new Error("Network response was not ok");
+                if(!res.ok) throw new Error("Network error");
                 const text = await res.text();
                 parseExamCSV(text);
             } catch(e) {
                 console.error(e);
-                document.getElementById('loading').innerHTML = "خطا در دریافت آزمون‌ها.<br>لطفا اتصال اینترنت را چک کنید.";
+                document.getElementById('loading').innerHTML = "خطا در دریافت لیست آزمون‌ها.<br>لطفا اتصال اینترنت را چک کنید.";
             }
         }
         
         function parseExamCSV(text) {
             const rows = text.split('\n');
             examsMap = {};
-            
-            for(let i=1; i<rows.length; i++) {
-                const col = rows[i].split(',');
+
+            // --- تابع پارسر پیشرفته برای خواندن CSV (حتی با ویرگول در متن) ---
+            const parseLine = (line) => {
+                const result = [];
+                let current = '';
+                let inQuote = false;
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') { inQuote = !inQuote; continue; }
+                    if (char === ',' && !inQuote) { result.push(current); current = ''; continue; }
+                    current += char;
+                }
+                result.push(current);
+                return result;
+            };
+
+            // شروع حلقه از 0 برای خواندن همه ردیف‌ها
+            for(let i=0; i<rows.length; i++) {
+                const rowStr = rows[i].trim();
+                if(!rowStr) continue; // رد کردن خطوط خالی
+                
+                const col = parseLine(rowStr);
+                
+                // اگر ستون اول کلمه "exam_id" یا "id" بود، یعنی این خط هدر است، پس ردش کن
+                if(col[0] && (col[0].includes('exam_id') || col[0].toLowerCase() === 'id')) continue;
+
                 if(col.length < 9) continue;
                 
-                // ستون‌ها طبق خروجی Apps Script:
-                // exam_id, exam_title, duration, start_time, question, opt1, opt2, opt3, opt4, correct_ans
+                // خواندن اطلاعات
                 const exId = col[0].trim();
                 const title = col[1].trim();
                 const duration = col[2].trim();
@@ -143,9 +164,9 @@
                 }
                 
                 examsMap[exId].questions.push({
-                    q: col[4],
-                    options: [col[5], col[6], col[7], col[8]],
-                    correct: parseInt(col[9])
+                    q: col[4].trim(),
+                    options: [col[5].trim(), col[6].trim(), col[7].trim(), col[8].trim()],
+                    correct: parseInt(col[9].trim())
                 });
             }
             renderExamList();
@@ -158,7 +179,7 @@
             
             const ids = Object.keys(examsMap);
             if(ids.length === 0) {
-                list.innerHTML = "<p>آزمونی یافت نشد (لطفا از پنل مدیریت آزمون بسازید)</p>";
+                list.innerHTML = "<p>آزمونی یافت نشد.</p>";
                 return;
             }
 
