@@ -23,7 +23,7 @@
         input:focus { border-color: var(--accent); }
         .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
-        /* پلیر ویدیو - عرض و ارتفاع مناسب برای دیده شدن کنترل‌ها */
+        /* پلیر ویدیو */
         video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; max-height: 80vh; outline: none; }
         
         .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; display: none; font-size: 0.9rem; width: max-content; }
@@ -98,7 +98,7 @@
             <strong id="videoTitle" style="font-size: 0.9rem;"></strong>
         </div>
         
-        <video id="myVideo" playsinline controls controlsList="nodownload noplaybackrate"></video>
+        <video id="myVideo" playsinline controls disablePictureInPicture controlsList="nodownload noplaybackrate"></video>
         
         <div id="downloadContainer"></div>
 
@@ -118,12 +118,13 @@
         const ANSWER_TIMEOUT = 60;
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
         
-        // زمان مجاز عدم فعالیت (۲ دقیقه = ۱۲۰ ثانیه)
-        const IDLE_TIMEOUT = 120;
+        // تنظیمات امنیتی جدید
+        const IDLE_TIMEOUT = 120; // 2 دقیقه توقف در صفحه (پلی نکرده)
+        const BACKGROUND_TIMEOUT = 120; // 2 دقیقه رفتن به برنامه دیگر
         // ***********************************************
 
         let playlist = []; 
-        const DB_KEY = "chamran_db_v13_"; 
+        const DB_KEY = "chamran_db_v14_"; // ورژن جدید
         let user = "";
         let activeVid = null;
         let maxTime = 0;
@@ -133,9 +134,10 @@
         let correctAnswer = 0;
         let timerInterval = null;
         
-        // متغیرهای سیستم توقف طولانی
+        // متغیرهای نظارتی
         let lastActivityTime = Date.now();
         let idleReportSent = false;
+        let backgroundTimer = null; // تایمر برای وقتی که به برنامه دیگر می‌رود
 
         const vid = document.getElementById('myVideo');
 
@@ -247,9 +249,10 @@
             lastReportedPercent = 0;
             vid.src = item.file;
             
-            // ریست کردن سیستم توقف طولانی
+            // ریست کردن مانیتورینگ
             lastActivityTime = Date.now();
             idleReportSent = false;
+            if(backgroundTimer) clearTimeout(backgroundTimer);
             
             const dlContainer = document.getElementById('downloadContainer');
             dlContainer.innerHTML = ""; 
@@ -293,6 +296,7 @@
         function backToLib() {
             checkAndReportExit();
             vid.pause();
+            if(backgroundTimer) clearTimeout(backgroundTimer);
             renderList();
             showScreen('screen-library');
         }
@@ -302,23 +306,43 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // --- مانیتورینگ عدم فعالیت (Idle Check) ---
-        // این تابع هر ۵ ثانیه چک میکند
+        // ******* سیستم امنیتی جدید: خروج از برنامه و توقف خودکار *******
+        document.addEventListener("visibilitychange", () => {
+            if(!activeVid || isDone) return;
+
+            if (document.visibilityState === 'hidden') {
+                // ۱. ویدیو را فوراً پاز کن
+                vid.pause();
+
+                // ۲. اگر هنوز تمام نکرده، تایمر ۲ دقیقه‌ای برای گزارش ایمیل روشن کن
+                let pText = document.getElementById('viewPercent').innerText;
+                pText = toEnglishNum(pText).replace('٪', '');
+                const percent = parseInt(pText);
+
+                if(percent > 5 && percent < 98) {
+                    backgroundTimer = setTimeout(() => {
+                        sendEmailReport("⛔ خروج از کلاس (رفتن به برنامه دیگر - ۲ دقیقه)", percent);
+                    }, BACKGROUND_TIMEOUT * 1000); 
+                }
+            } else {
+                // اگر برگشت به برنامه، تایمر ایمیل را لغو کن
+                if(backgroundTimer) clearTimeout(backgroundTimer);
+            }
+        });
+
+        // --- مانیتورینگ عدم فعالیت (Idle Check) وقتی داخل برنامه است ---
         setInterval(() => {
-            if (!activeVid || isDone || vid.paused) return; // اگر ویدیو پخش نمی‌شود کاری نداشته باش
+            if (!activeVid || isDone || vid.paused) return; 
             
             const timeDiff = (Date.now() - lastActivityTime) / 1000;
-            
             if (timeDiff > IDLE_TIMEOUT && !idleReportSent) {
-                // اگر ۲ دقیقه گذشت و فعالیتی ثبت نشد
                 let pText = document.getElementById('viewPercent').innerText;
                 pText = toEnglishNum(pText).replace('٪', '');
                 const percent = parseInt(pText);
                 
-                // فقط اگر پیشرفت بالای ۵ درصد باشد گزارش بده
                 if(percent > 5) {
                     sendEmailReport("⚠️ توقف طولانی (۲ دقیقه عدم پیشرفت)", percent);
-                    idleReportSent = true; // جلوگیری از ارسال تکراری
+                    idleReportSent = true; 
                 }
             }
         }, 5000);
@@ -335,12 +359,9 @@
             if(!vid.seeking && vid.currentTime > maxTime) {
                 maxTime = vid.currentTime;
                 localStorage.setItem(`${DB_KEY}${user}_time_${activeVid.id}`, maxTime);
-                
-                // *** آپدیت: فعالیت جدید ثبت شد ***
                 lastActivityTime = Date.now();
-                idleReportSent = false; // پرچم ریست می‌شود چون کاربر فعال است
+                idleReportSent = false; 
             }
-            
             if(vid.currentTime > nextCheckTime) triggerSecurityCheck();
             if(vid.duration) {
                 const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
@@ -388,7 +409,7 @@
             localStorage.setItem(`${DB_KEY}${user}_${activeVid.id}`, 0);
             document.getElementById('progressBar').style.width = "0%";
             document.getElementById('viewPercent').innerText = "۰٪";
-            lastActivityTime = Date.now(); // ریست تایمر توقف
+            lastActivityTime = Date.now(); 
         }
 
         function checkSecurityAnswer() {
@@ -399,14 +420,16 @@
                 document.getElementById('securityModal').style.display = 'none';
                 nextCheckTime = vid.currentTime + CHECK_INTERVAL; 
                 vid.play();
-                lastActivityTime = Date.now(); // ریست تایمر توقف
+                lastActivityTime = Date.now(); 
             } else {
                 document.getElementById('mathAns').classList.add('wrong-ans');
             }
         }
 
         window.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === 'hidden') checkAndReportExit();
+             // این بخش برای خروج کامل (بستن تب) است که با Beacon هندل میشود
+             // اما برای خروج موقت (Minimize) در بالا هندلر جداگانه نوشتیم
+             if (document.visibilityState === 'hidden') checkAndReportExit();
         });
         
         function checkAndReportExit() {
@@ -414,9 +437,10 @@
             let pText = document.getElementById('viewPercent').innerText;
             pText = toEnglishNum(pText).replace('٪', '');
             const percent = parseInt(pText);
+            // فقط برای Beacon اینجا چک میکنیم، لاجیک تایمر جداست
             if(percent > 10 && percent < 98 && percent > lastReportedPercent) {
                 lastReportedPercent = percent;
-                sendEmailReport("خروج ناقص (نیمه‌کاره) ⚠️", percent);
+                sendEmailReport("خروج از صفحه (بستن/مینیمایز) ⚠️", percent);
             }
         }
 
