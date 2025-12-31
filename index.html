@@ -45,15 +45,21 @@
         .security-box {
             background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; border: 4px solid var(--primary);
         }
-        .math-question { font-size: 1.8rem; font-weight: bold; color: var(--primary); margin: 15px 0; }
+        /* جهت چپ به راست برای نمایش صحیح ریاضی */
+        .math-question { 
+            font-size: 2rem; font-weight: bold; color: var(--primary); margin: 20px 0;
+            direction: ltr; /* مهم: چپ چین کردن فرمول */
+            font-family: 'Vazirmatn', sans-serif;
+        }
         .wrong-ans { border-color: red !important; background: #ffebee; }
         
         /* تایمر معکوس */
         .timer-circle {
-            width: 60px; height: 60px; background: var(--danger); color: white;
+            width: 70px; height: 70px; background: var(--danger); color: white;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; font-weight: bold; margin: 0 auto 10px auto;
+            font-size: 1.8rem; font-weight: bold; margin: 0 auto 10px auto;
             border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            padding-top: 5px; /* تنظیم بصری برای فونت فارسی */
         }
     </style>
 </head>
@@ -63,11 +69,13 @@
 
     <div id="securityModal">
         <div class="security-box">
-            <div id="timerDisplay" class="timer-circle">60</div>
-            <h3>⏱️ کنترل حضور سریع!</h3>
-            <p style="font-size: 0.9rem; color: #555;">اگر زمان تمام شود، فیلم از اول شروع می‌شود!</p>
+            <div id="timerDisplay" class="timer-circle">۶۰</div>
+            <h3>🔒 حضور غیاب هوشمند</h3>
+            <p style="font-size: 0.9rem; color: #555;">برای ادامه، حاصل جمع زیر را وارد کنید:</p>
+            
             <div id="mathQ" class="math-question">...</div>
-            <input type="number" id="mathAns" placeholder="پاسخ؟">
+            
+            <input type="tel" id="mathAns" placeholder="پاسخ؟ (به انگلیسی یا فارسی)">
             <button class="btn-main" onclick="checkSecurityAnswer()">ثبت پاسخ ✅</button>
         </div>
     </div>
@@ -101,7 +109,7 @@
         
         <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
         <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem;">
-            <span id="viewPercent" style="color: var(--accent); font-weight: bold;">0%</span>
+            <span id="viewPercent" style="color: var(--accent); font-weight: bold;">۰٪</span>
             <span id="viewStatus" style="color: #95a5a6;">در حال تماشا...</span>
         </div>
     </div>
@@ -112,8 +120,8 @@
         // ***********************************************
         const TEACHER_EMAIL = "mpakzad529@gmail.com"; 
         
-        // زمان سوال پرسیدن (الان روی ۳۰ ثانیه برای تست شماست)
-        const CHECK_INTERVAL = 30; 
+        // زمان سوال پرسیدن (هر ۵ دقیقه = ۳۰۰ ثانیه)
+        const CHECK_INTERVAL = 300; 
         
         // زمان مجاز پاسخگویی (۶۰ ثانیه)
         const ANSWER_TIMEOUT = 60;
@@ -123,19 +131,29 @@
         ];
         // ***********************************************
 
-        const DB_KEY = "chamran_db_v4_";
+        const DB_KEY = "chamran_db_v5_"; // ورژن دیتابیس
         let user = "";
         let activeVid = null;
         let maxTime = 0;
         let isDone = false;
         let lastReportedPercent = 0;
         
-        // متغیرهای سیستم سوال و تایمر
         let nextCheckTime = CHECK_INTERVAL;
         let correctAnswer = 0;
         let timerInterval = null;
 
         const vid = document.getElementById('myVideo');
+
+        // تابع تبدیل عدد به فارسی
+        function toPersianNum(n) {
+            const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            return n.toString().replace(/\d/g, x => farsiDigits[x]);
+        }
+        
+        // تابع تبدیل عدد فارسی ورودی کاربر به انگلیسی برای محاسبه
+        function toEnglishNum(s) {
+            return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+        }
 
         function initApp() {
             const savedName = localStorage.getItem(DB_KEY + 'name');
@@ -180,7 +198,7 @@
                     <div class="video-icon">${icon}</div>
                     <div class="video-info">
                         <h4>${item.title}</h4>
-                        <span class="status-text">${progress >= 98 ? 'تکمیل شد' : progress + '% مشاهده شده'}</span>
+                        <span class="status-text">${progress >= 98 ? 'تکمیل شد' : toPersianNum(progress) + '٪ مشاهده شده'}</span>
                     </div>
                 `;
                 list.appendChild(el);
@@ -197,6 +215,7 @@
             const savedTime = localStorage.getItem(`${DB_KEY}${user}_time_${item.id}`);
             maxTime = savedTime ? parseFloat(savedTime) : 0;
             
+            // تنظیم اولین زمان چک کردن
             nextCheckTime = maxTime + CHECK_INTERVAL; 
 
             showScreen('screen-player');
@@ -218,7 +237,7 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // --- سیستم ضد تقلب و تایمر ---
+        // --- سیستم اصلی ---
         vid.addEventListener('seeking', () => {
             if(vid.currentTime > maxTime + 3) {
                 vid.currentTime = maxTime;
@@ -233,7 +252,7 @@
                 localStorage.setItem(`${DB_KEY}${user}_time_${activeVid.id}`, maxTime);
             }
 
-            // *** چک کردن زمان سوال امنیتی ***
+            // چک کردن زمان سوال
             if(vid.currentTime > nextCheckTime) {
                 triggerSecurityCheck();
             }
@@ -241,7 +260,7 @@
             if(vid.duration) {
                 const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
                 document.getElementById('progressBar').style.width = percent + "%";
-                document.getElementById('viewPercent').innerText = percent + "%";
+                document.getElementById('viewPercent').innerText = toPersianNum(percent) + "٪";
                 localStorage.setItem(`${DB_KEY}${user}_${activeVid.id}`, percent);
 
                 if(percent >= 98 && !isDone) {
@@ -252,37 +271,34 @@
             }
         });
 
-        // --- توابع سوال امنیتی + تایمر مرگ (جدید) ---
+        // --- توابع سوال امنیتی + تایمر فارسی ---
         function triggerSecurityCheck() {
             vid.pause();
             
-            // تولید اعداد تصادفی
             const num1 = Math.floor(Math.random() * 10) + 1;
             const num2 = Math.floor(Math.random() * 10) + 1;
             correctAnswer = num1 + num2;
             
-            document.getElementById('mathQ').innerText = `${num1} + ${num2} = ؟`;
+            // نمایش سوال با اعداد فارسی و جهت LTR
+            document.getElementById('mathQ').innerText = `${toPersianNum(num1)} + ${toPersianNum(num2)} = ؟`;
             document.getElementById('mathAns').value = "";
             document.getElementById('mathAns').classList.remove('wrong-ans');
             document.getElementById('securityModal').style.display = 'flex';
 
-            // شروع شمارش معکوس
             let timeLeft = ANSWER_TIMEOUT;
             const timerDisplay = document.getElementById('timerDisplay');
-            timerDisplay.innerText = timeLeft;
+            timerDisplay.innerText = toPersianNum(timeLeft);
 
-            if(timerInterval) clearInterval(timerInterval); // پاک کردن تایمرهای قبلی
+            if(timerInterval) clearInterval(timerInterval);
 
             timerInterval = setInterval(() => {
                 timeLeft--;
-                timerDisplay.innerText = timeLeft;
+                timerDisplay.innerText = toPersianNum(timeLeft); // آپدیت تایمر با عدد فارسی
                 
-                // تغییر رنگ در ۱۰ ثانیه آخر
                 if(timeLeft < 10) timerDisplay.style.background = "#b71c1c";
                 else timerDisplay.style.background = "#c0392b";
 
                 if(timeLeft <= 0) {
-                    // *** جریمه: بازگشت به اول ***
                     clearInterval(timerInterval);
                     punishUser();
                 }
@@ -290,10 +306,12 @@
         }
 
         function checkSecurityAnswer() {
-            const userAns = parseInt(document.getElementById('mathAns').value);
+            // تبدیل ورودی کاربر (اگر فارسی تایپ کرد) به انگلیسی برای مقایسه
+            const rawVal = document.getElementById('mathAns').value;
+            const userAns = parseInt(toEnglishNum(rawVal));
+            
             if(userAns === correctAnswer) {
-                // جواب درست
-                clearInterval(timerInterval); // توقف تایمر
+                clearInterval(timerInterval);
                 document.getElementById('securityModal').style.display = 'none';
                 nextCheckTime = vid.currentTime + CHECK_INTERVAL; 
                 vid.play();
@@ -304,28 +322,30 @@
 
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none';
-            alert("⏰ زمان شما تمام شد! متاسفانه چون پاسخ ندادید، فیلم از اول شروع می‌شود.");
+            alert("⏰ زمان تمام شد! فیلم از اول شروع می‌شود.");
             
-            // ریست کردن همه چیز
             vid.currentTime = 0;
             maxTime = 0;
             nextCheckTime = CHECK_INTERVAL;
             localStorage.setItem(`${DB_KEY}${user}_time_${activeVid.id}`, 0);
             localStorage.setItem(`${DB_KEY}${user}_${activeVid.id}`, 0);
             
-            // آپدیت گرافیک درصد
             document.getElementById('progressBar').style.width = "0%";
-            document.getElementById('viewPercent').innerText = "0%";
+            document.getElementById('viewPercent').innerText = "۰٪";
         }
 
-        // --- سیستم گزارش‌دهی ---
+        // --- گزارش‌دهی ---
         window.addEventListener("visibilitychange", () => {
             if (document.visibilityState === 'hidden') checkAndReportExit();
         });
         
         function checkAndReportExit() {
             if(!activeVid || isDone) return;
-            const percent = parseInt(document.getElementById('viewPercent').innerText);
+            // خواندن درصد به صورت عددی (حذف علامت درصد و تبدیل به انگلیسی)
+            let pText = document.getElementById('viewPercent').innerText;
+            pText = toEnglishNum(pText).replace('٪', '');
+            const percent = parseInt(pText);
+            
             if(percent > 10 && percent < 98 && percent > lastReportedPercent) {
                 lastReportedPercent = percent;
                 sendEmailReport("خروج ناقص (نیمه‌کاره) ⚠️", percent);
