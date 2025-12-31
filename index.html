@@ -6,11 +6,11 @@
     <title>میز مطالعه هوشمند چمران</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
-        :root { --primary: #2c3e50; --accent: #d35400; --bg: #ecf0f1; --success: #27ae60; }
+        :root { --primary: #2c3e50; --accent: #d35400; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; }
-        .active { display: block; animation: fadeIn 0.5s ease; }
+        .active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* استایل لیست */
@@ -23,24 +23,56 @@
         .video-item.done { border-color: var(--success); background: #f0fdf4; }
         .video-icon { font-size: 1.5rem; background: #f1f2f6; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--primary); }
         
-        /* استایل فرم و پلیر */
+        .logout-btn { font-size: 0.75rem; color: var(--danger); background: #ffebee; padding: 4px 10px; border-radius: 8px; cursor: pointer; border: 1px solid var(--danger); display: inline-block; margin-top: 5px; }
+
         input { width: 100%; padding: 15px; margin: 20px 0; border: 2px solid #dfe6e9; border-radius: 15px; text-align: center; font-family: inherit; font-size: 1rem; outline: none; box-sizing: border-box; }
         input:focus { border-color: var(--accent); }
         .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
         video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; max-height: 70vh; }
-        .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; display: none; font-size: 0.9rem; width: max-content; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; display: none; font-size: 0.9rem; width: max-content; }
         
         .progress-bar { width: 100%; background: #dfe6e9; height: 8px; border-radius: 4px; margin-top: 15px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
         .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; }
+
+        /* --- استایل سوال امنیتی و تایمر --- */
+        #securityModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 10000; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .security-box {
+            background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; border: 4px solid var(--primary);
+        }
+        .math-question { font-size: 1.8rem; font-weight: bold; color: var(--primary); margin: 15px 0; }
+        .wrong-ans { border-color: red !important; background: #ffebee; }
+        
+        /* تایمر معکوس */
+        .timer-circle {
+            width: 60px; height: 60px; background: var(--danger); color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: bold; margin: 0 auto 10px auto;
+            border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
 
     <div id="cheatAlert" class="alert-box">⛔ جلو زدن فیلم مجاز نیست!</div>
 
-    <div id="screen-login" class="card active">
+    <div id="securityModal">
+        <div class="security-box">
+            <div id="timerDisplay" class="timer-circle">60</div>
+            <h3>⏱️ کنترل حضور سریع!</h3>
+            <p style="font-size: 0.9rem; color: #555;">اگر زمان تمام شود، فیلم از اول شروع می‌شود!</p>
+            <div id="mathQ" class="math-question">...</div>
+            <input type="number" id="mathAns" placeholder="پاسخ؟">
+            <button class="btn-main" onclick="checkSecurityAnswer()">ثبت پاسخ ✅</button>
+        </div>
+    </div>
+
+    <div id="screen-login" class="card">
         <div style="font-size: 4rem; margin-bottom: 10px;">🎓</div>
         <h2>کلاس مجازی چمران</h2>
         <p style="color: #7f8c8d;">برای شروع نام و نام خانوادگی خود را بنویسید:</p>
@@ -49,9 +81,12 @@
     </div>
 
     <div id="screen-library" class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f2f6; padding-bottom: 15px;">
-            <h3 style="margin:0;">درس‌های من</h3>
-            <span id="displayName" style="font-size: 0.8rem; color: var(--accent); font-weight: bold;"></span>
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; border-bottom: 2px solid #f1f2f6; padding-bottom: 15px;">
+            <div style="text-align: right;">
+                <h3 style="margin:0;">درس‌های من</h3>
+                <span id="displayName" style="font-size: 0.8rem; color: var(--accent); font-weight: bold;"></span>
+            </div>
+            <div class="logout-btn" onclick="logout()">خروج 🚪</div>
         </div>
         <div id="video-list-container"></div>
     </div>
@@ -73,36 +108,51 @@
 
     <script>
         // ***********************************************
-        // تنظیمات اختصاصی شما
+        // تنظیمات معلم
         // ***********************************************
-        
         const TEACHER_EMAIL = "mpakzad529@gmail.com"; 
         
-        // لیست فیلم‌ها (دقت کنید فایل karbarg5.mp4 باید در گیت‌هاب کنار فایل index.html باشد)
+        // زمان سوال پرسیدن (الان روی ۳۰ ثانیه برای تست شماست)
+        const CHECK_INTERVAL = 30; 
+        
+        // زمان مجاز پاسخگویی (۶۰ ثانیه)
+        const ANSWER_TIMEOUT = 60;
+
         const playlist = [
             { id: 1, title: "کاربرگ ریاضی (هفته ۵)", file: "karbarg5.mp4" }
-            // برای اضافه کردن فیلم بعدی، خط زیر را از حالت کامنت خارج کنید و ویرایش کنید:
-            // , { id: 2, title: "درس علوم", file: "oloom.mp4" }
         ];
-
         // ***********************************************
 
-        const DB_KEY = "chamran_db_v2_";
+        const DB_KEY = "chamran_db_v4_";
         let user = "";
         let activeVid = null;
         let maxTime = 0;
         let isDone = false;
-        let lastReportedPercent = 0; // برای جلوگیری از ارسال تکراری گزارش
+        let lastReportedPercent = 0;
+        
+        // متغیرهای سیستم سوال و تایمر
+        let nextCheckTime = CHECK_INTERVAL;
+        let correctAnswer = 0;
+        let timerInterval = null;
+
         const vid = document.getElementById('myVideo');
 
-        // چک کردن لاگین قبلی
-        if(localStorage.getItem(DB_KEY + 'name')) {
-            document.getElementById('inpName').value = localStorage.getItem(DB_KEY + 'name');
+        function initApp() {
+            const savedName = localStorage.getItem(DB_KEY + 'name');
+            if(savedName) {
+                user = savedName;
+                document.getElementById('displayName').innerText = user;
+                renderList();
+                showScreen('screen-library');
+            } else {
+                showScreen('screen-login');
+            }
         }
+        initApp();
 
         function login() {
             const name = document.getElementById('inpName').value.trim();
-            if(name.length < 3) return alert("نام کوتاه است!");
+            if(name.length < 3) return alert("لطفاً نام کامل خود را بنویسید");
             user = name;
             localStorage.setItem(DB_KEY + 'name', user);
             document.getElementById('displayName').innerText = user;
@@ -110,16 +160,21 @@
             showScreen('screen-library');
         }
 
+        function logout() {
+            if(confirm("خروج از حساب؟")) {
+                localStorage.removeItem(DB_KEY + 'name');
+                location.reload();
+            }
+        }
+
         function renderList() {
             const list = document.getElementById('video-list-container');
             list.innerHTML = "";
             playlist.forEach(item => {
                 const progress = localStorage.getItem(`${DB_KEY}${user}_${item.id}`) || 0;
-                const doneClass = progress >= 98 ? 'done' : '';
                 const icon = progress >= 98 ? '✅' : '▶️';
-                
                 const el = document.createElement('div');
-                el.className = `video-item ${doneClass}`;
+                el.className = `video-item ${progress >= 98 ? 'done' : ''}`;
                 el.onclick = () => playVideo(item);
                 el.innerHTML = `
                     <div class="video-icon">${icon}</div>
@@ -142,6 +197,8 @@
             const savedTime = localStorage.getItem(`${DB_KEY}${user}_time_${item.id}`);
             maxTime = savedTime ? parseFloat(savedTime) : 0;
             
+            nextCheckTime = maxTime + CHECK_INTERVAL; 
+
             showScreen('screen-player');
             
             if(maxTime > 5) {
@@ -150,8 +207,7 @@
         }
 
         function backToLib() {
-            // اگر وسط کار بک زد، گزارش خروج بده
-            checkAndReportExit(); 
+            checkAndReportExit();
             vid.pause();
             renderList();
             showScreen('screen-library');
@@ -162,9 +218,9 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ضد تقلب و ذخیره
+        // --- سیستم ضد تقلب و تایمر ---
         vid.addEventListener('seeking', () => {
-            if(vid.currentTime > maxTime + 3) { // 3 ثانیه ارفاق
+            if(vid.currentTime > maxTime + 3) {
                 vid.currentTime = maxTime;
                 document.getElementById('cheatAlert').style.display = 'block';
                 setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
@@ -175,6 +231,11 @@
             if(!vid.seeking && vid.currentTime > maxTime) {
                 maxTime = vid.currentTime;
                 localStorage.setItem(`${DB_KEY}${user}_time_${activeVid.id}`, maxTime);
+            }
+
+            // *** چک کردن زمان سوال امنیتی ***
+            if(vid.currentTime > nextCheckTime) {
+                triggerSecurityCheck();
             }
             
             if(vid.duration) {
@@ -191,22 +252,82 @@
             }
         });
 
-        // ** سیستم گزارش خروج اضطراری (وقتی مرورگر بسته می‌شود) **
-        window.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === 'hidden') {
-                checkAndReportExit();
+        // --- توابع سوال امنیتی + تایمر مرگ (جدید) ---
+        function triggerSecurityCheck() {
+            vid.pause();
+            
+            // تولید اعداد تصادفی
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            correctAnswer = num1 + num2;
+            
+            document.getElementById('mathQ').innerText = `${num1} + ${num2} = ؟`;
+            document.getElementById('mathAns').value = "";
+            document.getElementById('mathAns').classList.remove('wrong-ans');
+            document.getElementById('securityModal').style.display = 'flex';
+
+            // شروع شمارش معکوس
+            let timeLeft = ANSWER_TIMEOUT;
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.innerText = timeLeft;
+
+            if(timerInterval) clearInterval(timerInterval); // پاک کردن تایمرهای قبلی
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft;
+                
+                // تغییر رنگ در ۱۰ ثانیه آخر
+                if(timeLeft < 10) timerDisplay.style.background = "#b71c1c";
+                else timerDisplay.style.background = "#c0392b";
+
+                if(timeLeft <= 0) {
+                    // *** جریمه: بازگشت به اول ***
+                    clearInterval(timerInterval);
+                    punishUser();
+                }
+            }, 1000);
+        }
+
+        function checkSecurityAnswer() {
+            const userAns = parseInt(document.getElementById('mathAns').value);
+            if(userAns === correctAnswer) {
+                // جواب درست
+                clearInterval(timerInterval); // توقف تایمر
+                document.getElementById('securityModal').style.display = 'none';
+                nextCheckTime = vid.currentTime + CHECK_INTERVAL; 
+                vid.play();
+            } else {
+                document.getElementById('mathAns').classList.add('wrong-ans');
             }
+        }
+
+        function punishUser() {
+            document.getElementById('securityModal').style.display = 'none';
+            alert("⏰ زمان شما تمام شد! متاسفانه چون پاسخ ندادید، فیلم از اول شروع می‌شود.");
+            
+            // ریست کردن همه چیز
+            vid.currentTime = 0;
+            maxTime = 0;
+            nextCheckTime = CHECK_INTERVAL;
+            localStorage.setItem(`${DB_KEY}${user}_time_${activeVid.id}`, 0);
+            localStorage.setItem(`${DB_KEY}${user}_${activeVid.id}`, 0);
+            
+            // آپدیت گرافیک درصد
+            document.getElementById('progressBar').style.width = "0%";
+            document.getElementById('viewPercent').innerText = "0%";
+        }
+
+        // --- سیستم گزارش‌دهی ---
+        window.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === 'hidden') checkAndReportExit();
         });
         
-        // گزارش هنگام خروج ناقص
         function checkAndReportExit() {
-            if(!activeVid || isDone) return; // اگر درس تمام شده یا ویدیویی نیست گزارش نده
-            
+            if(!activeVid || isDone) return;
             const percent = parseInt(document.getElementById('viewPercent').innerText);
-            
-            // فقط اگر پیشرفت بین ۱۰٪ تا ۹۷٪ بود گزارش خروج ناقص بده (کمتر از ۱۰ ارزش ندارد)
             if(percent > 10 && percent < 98 && percent > lastReportedPercent) {
-                lastReportedPercent = percent; // که چندبار گزارش تکراری ندهد
+                lastReportedPercent = percent;
                 sendEmailReport("خروج ناقص (نیمه‌کاره) ⚠️", percent);
             }
         }
@@ -219,14 +340,10 @@
             formData.append("وضعیت", status);
             formData.append("درصد_مشاهده", percent + "%");
             formData.append("زمان", new Date().toLocaleString('fa-IR'));
-            formData.append("_captcha", "false"); // غیرفعال کردن کپچا برای سرعت
-            formData.append("_template", "table"); // ایمیل به صورت جدول بیاید
-
-            // استفاده از sendBeacon برای ارسال مطمئن هنگام بستن صفحه
+            formData.append("_captcha", "false");
+            formData.append("_template", "table");
             const url = `https://formsubmit.co/${TEACHER_EMAIL}`;
             navigator.sendBeacon(url, formData);
-            
-            console.log("Report sent:", status);
         }
     </script>
 </body>
