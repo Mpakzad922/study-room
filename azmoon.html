@@ -10,32 +10,25 @@
         .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; }
         h2 { color: #2c3e50; margin: 0 0 15px 0; }
         
-        /* دکمه‌ها */
         .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; transition: 0.2s; margin-top: 10px; }
         .btn-start { background: #8e44ad; color: white; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3); }
-        .btn-start:hover { transform: translateY(-2px); }
         .btn-next { background: #2980b9; color: white; }
         .btn-finish { background: #27ae60; color: white; display: none; }
         .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
 
-        /* استایل لیست آزمون‌ها */
         .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
         .exam-info h4 { margin: 0; color: #4a148c; }
         .exam-info small { color: #7f8c8d; font-size: 0.8rem; }
         
-        /* محیط آزمون */
-        #examArea { display: none; }
+        #examArea, #reportCard { display: none; }
         .timer-box { font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 20px; width: 100px; }
         
-        .option { display: block; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; position: relative; }
+        .option { display: block; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; }
         .option:hover { background: #e8f5e9; border-color: #a5d6a7; }
         .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; }
         
-        /* کارنامه */
-        #reportCard { display: none; }
         .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem; color: #2ecc71; font-weight: bold; }
         .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-
         #loading { color: #7f8c8d; margin-top: 20px; }
     </style>
 </head>
@@ -55,11 +48,8 @@
             <span id="qProgress" style="font-size: 0.9rem; color: #7f8c8d;">سوال ۱ از ۱۰</span>
             <div id="timer" class="timer-box">00:00</div>
         </div>
-        
-        <h3 id="questionText" style="text-align: right; line-height: 1.6; margin-bottom: 20px;">متن سوال اینجا...</h3>
-        
+        <h3 id="questionText" style="text-align: right; line-height: 1.6; margin-bottom: 20px;">...</h3>
         <div id="optionsContainer"></div>
-
         <button id="btnNext" class="btn btn-next" onclick="nextQuestion()">سوال بعدی ➜</button>
         <button id="btnFinish" class="btn btn-finish" onclick="finishExam()">ثبت نهایی آزمون ✅</button>
     </div>
@@ -67,38 +57,28 @@
     <div id="reportCard" class="card">
         <h2>📊 کارنامه آزمون</h2>
         <h3 id="reportTitle" style="color:#8e44ad;"></h3>
-        
-        <div class="score-circle">
-            <span id="scoreNum">0</span>
-            <span style="font-size:0.8rem;">نمره نهایی</span>
-        </div>
-
+        <div class="score-circle"><span id="scoreNum">0</span><span style="font-size:0.8rem;">نمره نهایی</span></div>
         <div class="stat-row"><span>✅ پاسخ صحیح:</span><span id="statCorrect">0</span></div>
         <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
         <div class="stat-row"><span>⚪ بدون پاسخ:</span><span id="statEmpty">0</span></div>
-        
-        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem;">
-            نمره شما در پرونده ذخیره شد.
-        </div>
-
-        <button class="btn btn-back" onclick="location.reload()">بازگشت به لیست آزمون‌ها</button>
+        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem;">نمره شما ذخیره شد. این دستگاه دیگر مجاز به شرکت در این آزمون نیست. 🔒</div>
+        <button class="btn btn-back" onclick="location.reload()">بازگشت</button>
     </div>
 
     <script>
         // ***********************************************
-        // تنظیمات با لینک‌های اختصاصی شما
+        // تنظیمات نهایی و دقیق
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=943392939&single=true&output=csv";
-        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzncm2r3lXIKYqGATa0sq0YzctNRbOyoNbcaTVlJdxBeNf4vFPulqVppR_X5SLOEdGXlA/exec"; 
+        
+        // لینک جدید وب‌اپ شما 👇
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzz_PWm9On-wgqekMbCGnN7aBQbbpt--VYfXAiZt8xQW6HulCKe3VXRCRS8QF4SgQGvTQ/exec"; 
+        
         const DB_KEY = "chamran_db_v19_"; 
         // ***********************************************
 
         let currentUser = localStorage.getItem(DB_KEY + 'name');
-        if(!currentUser) { 
-            alert("لطفا ابتدا وارد کلاس شوید!"); 
-            window.location.href = 'index.html'; 
-        }
-        
+        if(!currentUser) { alert("لطفا ابتدا وارد کلاس شوید!"); window.location.href = 'index.html'; }
         document.getElementById('welcomeText').innerText = `سلام ${currentUser} 👋`;
 
         let examsMap = {}; 
@@ -109,64 +89,65 @@
         let timerInterval;
         let timeRemaining = 0;
 
+        function getDeviceSignature() {
+            return navigator.userAgent + "||" + window.screen.width + "x" + window.screen.height;
+        }
+
         async function loadExams() {
             try {
-                // پارامتر t برای جلوگیری از کش شدن قدیمی
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
                 if(!res.ok) throw new Error("Network error");
                 const text = await res.text();
                 parseExamCSV(text);
             } catch(e) {
                 console.error(e);
-                document.getElementById('loading').innerHTML = "خطا در دریافت لیست آزمون‌ها.<br>لطفا اتصال اینترنت را چک کنید.";
+                document.getElementById('loading').innerHTML = "خطا در دریافت آزمون‌ها.";
             }
         }
         
         function parseExamCSV(text) {
             const rows = text.split('\n');
             examsMap = {};
-
-            // --- تابع پارسر پیشرفته برای خواندن CSV (حتی با ویرگول در متن) ---
             const parseLine = (line) => {
-                const result = [];
-                let current = '';
-                let inQuote = false;
+                const result = []; let current = ''; let inQuote = false;
                 for (let i = 0; i < line.length; i++) {
                     const char = line[i];
                     if (char === '"') { inQuote = !inQuote; continue; }
                     if (char === ',' && !inQuote) { result.push(current); current = ''; continue; }
                     current += char;
                 }
-                result.push(current);
-                return result;
+                result.push(current); return result;
             };
 
-            // شروع حلقه از 0 برای خواندن همه ردیف‌ها
             for(let i=0; i<rows.length; i++) {
                 const rowStr = rows[i].trim();
-                if(!rowStr) continue; // رد کردن خطوط خالی
-                
+                if(!rowStr) continue;
                 const col = parseLine(rowStr);
                 
-                // اگر ستون اول کلمه "exam_id" یا "id" بود، یعنی این خط هدر است، پس ردش کن
-                if(col[0] && (col[0].includes('exam_id') || col[0].toLowerCase() === 'id')) continue;
-
-                if(col.length < 9) continue;
-                
-                // خواندن اطلاعات
-                const exId = col[0].trim();
-                const title = col[1].trim();
-                const duration = col[2].trim();
-                const startStr = col[3].trim();
-                
-                if(!examsMap[exId]) {
-                    examsMap[exId] = { id: exId, title, duration, start: startStr, questions: [] };
+                // هوشمند: رد کردن هدرهای احتمالی
+                if(col[0] && (col[0].includes('exam_id') || col[0].toLowerCase() === 'id' || col[0].includes('EX-') === false)) {
+                     // اگر خط اول کد آزمون نداشت (مثلا تیتر بود یا خالی)، ردش کن
+                     // اما اگر فرمت EX- داشت یعنی سوال است
+                     if(!col[0].includes('EX-')) continue;
                 }
-                
+
+                if(col.length < 10) continue; 
+
+                const exId = col[0].trim();
+                if(!examsMap[exId]) {
+                    examsMap[exId] = { 
+                        id: exId, 
+                        title: col[1].trim(), 
+                        duration: col[2].trim(), 
+                        start: col[3].trim(), 
+                        password: col[4].trim(), 
+                        questions: [] 
+                    };
+                }
                 examsMap[exId].questions.push({
-                    q: col[4].trim(),
-                    options: [col[5].trim(), col[6].trim(), col[7].trim(), col[8].trim()],
-                    correct: parseInt(col[9].trim())
+                    q: col[5].trim(),
+                    options: [col[6].trim(), col[7].trim(), col[8].trim(), col[9].trim()],
+                    correct: parseInt(col[10].trim())
                 });
             }
             renderExamList();
@@ -176,24 +157,32 @@
             const list = document.getElementById('examList');
             document.getElementById('loading').style.display = 'none';
             list.innerHTML = "";
-            
             const ids = Object.keys(examsMap);
-            if(ids.length === 0) {
-                list.innerHTML = "<p>آزمونی یافت نشد.</p>";
-                return;
-            }
+            if(ids.length === 0) { list.innerHTML = "<p>آزمونی یافت نشد.</p>"; return; }
 
             ids.forEach(id => {
                 const exam = examsMap[id];
+                const isLocked = localStorage.getItem('taken_' + id);
+                
                 const btn = document.createElement('div');
                 btn.className = 'exam-item';
+                btn.style.borderColor = isLocked ? '#95a5a6' : '#e1bee7';
+                btn.style.background = isLocked ? '#f5f6fa' : '#fff';
+                
+                let btnHtml = '';
+                if(isLocked) {
+                    btnHtml = '<span style="color:#7f8c8d; font-size:0.8rem;">🔒 قبلاً شرکت کرده‌اید</span>';
+                } else {
+                    const lockIcon = (exam.password && exam.password.length > 0) ? '🔑 ' : '';
+                    btnHtml = `<button style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;" onclick="checkAndStart('${id}')">${lockIcon}شروع آزمون</button>`;
+                }
+
                 btn.innerHTML = `
                     <div class="exam-info">
-                        <h4>${exam.title}</h4>
-                        <small>⏱️ ${exam.duration} دقیقه | 📅 شروع: ${exam.start}</small>
+                        <h4 style="${isLocked ? 'color:#7f8c8d':''}">${exam.title}</h4>
+                        <small>⏱️ ${exam.duration} دقیقه</small>
                     </div>
-                    <button style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:bold;" 
-                            onclick="checkAndStart('${id}')">شروع آزمون</button>
+                    ${btnHtml}
                 `;
                 list.appendChild(btn);
             });
@@ -201,6 +190,18 @@
 
         function checkAndStart(id) {
             const exam = examsMap[id];
+            
+            if(localStorage.getItem('taken_' + id)) {
+                return alert("⛔ شما با این دستگاه قبلاً در این آزمون شرکت کرده‌اید.");
+            }
+
+            if(exam.password && exam.password.length > 0) {
+                const userPass = prompt("🔒 این آزمون رمز دارد. لطفاً رمز را وارد کنید:");
+                if(userPass !== exam.password) {
+                    return alert("❌ رمز اشتباه است.");
+                }
+            }
+
             if(confirm(`آیا آماده شروع آزمون "${exam.title}" هستید؟\nزمان: ${exam.duration} دقیقه`)) {
                 startExam(id);
             }
@@ -212,10 +213,8 @@
             timeRemaining = parseInt(examsMap[id].duration) * 60;
             currentQIndex = 0;
             userAnswers = {};
-
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('examArea').style.display = 'block';
-            
             startTimer();
             showQuestion();
         }
@@ -227,7 +226,6 @@
                 const m = Math.floor(timeRemaining / 60);
                 const s = timeRemaining % 60;
                 timerDiv.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-                
                 if(timeRemaining <= 0) {
                     clearInterval(timerInterval);
                     alert("⏰ زمان آزمون به پایان رسید!");
@@ -240,10 +238,8 @@
             const q = currentQuestions[currentQIndex];
             document.getElementById('qProgress').innerText = `سوال ${currentQIndex + 1} از ${currentQuestions.length}`;
             document.getElementById('questionText').innerText = q.q;
-            
             const cont = document.getElementById('optionsContainer');
             cont.innerHTML = "";
-            
             q.options.forEach((opt, idx) => {
                 const div = document.createElement('div');
                 div.className = 'option';
@@ -252,7 +248,6 @@
                 div.onclick = () => selectOption(idx + 1, div);
                 cont.appendChild(div);
             });
-
             if(currentQIndex === currentQuestions.length - 1) {
                 document.getElementById('btnNext').style.display = 'none';
                 document.getElementById('btnFinish').style.display = 'block';
@@ -268,27 +263,20 @@
             userAnswers[currentQIndex] = optIndex;
         }
 
-        function nextQuestion() {
-            currentQIndex++;
-            showQuestion();
-        }
+        function nextQuestion() { currentQIndex++; showQuestion(); }
 
         function finishExam() {
             clearInterval(timerInterval);
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
             
-            let correct = 0;
-            let wrong = 0;
-            let empty = 0;
-            
+            localStorage.setItem('taken_' + currentExamId, getDeviceSignature());
+
+            let correct = 0; let wrong = 0; let empty = 0;
             currentQuestions.forEach((q, idx) => {
                 const ans = userAnswers[idx];
-                if(!ans) empty++;
-                else if(ans == q.correct) correct++; 
-                else wrong++;
+                if(!ans) empty++; else if(ans == q.correct) correct++; else wrong++;
             });
-            
             const score = (correct / currentQuestions.length) * 20; 
             
             document.getElementById('reportTitle').innerText = examsMap[currentExamId].title;
@@ -308,7 +296,6 @@
                 percent: `نمره: ${score}/20`,
                 deviceInfo: navigator.userAgent
             };
-            
             fetch(REPORT_WEBAPP_URL, {
                 method: 'POST',
                 mode: 'no-cors',
