@@ -2,156 +2,232 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>میز مطالعه هوشمند چمران</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
-        :root { --primary: #1a237e; --accent: #ff6f00; --bg: #f5f5f5; }
-        body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .card { background: white; width: 92%; max-width: 700px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 20px 0; text-align: center; }
-        .screen { display: none; }
-        .active { display: block; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        :root { --primary: #2c3e50; --accent: #d35400; --bg: #ecf0f1; --success: #27ae60; }
+        body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; }
+        .active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* استایل لیست */
         .video-item { 
-            background: #fff; border: 2px solid #eee; border-radius: 15px; 
-            margin-bottom: 10px; padding: 15px; display: flex; align-items: center; 
-            gap: 15px; cursor: pointer; transition: 0.3s; text-align: right;
+            background: #fff; border: 2px solid #f1f2f6; border-radius: 15px; 
+            margin-bottom: 15px; padding: 15px; display: flex; align-items: center; 
+            gap: 12px; cursor: pointer; transition: all 0.2s; text-align: right; 
         }
-        .video-item:hover { border-color: var(--accent); background: #fff8f1; }
-        .video-icon { font-size: 2rem; }
-        .video-info h4 { margin: 0; color: var(--primary); }
-
-        input { width: 80%; padding: 15px; margin: 20px 0; border: 2px solid #ddd; border-radius: 50px; text-align: center; font-family: inherit; font-size: 1rem; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 50px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; }
-        video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; }
-        .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #d32f2f; color: white; padding: 10px 20px; border-radius: 10px; z-index: 1000; display: none; }
-        .badge { background: var(--accent); color: white; padding: 3px 10px; border-radius: 5px; font-size: 0.8rem; }
+        .video-item:active { transform: scale(0.98); border-color: var(--accent); }
+        .video-item.done { border-color: var(--success); background: #f0fdf4; }
+        .video-icon { font-size: 1.5rem; background: #f1f2f6; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--primary); }
+        
+        /* استایل فرم و پلیر */
+        input { width: 100%; padding: 15px; margin: 20px 0; border: 2px solid #dfe6e9; border-radius: 15px; text-align: center; font-family: inherit; font-size: 1rem; outline: none; box-sizing: border-box; }
+        input:focus { border-color: var(--accent); }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; max-height: 70vh; }
+        .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; display: none; font-size: 0.9rem; width: max-content; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .progress-bar { width: 100%; background: #dfe6e9; height: 8px; border-radius: 4px; margin-top: 15px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+        .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; }
     </style>
 </head>
 <body>
 
-    <div id="cheatAlert" class="alert-box">⚠️ جلو زدن فیلم مجاز نیست!</div>
+    <div id="cheatAlert" class="alert-box">⛔ جلو زدن فیلم مجاز نیست!</div>
 
-    <div id="screen-login" class="card screen active">
-        <div style="font-size: 4rem;">🏫</div>
-        <h2>میز مطالعه هوشمند چمران</h2>
-        <p>خوش آمدید! لطفا نام خود را وارد کنید:</p>
-        <input type="text" id="inpName" placeholder="نام و نام خانوادگی">
-        <button class="btn-main" onclick="login()">ورود به کلاس</button>
+    <div id="screen-login" class="card active">
+        <div style="font-size: 4rem; margin-bottom: 10px;">🎓</div>
+        <h2>کلاس مجازی چمران</h2>
+        <p style="color: #7f8c8d;">برای شروع نام و نام خانوادگی خود را بنویسید:</p>
+        <input type="text" id="inpName" placeholder="مثال: محمد احمدی">
+        <button class="btn-main" onclick="login()">ورود</button>
     </div>
 
-    <div id="screen-library" class="card screen">
-        <h3 style="text-align: right;">📚 لیست فیلم‌های آموزشی:</h3>
-        <div id="video-list">
-            
-            <div class="video-item" onclick="selectVideo('ریاضی کاربرگ هفته ۵', 'kargarb-w5.mp4')">
-                <div class="video-icon">🎬</div>
-                <div class="video-info">
-                    <h4>ریاضی کاربرگ هفته ۵</h4>
-                    <span class="badge">جدید</span>
-                </div>
-            </div>
-
-            </div>
-    </div>
-
-    <div id="screen-player" class="card screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <button onclick="switchScreen('screen-library')" style="width: auto; padding: 5px 15px; background: #666; color:white; border:none; border-radius:10px; cursor:pointer;">⬅️ بازگشت</button>
-            <strong id="currentVideoTitle">عنوان فیلم</strong>
+    <div id="screen-library" class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f1f2f6; padding-bottom: 15px;">
+            <h3 style="margin:0;">درس‌های من</h3>
+            <span id="displayName" style="font-size: 0.8rem; color: var(--accent); font-weight: bold;"></span>
         </div>
-        <video id="myVideo" controls controlsList="nodownload"></video>
-        <div id="viewStatus" style="margin-top:10px; font-weight:bold; color:var(--accent);">۰٪ مشاهده شده</div>
+        <div id="video-list-container"></div>
+    </div>
+
+    <div id="screen-player" class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <button class="back-btn" onclick="backToLib()">بازگشت</button>
+            <strong id="videoTitle" style="font-size: 0.9rem;"></strong>
+        </div>
+        
+        <video id="myVideo" playsinline controls controlsList="nodownload"></video>
+        
+        <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem;">
+            <span id="viewPercent" style="color: var(--accent); font-weight: bold;">0%</span>
+            <span id="viewStatus" style="color: #95a5a6;">در حال تماشا...</span>
+        </div>
     </div>
 
     <script>
-        // *** تنظیمات ***
-        const TEACHER_EMAIL = "mpakzad529@gmail.com"; // ایمیل خود را اینجا بنویسید
-        const DB_PREFIX = "chamran_lib_v2_";
+        // ***********************************************
+        // تنظیمات اختصاصی شما
+        // ***********************************************
+        
+        const TEACHER_EMAIL = "mpakzad529@gmail.com"; 
+        
+        // لیست فیلم‌ها (دقت کنید فایل karbarg5.mp4 باید در گیت‌هاب کنار فایل index.html باشد)
+        const playlist = [
+            { id: 1, title: "کاربرگ ریاضی (هفته ۵)", file: "karbarg5.mp4" }
+            // برای اضافه کردن فیلم بعدی، خط زیر را از حالت کامنت خارج کنید و ویرایش کنید:
+            // , { id: 2, title: "درس علوم", file: "oloom.mp4" }
+        ];
 
-        let studentName = "";
-        let currentVideoFile = "";
-        let currentVideoTitle = "";
-        let maxTimeWatched = 0;
-        let videoDuration = 0;
-        let isFinished = false;
+        // ***********************************************
 
+        const DB_KEY = "chamran_db_v2_";
+        let user = "";
+        let activeVid = null;
+        let maxTime = 0;
+        let isDone = false;
+        let lastReportedPercent = 0; // برای جلوگیری از ارسال تکراری گزارش
         const vid = document.getElementById('myVideo');
+
+        // چک کردن لاگین قبلی
+        if(localStorage.getItem(DB_KEY + 'name')) {
+            document.getElementById('inpName').value = localStorage.getItem(DB_KEY + 'name');
+        }
 
         function login() {
             const name = document.getElementById('inpName').value.trim();
-            if(name.length < 3) return alert("لطفاً نام خود را کامل وارد کنید");
-            studentName = name;
-            switchScreen('screen-library');
+            if(name.length < 3) return alert("نام کوتاه است!");
+            user = name;
+            localStorage.setItem(DB_KEY + 'name', user);
+            document.getElementById('displayName').innerText = user;
+            renderList();
+            showScreen('screen-library');
         }
 
-        function selectVideo(title, file) {
-            currentVideoTitle = title;
-            currentVideoFile = file;
-            document.getElementById('currentVideoTitle').innerText = title;
-            vid.src = file;
-            isFinished = false;
+        function renderList() {
+            const list = document.getElementById('video-list-container');
+            list.innerHTML = "";
+            playlist.forEach(item => {
+                const progress = localStorage.getItem(`${DB_KEY}${user}_${item.id}`) || 0;
+                const doneClass = progress >= 98 ? 'done' : '';
+                const icon = progress >= 98 ? '✅' : '▶️';
+                
+                const el = document.createElement('div');
+                el.className = `video-item ${doneClass}`;
+                el.onclick = () => playVideo(item);
+                el.innerHTML = `
+                    <div class="video-icon">${icon}</div>
+                    <div class="video-info">
+                        <h4>${item.title}</h4>
+                        <span class="status-text">${progress >= 98 ? 'تکمیل شد' : progress + '% مشاهده شده'}</span>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function playVideo(item) {
+            activeVid = item;
+            document.getElementById('videoTitle').innerText = item.title;
+            isDone = false;
+            lastReportedPercent = 0;
+            vid.src = item.file;
             
-            const saved = localStorage.getItem(DB_PREFIX + studentName + "_" + file);
-            maxTimeWatched = saved ? parseFloat(saved) : 0;
+            const savedTime = localStorage.getItem(`${DB_KEY}${user}_time_${item.id}`);
+            maxTime = savedTime ? parseFloat(savedTime) : 0;
             
-            switchScreen('screen-player');
-            if(maxTimeWatched > 2) {
-                if(confirm("مایلید فیلم را از ادامه جایی که قبلاً دیدید تماشا کنید؟")) vid.currentTime = maxTimeWatched;
+            showScreen('screen-player');
+            
+            if(maxTime > 5) {
+                if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = maxTime;
             }
-            vid.play();
         }
 
-        function switchScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        function backToLib() {
+            // اگر وسط کار بک زد، گزارش خروج بده
+            checkAndReportExit(); 
+            vid.pause();
+            renderList();
+            showScreen('screen-library');
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id !== 'screen-player') vid.pause();
         }
 
-        vid.onloadedmetadata = () => videoDuration = vid.duration;
-
-        vid.addEventListener('seeking', function() {
-            if (vid.currentTime > maxTimeWatched + 2) {
-                vid.currentTime = maxTimeWatched;
+        // ضد تقلب و ذخیره
+        vid.addEventListener('seeking', () => {
+            if(vid.currentTime > maxTime + 3) { // 3 ثانیه ارفاق
+                vid.currentTime = maxTime;
                 document.getElementById('cheatAlert').style.display = 'block';
                 setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
             }
         });
 
-        vid.addEventListener('timeupdate', function() {
-            if (!vid.seeking && vid.currentTime > maxTimeWatched) {
-                maxTimeWatched = vid.currentTime;
-                localStorage.setItem(DB_PREFIX + studentName + "_" + currentVideoFile, maxTimeWatched);
+        vid.addEventListener('timeupdate', () => {
+            if(!vid.seeking && vid.currentTime > maxTime) {
+                maxTime = vid.currentTime;
+                localStorage.setItem(`${DB_KEY}${user}_time_${activeVid.id}`, maxTime);
             }
-            if(videoDuration > 0) {
-                const percent = Math.round((maxTimeWatched / videoDuration) * 100);
-                document.getElementById('viewStatus').innerText = percent + "٪ مشاهده شده";
+            
+            if(vid.duration) {
+                const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
+                document.getElementById('progressBar').style.width = percent + "%";
+                document.getElementById('viewPercent').innerText = percent + "%";
+                localStorage.setItem(`${DB_KEY}${user}_${activeVid.id}`, percent);
+
+                if(percent >= 98 && !isDone) {
+                    isDone = true;
+                    document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
+                    sendEmailReport("تکمیل کامل درس ✅", 100);
+                }
             }
         });
 
-        vid.addEventListener('ended', function() {
-            if(!isFinished) {
-                isFinished = true;
-                sendReport("تکمیل ۱۰۰٪ ویدیو", 100);
-                alert("آفرین! مشاهده این درس به پایان رسید.");
+        // ** سیستم گزارش خروج اضطراری (وقتی مرورگر بسته می‌شود) **
+        window.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === 'hidden') {
+                checkAndReportExit();
             }
         });
+        
+        // گزارش هنگام خروج ناقص
+        function checkAndReportExit() {
+            if(!activeVid || isDone) return; // اگر درس تمام شده یا ویدیویی نیست گزارش نده
+            
+            const percent = parseInt(document.getElementById('viewPercent').innerText);
+            
+            // فقط اگر پیشرفت بین ۱۰٪ تا ۹۷٪ بود گزارش خروج ناقص بده (کمتر از ۱۰ ارزش ندارد)
+            if(percent > 10 && percent < 98 && percent > lastReportedPercent) {
+                lastReportedPercent = percent; // که چندبار گزارش تکراری ندهد
+                sendEmailReport("خروج ناقص (نیمه‌کاره) ⚠️", percent);
+            }
+        }
 
-        function sendReport(status, percent) {
-            if(TEACHER_EMAIL === "YOUR_EMAIL_HERE") return;
-            fetch(`https://formsubmit.co/ajax/${TEACHER_EMAIL}`, {
-                method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    دانش‌آموز: studentName,
-                    نام_درس: currentVideoTitle,
-                    وضعیت: status,
-                    درصد_مشاهده: percent + "%"
-                })
-            });
+        function sendEmailReport(status, percent) {
+            const formData = new FormData();
+            formData.append("موضوع", `گزارش: ${activeVid.title} - ${user}`);
+            formData.append("نام_دانش_آموز", user);
+            formData.append("درس", activeVid.title);
+            formData.append("وضعیت", status);
+            formData.append("درصد_مشاهده", percent + "%");
+            formData.append("زمان", new Date().toLocaleString('fa-IR'));
+            formData.append("_captcha", "false"); // غیرفعال کردن کپچا برای سرعت
+            formData.append("_template", "table"); // ایمیل به صورت جدول بیاید
+
+            // استفاده از sendBeacon برای ارسال مطمئن هنگام بستن صفحه
+            const url = `https://formsubmit.co/${TEACHER_EMAIL}`;
+            navigator.sendBeacon(url, formData);
+            
+            console.log("Report sent:", status);
         }
     </script>
 </body>
-
 </html>
