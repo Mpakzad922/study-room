@@ -76,11 +76,11 @@
 
     <script>
         // ***********************************************
-        // تنظیمات (لینک جدید شما جایگذاری شد)
+        // تنظیمات (لینک جدید CSV شما در خط زیر قرار گرفت 👇)
         // ***********************************************
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=943392939&single=true&output=csv";
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
         
-        // 👇 لینک وب‌اپ جدید شما:
+        // لینک وب‌اپ (نمره دهی):
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxVVIW_zDCoieNZZmXCkuflTksvQstGIg6rIHREpIpJoZLeGkKV0vMioTvM_hdkJXt2vA/exec"; 
         
         const DB_KEY = "chamran_db_v19_"; 
@@ -102,13 +102,14 @@
 
         async function loadExams() {
             try {
+                // اضافه کردن پارامتر زمان برای جلوگیری از کش شدن اطلاعات قدیمی
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
                 if(!res.ok) throw new Error("Network error");
                 const text = await res.text();
                 parseExamCSV(text);
             } catch(e) {
                 console.error(e);
-                document.getElementById('loading').innerHTML = "خطا در دریافت آزمون‌ها.";
+                document.getElementById('loading').innerHTML = "خطا در دریافت آزمون‌ها.<br>لطفا اتصال اینترنت را چک کنید.";
             }
         }
         
@@ -116,6 +117,7 @@
         function parseExamCSV(text) {
             const rows = text.split('\n');
             examsMap = {};
+            // تابع کمکی برای خواندن صحیح CSV (حتی با ویرگول در متن)
             const parseLine = (line) => {
                 const result = []; let current = ''; let inQuote = false;
                 for (let i = 0; i < line.length; i++) {
@@ -132,7 +134,7 @@
                 if(!rowStr) continue;
                 const col = parseLine(rowStr);
                 
-                // فیلتر کردن هدرها و خطوط نامعتبر
+                // فیلتر کردن هدرها و خطوط نامعتبر (فقط خطوطی که با EX- شروع میشوند معتبرند)
                 if(col[0] && !col[0].includes('EX-')) continue;
                 if(col.length < 11) continue; 
 
@@ -149,7 +151,7 @@
                 }
                 
                 examsMap[exId].questions.push({
-                    img: col[5].trim(), // تصویر سوال
+                    img: col[5].trim(), // ستون عکس
                     q: col[6].trim(),   // متن سوال
                     options: [col[7].trim(), col[8].trim(), col[9].trim(), col[10].trim()],
                     correct: parseInt(col[11].trim())
@@ -249,7 +251,7 @@
                 const div = document.createElement('div');
                 div.className = 'option';
                 if(userAnswers[currentQIndex] === idx + 1) div.classList.add('selected');
-                div.innerHTML = renderContent(opt);
+                div.innerHTML = renderContent(opt); // اگر لینک عکس باشد، تصویر نشان می‌دهد
                 div.onclick = () => selectOption(idx + 1, div);
                 cont.appendChild(div);
             });
