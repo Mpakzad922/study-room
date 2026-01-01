@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت مدرسه چمران</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <style>
+        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #f4f6f9; --white: #fff; --success: #27ae60; --danger: #c0392b; }
+        body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; padding: 0; font-size: 14px; }
+        
+        /* Login Screen */
+        #loginScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        #loginScreen input { padding: 10px; border-radius: 5px; border: none; text-align: center; width: 250px; font-size: 1.1rem; margin-bottom: 10px; }
+        #loginScreen button { padding: 10px 30px; background: var(--accent); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        /* Main Layout */
+        #mainApp { display: none; padding-bottom: 70px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { margin: 0; font-size: 1.2rem; }
+        
+        /* Tabs */
+        .tabs { display: flex; justify-content: space-around; background: white; padding: 10px; position: fixed; bottom: 0; width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; }
+        .tab-btn { border: none; background: none; flex: 1; text-align: center; font-family: inherit; color: #7f8c8d; font-size: 0.8rem; cursor: pointer; }
+        .tab-btn.active { color: var(--primary); font-weight: bold; }
+        .tab-icon { display: block; font-size: 1.5rem; margin-bottom: 3px; }
+
+        /* Sections */
+        .section { display: none; padding: 15px; }
+        .section.active { display: block; }
+        
+        /* Cards & Lists */
+        .card { background: var(--white); border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; border-right: 4px solid transparent; }
+        .card:active { transform: scale(0.98); }
+        .user-row { display: flex; justify-content: space-between; align-items: center; }
+        .badge { padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; color: white; }
+        .bg-green { background: var(--success); } .bg-red { background: var(--danger); } .bg-blue { background: #3498db; } .bg-gold { background: #f1c40f; color: #333; }
+
+        /* Detail Modal */
+        #detailModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 500; display: none; justify-content: center; align-items: flex-end; }
+        .modal-content { background: #f8f9fa; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 20px; box-sizing: border-box; animation: slideUp 0.3s; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .close-btn { background: #ddd; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+
+        .op-btn { background: white; border: 1px solid #ddd; padding: 8px; border-radius: 8px; font-size: 0.8rem; margin-left: 5px; cursor: pointer; color: #555; }
+        .op-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background: #ecf0f1; color: #555; }
+
+        .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000; display:none; justify-content:center; align-items:center; flex-direction:column; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreen">
+        <h2 style="margin-bottom:20px;">🛡️ مدیریت مدرسه چمران</h2>
+        <input type="password" id="adminPass" placeholder="رمز عبور مدیر">
+        <button onclick="doLogin()">ورود امن</button>
+    </div>
+
+    <div id="loadingBox" class="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top:10px; color:#555;">درحال ارتباط با سرور...</p>
+    </div>
+
+    <div id="mainApp">
+        <header>
+            <h1>پنل مدیریت چمران</h1>
+            <small id="lastUpdate">بروزرسانی: ...</small>
+            <button onclick="fetchData()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:5px 10px; border-radius:5px; margin-right:10px; cursor:pointer;">🔄</button>
+        </header>
+
+        <div id="tab-users" class="section active">
+            <input type="text" id="searchBox" placeholder="🔍 جستجوی نام دانش‌آموز..." onkeyup="filterUsers()" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; margin-bottom:15px; box-sizing:border-box;">
+            <div id="usersList"></div>
+        </div>
+
+        <div id="tab-lessons" class="section">
+            <h3>📊 آمار بازدید درس‌ها</h3>
+            <div id="lessonsStats"></div>
+        </div>
+
+        <div id="tab-exams" class="section">
+            <h3>📝 دفتر نمرات آزمون</h3>
+            <div id="examsStats"></div>
+        </div>
+
+        <div id="tab-ranking" class="section">
+            <h3>🏆 تالار افتخارات (Top 10)</h3>
+            <div id="rankingList"></div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('users')"><span class="tab-icon">👥</span>دانش‌آموزان</button>
+        <button class="tab-btn" onclick="switchTab('lessons')"><span class="tab-icon">🎬</span>درس‌ها</button>
+        <button class="tab-btn" onclick="switchTab('exams')"><span class="tab-icon">📝</span>آزمون‌ها</button>
+        <button class="tab-btn" onclick="switchTab('ranking')"><span class="tab-icon">🏆</span>برترین‌ها</button>
+    </div>
+
+    <div id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">جزئیات کاربر</h3>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="data.js"></script> 
+    <script>
+        // ***************** تنظیمات *****************
+        // همان آدرس وب‌اپ اسکریپت که در ایندکس دارید
+        const API_URL = "https://script.google.com/macros/s/AKfycbySE6sKxzPB4Lg-zreDERQnQ3qse8FS_r6lHAVqIUFFS6VSG30r-r_7MshmlvdHad_T/exec";
+        // رمز عبوری که در گوگل شیت گذاشتیم (ADMIN_TOKEN)
+        const ADMIN_TOKEN_KEY = "chamran_admin_2025_secret_key"; 
+        // *******************************************
+
+        let ALL_USERS = [];
+        let EXAMS_LIST = []; // لیست آزمون‌ها را از دیتای یوزرها استخراج میکنیم
+        let LESSONS_LIST = []; // از data.js میخوانیم
+
+        function doLogin() {
+            const p = document.getElementById('adminPass').value;
+            if(p === ADMIN_TOKEN_KEY) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                // بارگذاری لیست درس‌ها از data.js
+                if(typeof LOCAL_PLAYLIST !== 'undefined') LESSONS_LIST = LOCAL_PLAYLIST;
+                fetchData();
+            } else {
+                alert("رمز اشتباه است!");
+            }
+        }
+
+        async function fetchData() {
+            document.getElementById('loadingBox').style.display = 'flex';
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'get_all_users', admin_token: ADMIN_TOKEN_KEY })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    ALL_USERS = data.users.map(u => {
+                        // پارس کردن دیتای جیسون هر کاربر
+                        try { u.parsedData = JSON.parse(u.json); } catch(e) { u.parsedData = {}; }
+                        return u;
+                    });
+                    processData();
+                    document.getElementById('lastUpdate').innerText = 'بروزرسانی: ' + new Date().toLocaleTimeString('fa-IR');
+                } else {
+                    alert("خطا در دریافت: " + data.message);
+                }
+            } catch(e) { alert("خطای ارتباط با سرور"); console.log(e); }
+            document.getElementById('loadingBox').style.display = 'none';
+        }
+
+        function processData() {
+            renderUsersList(ALL_USERS);
+            renderLessonsStats();
+            renderExamsStats();
+            renderRanking();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-'+tabId).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        // --- بخش ۱: لیست یوزرها ---
+        function renderUsersList(users) {
+            const container = document.getElementById('usersList');
+            container.innerHTML = '';
+            users.forEach(u => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.onclick = () => showUserDetail(u);
+                const role = u.parsedData.rank || 'نوآموز';
+                const xp = u.parsedData.xp || 0;
+                div.style.borderRightColor = getRankColor(role);
+                
+                div.innerHTML = `
+                    <div class="user-row">
+                        <strong>${u.n} <span style="font-size:0.8rem;color:#777">(${u.u})</span></strong>
+                        <span class="badge bg-blue">${xp} XP</span>
+                    </div>
+                    <div style="margin-top:5px; font-size:0.8rem; color:#555; display:flex; justify-content:space-between;">
+                        <span>🔰 ${role}</span>
+                        <span>آخرین فعالیت: ${u.last ? u.last.split(' ')[1] : '-'}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function filterUsers() {
+            const q = document.getElementById('searchBox').value.toLowerCase();
+            const filtered = ALL_USERS.filter(u => u.n.includes(q) || u.u.toLowerCase().includes(q));
+            renderUsersList(filtered);
+        }
+
+        // --- بخش جزئیات و عملیات ---
+        function showUserDetail(user) {
+            document.getElementById('modalTitle').innerText = user.n;
+            const body = document.getElementById('modalBody');
+            const d = user.parsedData;
+            
+            // لیست آزمون‌های این کاربر
+            let examsHtml = '<p style="color:#777;text-align:center">آزمونی ثبت نشده</p>';
+            if(d.exams && Object.keys(d.exams).length > 0) {
+                examsHtml = '<table><tr><th>کد آزمون</th><th>نمره</th><th>عملیات</th></tr>';
+                for(let [eid, score] of Object.entries(d.exams)) {
+                    examsHtml += `<tr>
+                        <td>${eid}</td>
+                        <td style="font-weight:bold; color:${score>=17?'green':score<10?'red':'black'}">${score}</td>
+                        <td><button class="op-btn" onclick="performAdminOp('reset_exam', '${user.u}', '${eid}')">♻️ ریست</button></td>
+                    </tr>`;
+                }
+                examsHtml += '</table>';
+            }
+
+            // لیست فیلم‌های دیده شده
+            let vidsHtml = '<p style="color:#777;text-align:center">درسی دیده نشده</p>';
+            if(d.completed && d.completed.length > 0) {
+                vidsHtml = '<table><tr><th>کد درس</th><th>وضعیت</th><th>عملیات</th></tr>';
+                d.completed.forEach(vid => {
+                    vidsHtml += `<tr>
+                        <td>${vid}</td>
+                        <td style="color:green">✅ کامل</td>
+                        <td><button class="op-btn" onclick="performAdminOp('reset_video', '${user.u}', '${vid}')">♻️ ریست</button></td>
+                    </tr>`;
+                });
+                vidsHtml += '</table>';
+            }
+
+            body.innerHTML = `
+                <div style="text-align:center; padding:10px; background:white; border-radius:10px; margin-bottom:15px;">
+                    <div style="font-size:1.5rem; font-weight:bold; color:#2c3e50">${d.xp || 0} XP</div>
+                    <div style="color:#7f8c8d">رتبه: ${d.rank || 'نوآموز'}</div>
+                    <div style="margin-top:10px; font-size:0.9rem;">رمز عبور: <b>${user.p}</b></div>
+                    <button style="margin-top:10px; background:#f1c40f; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;" onclick="giveBonusXP('${user.u}')">🎁 اهدای امتیاز دستی</button>
+                </div>
+                
+                <h4>📝 سوابق آزمون</h4>
+                ${examsHtml}
+                
+                <h4 style="margin-top:20px;">🎬 سوابق دروس</h4>
+                ${vidsHtml}
+            `;
+            
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        async function performAdminOp(type, username, itemId) {
+            if(!confirm("آیا از انجام این عملیات اطمینان دارید؟")) return;
+            
+            // بستن موقت مودال یا نمایش لودینگ
+            const btn = event.target;
+            btn.innerText = '⏳...';
+            
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'admin_op',
+                        admin_token: ADMIN_TOKEN_KEY,
+                        target_user: username,
+                        op_type: type,
+                        exam_id: (type==='reset_exam' ? itemId : null),
+                        video_id: (type==='reset_video' ? itemId : null)
+                    })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    alert("عملیات انجام شد! ✅");
+                    fetchData(); // رفرش کل دیتا
+                    closeModal();
+                } else {
+                    alert("خطا: " + data.message);
+                }
+            } catch(e) { alert("خطای شبکه"); }
+        }
+
+        async function giveBonusXP(username) {
+            const amount = prompt("مقدار امتیاز اضافه (مثلا 50):");
+            if(!amount) return;
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'admin_op',
+                        admin_token: ADMIN_TOKEN_KEY,
+                        target_user: username,
+                        op_type: 'give_xp',
+                        amount: amount
+                    })
+                });
+                alert("امتیاز اهدا شد! ✅");
+                fetchData();
+                closeModal();
+            } catch(e) { alert("خطا"); }
+        }
+
+        function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
+
+        // --- بخش ۲: آمار درس‌ها ---
+        function renderLessonsStats() {
+            const container = document.getElementById('lessonsStats');
+            container.innerHTML = '';
+            
+            // محاسبه برای هر درس
+            LESSONS_LIST.forEach(lesson => {
+                let count = 0;
+                ALL_USERS.forEach(u => {
+                    if(u.parsedData.completed && u.parsedData.completed.includes(lesson.id.toString())) count++;
+                });
+                const percent = Math.round((count / ALL_USERS.length) * 100) || 0;
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>${lesson.title}</strong>
+                        <small>${count} از ${ALL_USERS.length} نفر</small>
+                    </div>
+                    <div style="background:#eee; height:10px; border-radius:5px; margin-top:5px; overflow:hidden;">
+                        <div style="background:${percent>80? 'var(--success)': 'var(--accent)'}; width:${percent}%; height:100%"></div>
+                    </div>
+                    <div style="text-align:left; font-size:0.7rem; color:#777; margin-top:2px">${percent}% تکمیل</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- بخش ۳: آمار آزمون‌ها ---
+        function renderExamsStats() {
+            // استخراج لیست کل آزمون‌های شرکت شده
+            const allExamsMap = {};
+            ALL_USERS.forEach(u => {
+                if(u.parsedData.exams) {
+                    for(let [eid, score] of Object.entries(u.parsedData.exams)) {
+                        if(!allExamsMap[eid]) allExamsMap[eid] = { count:0, sum:0, title: eid };
+                        allExamsMap[eid].count++;
+                        allExamsMap[eid].sum += parseFloat(score);
+                    }
+                }
+            });
+
+            const container = document.getElementById('examsStats');
+            container.innerHTML = '';
+            
+            if(Object.keys(allExamsMap).length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#777">هنوز آزمونی برگزار نشده</p>';
+                return;
+            }
+
+            for(let [eid, stats] of Object.entries(allExamsMap)) {
+                const avg = (stats.sum / stats.count).toFixed(1);
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.borderRightColor = '#8e44ad';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between">
+                        <strong>آزمون: ${eid}</strong>
+                        <span class="badge" style="background:#8e44ad">${stats.count} شرکت‌کننده</span>
+                    </div>
+                    <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.9rem; color:#555">میانگین کلاس:</span>
+                        <span style="font-weight:bold; font-size:1.2rem; color:${avg>=15?'green':'orange'}">${avg}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // --- بخش ۴: رنکینگ ---
+        function renderRanking() {
+            const sorted = [...ALL_USERS].sort((a,b) => (b.parsedData.xp || 0) - (a.parsedData.xp || 0)).slice(0, 10);
+            const container = document.getElementById('rankingList');
+            container.innerHTML = '';
+            
+            sorted.forEach((u, idx) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                let medal = '';
+                if(idx===0) medal = '🥇';
+                else if(idx===1) medal = '🥈';
+                else if(idx===2) medal = '🥉';
+                else medal = `#${idx+1}`;
+                
+                div.innerHTML = `
+                    <div class="user-row">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:1.2rem; font-weight:bold; width:30px;">${medal}</span>
+                            <span>${u.n}</span>
+                        </div>
+                        <span class="badge bg-gold">${u.parsedData.xp || 0} XP</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function getRankColor(r) {
+            if(r.includes('اسطوره')) return '#c0392b';
+            if(r.includes('فرمانده')) return '#8e44ad';
+            if(r.includes('جنگجو')) return '#2980b9';
+            if(r.includes('محافظ')) return '#27ae60';
+            return '#7f8c8d';
+        }
+    </script>
+</body>
+</html>
