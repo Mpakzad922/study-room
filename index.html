@@ -16,7 +16,7 @@
         .card.show-content { opacity: 1; }
         .active { display: block; }
 
-        /* استایل پنل کاربری (جدید) */
+        /* استایل پنل کاربری */
         .user-panel { background: #2c3e50; color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3); position: relative; overflow: hidden; }
         .user-panel::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent); animation: shinePanel 5s infinite; }
         @keyframes shinePanel { 0% {transform: translateX(-100%);} 100% {transform: translateX(100%);} }
@@ -152,7 +152,7 @@
             <strong id="videoTitle" style="font-size: 0.9rem;"></strong>
         </div>
         
-        <video id="myVideo" playsinline controls controlsList="nodownload noplaybackrate"></video>
+        <video id="myVideo" playsinline controls disablePictureInPicture controlsList="nodownload noplaybackrate"></video>
         
         <button class="fullscreen-btn" onclick="forceFullScreen()">
             <span>⛶</span> تمام صفحه
@@ -172,7 +172,7 @@
 
     <script>
         // ***********************************************
-        // تنظیمات اصلی - آدرس وب‌اپ خود را اینجا قرار دهید
+        // تنظیمات اصلی
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx7Y3YavH825i9yzrX3UA5HP1vfrN4cnPWyAlHqk_imdnjj_wLabYGj3HTuuZcUCpSrjA/exec"; 
@@ -181,7 +181,7 @@
         const CHECK_INTERVAL = 300; 
         const ANSWER_TIMEOUT = 60;
         const IDLE_TIMEOUT = 120;
-        const DB_KEY = "chamran_db_v20_"; // ورژن دیتابیس را ارتقا دادیم
+        const DB_KEY = "chamran_db_v20_";
         
         let playlist = []; 
         let currentUser = null;
@@ -197,7 +197,6 @@
 
         const vid = document.getElementById('myVideo');
 
-        // ***** مدیریت انیمیشن ورودی *****
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('intro-overlay').classList.add('move-down');
@@ -205,7 +204,7 @@
                 document.getElementById('loginFooterSig').classList.add('show');
                 setTimeout(() => {
                     document.getElementById('intro-overlay').style.display = 'none';
-                    checkAuth(); // بررسی ورود بعد از انیمیشن
+                    checkAuth();
                 }, 1200);
             }, 2500);
         });
@@ -220,13 +219,11 @@
                 try {
                     const creds = JSON.parse(savedUser);
                     currentUser = creds;
-                    // راه‌اندازی سیستم‌های جانبی
                     SyncManager.init(creds.username, creds.password);
                     RankSystem.init(creds.jsonData);
-                    
                     document.getElementById('displayName').innerText = creds.displayName;
                     showScreen('screen-library');
-                    fetchPlaylist(); // دریافت لیست درس‌ها
+                    fetchPlaylist();
                 } catch(e) {
                     showScreen('screen-login');
                 }
@@ -248,7 +245,6 @@
             msg.innerText = "";
 
             try {
-                // ارسال درخواست لاگین به گوگل شیت
                 const res = await fetch(REPORT_WEBAPP_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'login', username: u, password: p })
@@ -256,7 +252,6 @@
                 const data = await res.json();
                 
                 if(data.status === 'success') {
-                    // ذخیره اطلاعات در لوکال
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
                     
@@ -292,37 +287,23 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
-// ***********************************************
-        // اصلاحیه بخش دریافت لیست (ادغام data.js و گوگل شیت)
-        // ***********************************************
-
         async function fetchPlaylist() {
-            // 1. ابتدا لیست را خالی می‌کنیم
             playlist = [];
-
-            // 2. اگر فایل لوکال (data.js) وجود دارد، آن را اضافه کن
             if (typeof LOCAL_PLAYLIST !== 'undefined' && Array.isArray(LOCAL_PLAYLIST)) {
                 console.log("Loading form Local data.js...");
-                playlist = [...LOCAL_PLAYLIST]; // کپی کردن داده‌های لوکال
+                playlist = [...LOCAL_PLAYLIST]; 
             }
-
-            // 3. حالا برو سراغ گوگل شیت و داده‌های آن را هم بگیر
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
                 if(res.ok) {
                     const csvText = await res.text();
-                    parseCSV(csvText); // این تابع به لیست فعلی اضافه می‌کند
+                    parseCSV(csvText); 
                 }
-            } catch (err) { 
-                console.log("Google CSV failed or offline"); 
-            }
-
-            // 4. در نهایت لیست را نمایش بده
+            } catch (err) { console.log("Google CSV failed or offline"); }
             renderList();
         }
 
         function parseCSV(csvText) {
-            // نکته مهم: اینجا دیگر playlist = [] را نمی‌نویسیم تا داده‌های قبلی پاک نشوند
             const rows = csvText.split('\n');
             for(let i=1; i<rows.length; i++) {
                 const row = rows[i].split(',');
@@ -335,7 +316,6 @@
                         const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
                         attachment = remaining.trim().replace(/^,|,$/g, ''); 
                     }
-                    // چک می‌کنیم که آیدی تکراری نباشد (اولویت با دیتای گوگل شیت است)
                     const exists = playlist.find(p => p.id === id);
                     if(id && title && file && !exists) {
                         playlist.push({ id, title, file, attachment });
@@ -343,13 +323,13 @@
                 }
             }
         }
+
         function renderList() {
             const list = document.getElementById('video-list-container');
             list.innerHTML = "";
             if(!playlist.length) list.innerHTML = "<p>در حال بارگذاری درس‌ها...</p>";
             
             playlist.forEach(item => {
-                // بررسی وضعیت تکمیل از سیستم رنکینگ
                 const isCompleted = RankSystem.data.completed.includes(item.id.toString());
                 const icon = isCompleted ? '✅' : '▶️';
                 const hasFile = (item.attachment && item.attachment.length > 3);
@@ -381,7 +361,6 @@
             lastActivityTime = Date.now();
             idleReportSent = false;
             
-            // دانلود باکس
             const dlContainer = document.getElementById('downloadContainer');
             dlContainer.innerHTML = ""; 
             if(item.attachment && item.attachment.length > 3) {
@@ -399,7 +378,6 @@
                 });
             }
 
-            // بازگردانی زمان قبلی
             const savedTime = localStorage.getItem(`${DB_KEY}${currentUser.username}_time_${item.id}`);
             maxTime = savedTime ? parseFloat(savedTime) : 0;
             nextCheckTime = maxTime + CHECK_INTERVAL; 
@@ -409,7 +387,6 @@
                 if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = maxTime;
             }
             
-            // ثبت لاگ ورود
             SyncManager.addToQueue('report', {
                 lesson: item.title, status: 'شروع درس', details: 'ورود به پلیر', device: getDeviceInfo()
             });
@@ -417,9 +394,7 @@
 
         function closePlayer() {
             vid.pause();
-            SyncManager.addToQueue('report', {
-                lesson: activeVid.title, status: 'خروج از درس', details: `تا دقیقه ${Math.floor(vid.currentTime/60)}`, device: getDeviceInfo()
-            });
+            checkAndReport("خروج از درس 🔙", true);
             renderList();
             showScreen('screen-library');
         }
@@ -429,50 +404,6 @@
             else if (vid.webkitEnterFullscreen) vid.webkitEnterFullscreen();
             else alert("مرورگر شما اجازه تمام صفحه نمی‌دهد.");
         }
-
-        // ***** لاجیک‌های امنیتی و پلیر *****
-        vid.addEventListener('timeupdate', () => {
-            if(!vid.seeking && vid.currentTime > maxTime) {
-                maxTime = vid.currentTime;
-                localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
-                lastActivityTime = Date.now();
-                idleReportSent = false; 
-            }
-            if(vid.currentTime > nextCheckTime && !isDone) triggerSecurityCheck();
-            
-            if(vid.duration) {
-                const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
-                document.getElementById('progressBar').style.width = percent + "%";
-                document.getElementById('viewPercent').innerText = toPersianNum(percent) + "٪";
-                
-                // تکمیل درس و امتیازدهی
-                if(percent >= 98 && !isDone) {
-                    isDone = true;
-                    document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
-                    // صدا زدن سیستم امتیازدهی
-                    RankSystem.addXP(100, `تکمیل درس: ${activeVid.title}`, activeVid.id.toString());
-                    renderList(); // آپدیت تیک سبز
-                }
-            }
-        });
-
-        vid.addEventListener('seeking', () => {
-            if(!isDone && vid.currentTime > maxTime + 3) {
-                vid.currentTime = maxTime;
-                document.getElementById('cheatAlert').style.display = 'block';
-                setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
-            }
-        });
-
-        // تایمر عدم فعالیت
-        setInterval(() => {
-            if (!activeVid || isDone || vid.paused) return; 
-            const timeDiff = (Date.now() - lastActivityTime) / 1000;
-            if (timeDiff > IDLE_TIMEOUT && !idleReportSent) {
-                SyncManager.addToQueue('report', { lesson: activeVid.title, status: 'توقف طولانی', details: 'کاربر غیرفعال', device: getDeviceInfo() });
-                idleReportSent = true; 
-            }
-        }, 5000);
 
         // سوال امنیتی ریاضی
         function triggerSecurityCheck() {
@@ -510,11 +441,114 @@
             lastActivityTime = Date.now(); 
         }
 
-        // دکمه بازگشت موبایل
+        // تابع کمکی برای ارسال گزارش سریع
+        function checkAndReport(statusMsg, forceSend) {
+            if (!activeVid) return;
+            SyncManager.addToQueue('report', {
+                lesson: activeVid.title,
+                status: statusMsg,
+                details: `زمان ویدیو: ${Math.floor(vid.currentTime)} ثانیه`,
+                device: getDeviceInfo()
+            });
+        }
+
+        // ***********************************************
+        // 🛡️ بخش امنیت و گزارش‌گیری پیشرفته (Super Watchdog)
+        // ***********************************************
+
+        // 1. لیسنر اتصال اینترنت
+        window.addEventListener('online', () => {
+            if(typeof processOfflineQueue === 'function') processOfflineQueue(); // جلوگیری از ارور اگر هنوز لود نشده
+            else if(typeof SyncManager !== 'undefined') SyncManager.processQueue();
+        });
+
+        // 2. تشخیص باز کردن برنامه دیگر روی فیلم (Focus Loss)
+        window.addEventListener('blur', () => {
+            if (activeVid && !vid.paused && !isDone) {
+                vid.pause();
+                checkAndReport("⚠️ عدم تمرکز (باز کردن برنامه دیگر)", true);
+            }
+        });
+
+        // 3. تشخیص رفتن به تب دیگر یا مینییمایز کردن (Visibility)
+        document.addEventListener("visibilitychange", () => {
+            if(!activeVid || isDone) return;
+            
+            if (document.visibilityState === 'hidden') {
+                vid.pause();
+                checkAndReport("⛔ توقف/خروج (مینیمایز)", true);
+            } else {
+                if(backgroundTimer) clearTimeout(backgroundTimer);
+                if(typeof SyncManager !== 'undefined') SyncManager.processQueue();
+            }
+        });
+
+        // 4. تشخیص بستن کامل برنامه یا دکمه ضربدر (The Killer Switch)
+        window.addEventListener('beforeunload', (e) => {
+            if (activeVid && !isDone) {
+                const data = {
+                    lesson: activeVid.title,
+                    status: "⛔ خروج ناگهانی (بستن برنامه)",
+                    details: `در دقیقه ${Math.floor(vid.currentTime/60)} برنامه بسته شد`,
+                    device: getDeviceInfo(),
+                    timestamp: Date.now()
+                };
+                // ذخیره مستقیم در صف لوکال استوریج (چون آبجکت SyncManager شاید از بین رفته باشد)
+                let q = JSON.parse(localStorage.getItem('chamran_queue_v2') || "[]");
+                q.push(data);
+                localStorage.setItem('chamran_queue_v2', JSON.stringify(q));
+            }
+        });
+
+        // 5. دکمه بازگشت موبایل (اصلاح شده)
         window.addEventListener('popstate', function(event) {
-            if (document.getElementById('screen-player').classList.contains('active')) closePlayer();
+            if (document.getElementById('screen-player').classList.contains('active')) {
+                closePlayer(); 
+            }
+        });
+
+        // 6. تایمر هوشمند عدم فعالیت (اخطار خواب آلودگی)
+        setInterval(() => {
+            if (!activeVid || isDone || vid.paused) return; 
+            const timeDiff = (Date.now() - lastActivityTime) / 1000;
+            if (timeDiff > IDLE_TIMEOUT && !idleReportSent) {
+                checkAndReport("⚠️ توقف طولانی (عدم فعالیت)", true);
+                idleReportSent = true; 
+            }
+        }, 5000);
+
+        // 7. لاجیک آپدیت زمان و تکمیل درس
+        vid.addEventListener('timeupdate', () => {
+            if(!vid.seeking && vid.currentTime > maxTime) {
+                maxTime = vid.currentTime;
+                localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
+                lastActivityTime = Date.now();
+                idleReportSent = false; 
+            }
+            if(vid.currentTime > nextCheckTime && !isDone) triggerSecurityCheck();
+            
+            if(vid.duration) {
+                const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
+                document.getElementById('progressBar').style.width = percent + "%";
+                document.getElementById('viewPercent').innerText = toPersianNum(percent) + "٪";
+                
+                if(percent >= 98 && !isDone) {
+                    isDone = true;
+                    document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
+                    RankSystem.addXP(100, `تکمیل درس: ${activeVid.title}`, activeVid.id.toString());
+                    renderList();
+                }
+            }
+        });
+
+        // 8. جلوگیری از جلو زدن
+        vid.addEventListener('seeking', () => {
+            if(!isDone && vid.currentTime > maxTime + 3) {
+                vid.currentTime = maxTime;
+                document.getElementById('cheatAlert').style.display = 'block';
+                setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
+            }
         });
     </script>
 </body>
 </html>
-
