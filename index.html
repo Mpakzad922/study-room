@@ -397,21 +397,33 @@
                 });
             }
 
-            // [مهم] اولویت با دیتای ابری است، بعد لوکال
+            // [اصلاح شده برای حل مشکل بازنشانی]
             const cloudTime = RankSystem.getLastPosition(item.id);
-            const localTime = parseFloat(localStorage.getItem(`${DB_KEY}${currentUser.username}_time_${item.id}`) || 0);
-            maxTime = Math.max(cloudTime, localTime);
+            const localKey = `${DB_KEY}${currentUser.username}_time_${item.id}`;
+            let startPos = 0;
+
+            // اگر سرور می‌گوید زمان ۰ است (بازنشانی شده)، کش لوکال را نادیده بگیر و پاک کن
+            if (cloudTime === 0) {
+                localStorage.removeItem(localKey);
+                startPos = 0;
+            } else {
+                // اگر سرور زمان دارد، با لوکال مقایسه کن (هرکدام بیشتر بود)
+                const localTime = parseFloat(localStorage.getItem(localKey) || 0);
+                startPos = Math.max(cloudTime, localTime);
+            }
+
+            maxTime = startPos;
             nextCheckTime = maxTime + CHECK_INTERVAL; 
             
             showScreen('screen-player');
             
-            // اگر قبلاً تمام کرده، نوار را پر نشان بده
             if(isDone) {
                  document.getElementById('progressBar').style.width = "100%";
                  document.getElementById('viewPercent').innerText = "۱۰۰٪";
                  document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
             }
             
+            // اگر زمان شروع بیشتر از ۵ ثانیه باشد، بپرس (مگر اینکه بازنشانی شده باشد که ۰ است)
             if(maxTime > 5 && !isDone) {
                 if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = maxTime;
             }
@@ -518,7 +530,6 @@
         });
 
         // خروج اضطراری (هوشمند)
-// خروج اضطراری (هوشمند)
         window.addEventListener('beforeunload', (e) => {
             if (activeVid) {
                 const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
@@ -589,6 +600,3 @@
     </script>
 </body>
 </html>
-
-
-
