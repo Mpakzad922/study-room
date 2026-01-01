@@ -1,10 +1,8 @@
 // ********************************************
-// 🎮 فایل کمکی: rank.js (نسخه اصلاح شده - سینک کامل)
-// وظایف: مدیریت امتیاز، لول‌آپ، صف ارسال و بازیابی وضعیت ظاهری
+// 🎮 فایل کمکی: rank.js (نسخه نهایی هماهنگ با سرور)
 // ********************************************
 
 const RankSystem = {
-    // تنظیمات لول‌ها
     ranks: [
         { min: 0, title: "🐣 نوآموز", color: "#7f8c8d" },
         { min: 500, title: "🛡️ محافظ", color: "#27ae60" },
@@ -17,55 +15,70 @@ const RankSystem = {
     data: {
         xp: 0,
         rank: "🐣 نوآموز",
-        completed: [], // لیست آیدی درس‌های تمام شده (مهم برای تیک سبز)
+        completed: [], 
         exams: {} 
     },
 
-    // 1. راه‌اندازی با دیتای سرور (نقطه شروع اصلاح شده)
-    init: function(savedJson) {
-        if(savedJson && savedJson !== "{}") {
+    // کلید ذخیره‌سازی اختصاصی
+    STORAGE_KEY: 'chamran_local_rank_v1',
+
+    // 1. راه‌اندازی هوشمند (ادغام حافظه گوشی و سرور)
+    init: function(serverJson) {
+        // الف) اول تلاش کن از حافظه گوشی بخوانی
+        const localData = localStorage.getItem(this.STORAGE_KEY);
+        if (localData) {
             try {
-                // اگر جیسون رشته بود، پارس کن
-                const parsed = typeof savedJson === 'string' ? JSON.parse(savedJson) : savedJson;
+                this.data = JSON.parse(localData);
+            } catch (e) { console.error("Local Parse Error"); }
+        }
+
+        // ب) اگر سرور دیتایی فرستاده، چک کن کدام جدیدتر/بیشتر است
+        if(serverJson && serverJson !== "{}") {
+            try {
+                const serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson;
                 
-                // ادغام هوشمند: اگر دیتای لوکال جدیدتر بود، آن را نگه دار (برای آفلاین)
-                // اما فعلا فرض می‌کنیم سرور پادشاه است
-                this.data = { ...this.data, ...parsed };
-                
-                console.log("RankSystem initialized:", this.data);
-            } catch(e) { console.error("Data Parse Error", e); }
+                // قانون طلایی: هر کدام XP بیشتری داشت، برنده است
+                if ((serverData.xp || 0) > this.data.xp) {
+                    this.data = { ...this.data, ...serverData };
+                    this.saveToDisk(); // آپدیت حافظه گوشی با دیتای سرور
+                }
+            } catch(e) { console.error("Server Parse Error", e); }
         }
         
-        // بلافاصله ظاهر را آپدیت کن
+        // ج) اعمال تغییرات در ظاهر
         this.updateUI();
-        this.refreshListUI(); 
+        setTimeout(() => this.refreshListUI(), 500);
     },
 
-    // 2. اضافه کردن امتیاز
+    // 2. امتیازدهی با ذخیره فوری
     addXP: function(amount, reason, uniqueId) {
-        // جلوگیری از فارم کردن (اگر قبلاً دیده امتیاز نده)
-        // نکته: uniqueId باید حتما استرینگ باشد تا با دیتابیس مچ شود
         const sId = uniqueId.toString();
         if(uniqueId && this.data.completed.includes(sId)) return;
 
         this.data.xp += amount;
         if(uniqueId) {
             this.data.completed.push(sId);
-            // همان لحظه تیک سبز را در لیست بزن
-            this.refreshListUI();
+            this.refreshListUI(); 
         }
         
         this.checkRankUp();
         this.updateUI();
         this.showToast(`⭐ +${amount} امتیاز: ${reason}`);
         
-        // ذخیره در صف سرور
+        // ذخیره فوری
+        this.saveToDisk();
+        
+        // ارسال به صف سرور
         SyncManager.addToQueue('report', {
             lesson: reason,
             status: 'کسب امتیاز',
             details: `مجموع XP: ${this.data.xp}`,
             device: this.getDevice()
         });
+    },
+
+    saveToDisk: function() {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
     },
 
     checkRankUp: function() {
@@ -80,20 +93,18 @@ const RankSystem = {
             const oldRank = this.data.rank;
             this.data.rank = currentRankTitle;
             alert(`🎉 تبریک!\nشما از "${oldRank}" به درجه "${currentRankTitle}" ارتقا یافتید!`);
+            this.saveToDisk();
         }
     },
 
     updateUI: function() {
-        // آپدیت پنل بالا
         const xpEl = document.getElementById('user-xp');
         const rankEl = document.getElementById('user-rank');
-        if(xpEl) xpEl.innerText = `${toPersianNum(this.data.xp)} XP`; // تبدیل به فارسی
+        if(xpEl) xpEl.innerText = `${toPersianNum(this.data.xp)} XP`;
         if(rankEl) rankEl.innerText = this.data.rank;
     },
 
-    // 3. تابع جدید: روشن کردن تیک‌های سبز در لیست درس‌ها
     refreshListUI: function() {
-        // اگر تابع رندر لیست در دسترس بود، دوباره صداش بزن تا با دیتای جدید (completed) لیست را بسازد
         if(typeof renderList === 'function') {
             renderList(); 
         }
@@ -113,7 +124,7 @@ const RankSystem = {
 };
 
 // ********************************************
-// 📡 مدیریت صف ارسال (SyncManager)
+// 📡 مدیریت صف ارسال
 // ********************************************
 const SyncManager = {
     queue: [],
@@ -125,18 +136,15 @@ const SyncManager = {
         this.password = pass;
         this.queue = JSON.parse(localStorage.getItem('chamran_queue_v2') || "[]");
         this.processQueue();
-        
-        // اتوسیو پروفایل هر 2 دقیقه (برای اطمینان بیشتر)
-        setInterval(() => this.syncProfile(), 120000);
+        setInterval(() => this.syncProfile(), 60000);
     },
 
     addToQueue: function(action, logData = null) {
-        // همیشه قبل از ارسال، آخرین وضعیت رنک را در جیسون قرار بده
         const item = {
             action: action,
             username: this.username,
             password: this.password,
-            jsonData: JSON.stringify(RankSystem.data), // کلیدی‌ترین بخش: ارسال دیتای کامل رنک
+            jsonData: JSON.stringify(RankSystem.data),
             logData: logData,
             timestamp: Date.now()
         };
@@ -160,15 +168,13 @@ const SyncManager = {
     },
 
     syncProfile: function() {
-        // این دستور فقط پروفایل را در سرور آپدیت می‌کند بدون نوشتن گزارش اضافه
         this.addToQueue('sync');
     },
 
     processQueue: function() {
         if(this.queue.length === 0 || !navigator.onLine) return;
-
         const item = this.queue[0];
-        // آپدیت کردن جیسون آیتم داخل صف با آخرین وضعیت (چون شاید از لحظه ساخت آیتم تا الان، کاربر XP بیشتری گرفته باشد)
+        // آپدیت لحظه‌ای
         item.jsonData = JSON.stringify(RankSystem.data);
 
         if(typeof REPORT_WEBAPP_URL === 'undefined') return;
@@ -188,7 +194,6 @@ const SyncManager = {
     }
 };
 
-// تابع کمکی برای تبدیل اعداد (چون در rank.js هم استفاده شده)
 function toPersianNum(n) { 
     if(n === undefined || n === null) return "۰";
     return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); 
