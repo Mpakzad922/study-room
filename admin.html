@@ -24,7 +24,7 @@
             padding: 0;
             font-size: 14px;
             color: var(--text-dark);
-            padding-bottom: 90px; /* فضای خالی برای منوی پایین */
+            padding-bottom: 90px;
         }
 
         /* --- صفحه ورود --- */
@@ -60,7 +60,7 @@
             padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1.2rem;
         }
 
-        /* --- تب‌ها و نویگیشن --- */
+        /* --- تب‌ها --- */
         .tabs {
             display: flex; justify-content: space-around;
             background: white; padding: 10px 0;
@@ -76,7 +76,7 @@
         .tab-btn.active { color: var(--primary); font-weight: bold; }
         .tab-icon { font-size: 1.5rem; margin-bottom: 4px; }
 
-        /* --- بخش‌های محتوا --- */
+        /* --- محتوا --- */
         .section { display: none; padding: 20px; animation: fadeIn 0.4s; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -102,7 +102,7 @@
         .bg-gold { background: #f1c40f; color: #333; }
         .bg-purple { background: #9b59b6; }
 
-        /* --- مودال جزئیات --- */
+        /* --- مودال --- */
         #detailModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 500; display: none;
@@ -116,7 +116,7 @@
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* --- جدول‌های داخلی --- */
+        /* --- جداول --- */
         table {
             width: 100%; border-collapse: separate; border-spacing: 0;
             background: white; border-radius: 12px; overflow: hidden;
@@ -133,7 +133,6 @@
         }
         .op-btn:hover { border-color: var(--danger); color: var(--danger); background: #fff5e6; }
 
-        /* --- المان‌های خاص --- */
         .search-box {
             width: 100%; padding: 14px; border: 2px solid #eee;
             border-radius: 15px; margin-bottom: 20px;
@@ -192,7 +191,8 @@
         </div>
 
         <div id="tab-lessons" class="section">
-            <h3 style="color:var(--primary); border-bottom:2px solid var(--accent); display:inline-block; padding-bottom:5px;">📊 آمار بازدید فیلم‌ها</h3>
+            <h3 style="color:var(--primary); border-bottom:2px solid var(--accent); display:inline-block; padding-bottom:5px;">📊 آمار بازدید فیلم‌ها (مدیریت)</h3>
+            <p style="color:red; font-size:0.8rem;">⚠️ نکته: برای حذف درس، حتما از دکمه سطل آشغال استفاده کنید تا سوابق پاک شود.</p>
             <div id="lessonsStats"></div>
         </div>
 
@@ -230,7 +230,7 @@
     // *************************************************************
     // ⚠️ لینک وب‌اپ خود را اینجا بگذارید
     // *************************************************************
-    const API_URL = "https://script.google.com/macros/s/AKfycbzdh2Un_UqTld4HyLGe5Oj8JDQbuOMo5MnHw18IIdpsO00x8NQhEnATX3ATQ7eyj6lUyA/exec"; // <--- اینجا لینک را بگذارید
+    const API_URL = "https://script.google.com/macros/s/AKfycbzdh2Un_UqTld4HyLGe5Oj8JDQbuOMo5MnHw18IIdpsO00x8NQhEnATX3ATQ7eyj6lUyA/exec"; 
     const ADMIN_TOKEN_KEY = "chamran_admin_2025_secret_key";
     
     let ALL_USERS = [];
@@ -315,23 +315,20 @@
         renderUsersList(ALL_USERS.filter(u => u.n.includes(q) || u.u.toLowerCase().includes(q)));
     }
 
-    // --- [اصلاح شده] نمایش جزئیات کامل (همه درس‌ها و آزمون‌ها) ---
+    // --- نمایش جزئیات کامل ---
     function showUserDetail(user) {
         document.getElementById('modalTitle').innerText = user.n;
         const body = document.getElementById('modalBody');
         const d = user.parsedData;
         const pb = d.playback || {};
         
-        // 1. لیست کامل آزمون‌ها (شرکت کرده و نکرده)
+        // 1. لیست کامل آزمون‌ها
         let examsHtml = '<table><tr><th>نام آزمون</th><th>وضعیت/نمره</th><th>عملیات</th></tr>';
-        
-        // تمام آزمون‌های موجود در سیستم را چک کن
         Object.keys(META_EXAMS).forEach(eid => {
             const examName = META_EXAMS[eid];
             let statusHtml = '<span style="color:red; font-size:0.8rem;">❌ شرکت نکرده</span>';
             let opHtml = '-';
 
-            // اگر کاربر شرکت کرده باشد
             if(d.exams && d.exams[eid] !== undefined) {
                 const score = d.exams[eid];
                 const color = score >= 17 ? 'green' : (score < 10 ? 'red' : 'black');
@@ -347,9 +344,8 @@
         });
         examsHtml += '</table>';
 
-        // 2. لیست کامل درس‌ها (فیلم‌ها)
+        // 2. لیست کامل درس‌ها
         let lessonsHtml = '<table><tr><th>نام درس</th><th>وضعیت مشاهده</th><th>عملیات</th></tr>';
-        
         Object.keys(META_LESSONS).forEach(lid => {
             const lessonName = META_LESSONS[lid];
             const isCompleted = d.completed && d.completed.includes(lid.toString());
@@ -362,7 +358,6 @@
                 statusHtml = '<span style="color:#27ae60; font-weight:bold;">✅ کامل (۱۰۰٪)</span>';
                 opHtml = `<button class="op-btn" onclick="performAdminOp('reset_video', '${user.u}', '${lid}')">♻️ ریست</button>`;
             } else if (lastTime > 0) {
-                // اگر درس تایم دارد (مثلا 10 دقیقه)، اینجا تقریبی مینویسیم یا دقیقه را نشان میدهیم
                 statusHtml = `<span style="color:#e67e22;">⚠️ ناقص (تا ثانیه ${lastTime})</span>`;
                  opHtml = `<button class="op-btn" onclick="performAdminOp('reset_video', '${user.u}', '${lid}')">♻️ ریست</button>`;
             } else {
@@ -396,7 +391,7 @@
 
     function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
 
-    // --- عملیات سرور ---
+    // --- عملیات سرور (با اضافه شدن حذف درس) ---
     async function performAdminOp(type, username, itemId) {
         let body = { action: 'admin_op', admin_token: ADMIN_TOKEN_KEY, target_user: username, op_type: type };
         
@@ -422,12 +417,36 @@
         } catch(e) { alert("❌ خطای شبکه"); }
     }
 
-    // --- [اصلاح شده] آمار آزمون (لیست غایبین و حاضرین) ---
+    // --- تابع جدید: حذف درس (هم از لیست هم از سابقه دانش‌آموزان) ---
+    async function deleteLesson(lid, title) {
+        if(!confirm(`⚠️ آیا مطمئن هستید که می‌خواهید درس "${title}" را حذف کنید؟\n\n⛔ این کار سابقه مشاهده این درس را از پروفایل تمام دانش‌آموزان پاک می‌کند و قابل بازگشت نیست!`)) return;
+        
+        document.getElementById('loadingBox').style.display = 'flex';
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: 'delete_lesson_global', 
+                    admin_token: ADMIN_TOKEN_KEY, 
+                    lesson_id: lid 
+                })
+            });
+            const data = await res.json();
+            if(data.status === 'success') {
+                alert("✅ درس با موفقیت حذف شد.");
+                fetchData(); // رفرش لیست
+            } else {
+                alert("❌ خطا: " + data.message);
+            }
+        } catch(e) { alert("❌ خطای شبکه"); }
+        document.getElementById('loadingBox').style.display = 'none';
+    }
+
+    // --- آمار آزمون ---
     function renderExamsStats() {
         const container = document.getElementById('examsStats');
         container.innerHTML = '';
         
-        // حلقه روی تمام آزمون‌های تعریف شده
         Object.keys(META_EXAMS).forEach(eid => {
             const title = META_EXAMS[eid];
             let count = 0;
@@ -449,10 +468,9 @@
             const avg = count > 0 ? (sum / count).toFixed(1) : 0;
 
             const div = document.createElement('div');
-            div.className = 'card lesson-card'; // استفاده از کلاس lesson-card برای قابلیت کلیک
+            div.className = 'card lesson-card';
             div.style.borderRightColor = '#8e44ad';
             
-            // قابلیت باز شدن لیست
             div.onclick = function() {
                 const lc = this.querySelector('.student-list-container');
                 lc.style.display = (lc.style.display === 'none' || lc.style.display === '') ? 'block' : 'none';
@@ -464,11 +482,9 @@
                     <span class="badge" style="background:#8e44ad">${count} شرکت‌کننده</span>
                 </div>
                 <div style="margin-top:5px; font-size:0.9rem; color:#555;">میانگین: <b>${avg}</b></div>
-                
                 <div class="student-list-container">
                     <div style="color:#27ae60; font-weight:bold; margin-bottom:5px;">✅ شرکت‌کنندگان:</div>
                     <div style="color:#555; font-size:0.85rem; line-height:1.6;">${participants.length ? participants.join(' ، ') : '-'}</div>
-                    
                     <div style="color:#c0392b; font-weight:bold; margin-top:10px; margin-bottom:5px;">❌ غایبین:</div>
                     <div style="color:#7f8c8d; font-size:0.85rem; line-height:1.6;">${absents.length ? absents.join(' ، ') : '(همه شرکت کردند)'}</div>
                 </div>
@@ -477,7 +493,7 @@
         });
     }
 
-    // --- آمار درس‌ها ---
+    // --- آمار درس‌ها (با قابلیت حذف 🗑️) ---
     function renderLessonsStats() {
         const container = document.getElementById('lessonsStats');
         container.innerHTML = '';
@@ -499,14 +515,20 @@
             const div = document.createElement('div');
             div.className = 'card lesson-card';
             div.style.borderRightColor = '#e67e22';
-            div.onclick = function() {
+            
+            // جلوگیری از باز شدن لیست موقع زدن دکمه حذف
+            div.onclick = function(e) {
+                if(e.target.classList.contains('del-btn-lesson')) return;
                 const lc = this.querySelector('.student-list-container');
                 lc.style.display = (lc.style.display === 'none' || lc.style.display === '') ? 'block' : 'none';
             };
 
             div.innerHTML = `
-                <div style="display:flex; justify-content:space-between;">
-                    <strong>${title}</strong>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="del-btn-lesson" onclick="deleteLesson('${lid}', '${title}')" style="background:#fee; color:red; border:1px solid red; border-radius:5px; cursor:pointer; padding:2px 6px; font-size:0.8rem;">🗑️</button>
+                        <strong>${title}</strong>
+                    </div>
                     <span class="badge" style="background:#e67e22">${count} / ${ALL_USERS.length}</span>
                 </div>
                 <div style="background:#eee; height:8px; border-radius:4px; margin-top:10px;"><div style="background:#e67e22; width:${percent}%; height:100%;"></div></div>
