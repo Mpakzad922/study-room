@@ -6,26 +6,26 @@
     <title>سالن امتحانات چمران</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
-        body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; }
+        body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; user-select: none; }
         .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; }
         h2 { color: #2c3e50; margin: 0 0 15px 0; }
-        .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1.1rem; cursor: pointer; font-family: 'Vazirmatn'; width: 100%; transition: 0.2s; margin-top: 10px; font-weight: bold; }
         .btn-start { background: #8e44ad; color: white; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3); }
         .btn-next { background: #2980b9; color: white; }
         .btn-finish { background: #27ae60; color: white; display: none; }
         .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
         .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
         .exam-info h4 { margin: 0; color: #4a148c; }
-        .exam-info small { color: #7f8c8d; font-size: 0.8rem; }
+        .exam-info small { color: #7f8c8d; font-size: 0.85rem; }
         #examArea, #reportCard { display: none; }
-        .timer-box { font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 20px; width: 100px; }
-        .option { display: flex; align-items: center; justify-content: start; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; min-height: 40px; }
+        .timer-box { font-size: 1.8rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 5px 15px; border-radius: 10px; display: inline-block; margin-bottom: 10px; min-width: 80px; font-family: 'Vazirmatn'; }
+        .option { display: flex; align-items: center; justify-content: start; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; min-height: 40px; font-size: 1.1rem; }
         .option:hover { background: #e8f5e9; border-color: #a5d6a7; }
         .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; }
-        .option img { max-width: 100%; max-height: 120px; border-radius: 8px; margin: 5px 0; border: 1px solid #ddd; }
+        .option img { max-width: 100%; max-height: 150px; border-radius: 8px; margin: 5px 0; border: 1px solid #ddd; }
         #questionImage { width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px; margin-bottom: 15px; display: none; border: 1px solid #eee; }
-        .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem; color: #2ecc71; font-weight: bold; }
-        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .score-circle { width: 130px; height: 130px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2.5rem; color: #2ecc71; font-weight: bold; font-family: 'Vazirmatn'; }
+        .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 1rem; }
         #loading { color: #7f8c8d; margin-top: 20px; font-weight: bold; }
         #errorBox { color: red; background: #fee; padding: 10px; border-radius: 10px; display: none; margin-top: 10px; font-size: 0.9rem; text-align: right; direction: ltr; }
         .offline-notice { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem; display:none; }
@@ -38,7 +38,7 @@
         <h3 id="welcomeText">سالن امتحانات</h3>
         <p style="font-size: 0.9rem; color: #777;">آزمون مورد نظر را انتخاب کنید:</p>
         <div id="examList"></div>
-        <div id="loading">⏳ در حال اتصال به سرور...</div>
+        <div id="loading">⏳ در حال دریافت آزمون‌ها...</div>
         <div id="errorBox"></div>
         <button class="btn btn-back" onclick="window.location.href='index.html'">🔙 بازگشت به کلاس</button>
     </div>
@@ -49,7 +49,7 @@
             <div id="timer" class="timer-box">00:00</div>
         </div>
         <img id="questionImage" src="" alt="تصویر سوال">
-        <h3 id="questionText" style="text-align: right; line-height: 1.6; margin-bottom: 20px;">...</h3>
+        <h3 id="questionText" style="text-align: right; line-height: 1.8; margin-bottom: 20px; font-size: 1.2rem;">...</h3>
         <div id="optionsContainer"></div>
         <button id="btnNext" class="btn btn-next" onclick="nextQuestion()">سوال بعدی ➜</button>
         <button id="btnFinish" class="btn btn-finish" onclick="finishExam()">ثبت نهایی آزمون ✅</button>
@@ -58,40 +58,40 @@
     <div id="reportCard" class="card">
         <h2>📊 کارنامه آزمون</h2>
         <h3 id="reportTitle" style="color:#8e44ad;"></h3>
-        <div class="score-circle"><span id="scoreNum">0</span><span style="font-size:0.8rem;">نمره نهایی</span></div>
+        <div class="score-circle"><span id="scoreNum">0</span><span style="font-size:0.8rem; margin-top:-5px;">نمره</span></div>
         <div class="stat-row"><span>✅ پاسخ صحیح:</span><span id="statCorrect">0</span></div>
         <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
         <div class="stat-row"><span>⚪ بدون پاسخ:</span><span id="statEmpty">0</span></div>
         
         <div id="xpRewardMsg" style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold; display:none;">
-            🎉 جایزه: +<span id="xpAmount">0</span> امتیاز!
+            🎉 جایزه عملکرد عالی: +<span id="xpAmount">0</span> امتیاز!
         </div>
 
-        <div id="saveMsg" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem;">
-            نتیجه آزمون با موفقیت ثبت شد. ✅
+        <div id="saveMsg" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem;">
+            نتیجه در سرور ثبت شد. ✅
         </div>
         <div id="offlineMsg" class="offline-notice">
-            ⚠️ اینترنت قطع است! نمره شما در صف ارسال قرار گرفت.
+            ⚠️ اینترنت قطع است! نمره ذخیره شد و به محض اتصال ارسال می‌شود.
         </div>
-        <div id="offlineBadge" style="display:none; margin-top:10px; font-size:0.8rem; color:orange;"></div>
 
         <button class="btn btn-back" onclick="window.location.href='index.html'">بازگشت به کلاس</button>
     </div>
 
-    <script src="rank.js" onerror="alert('فایل rank.js یافت نشد!')"></script>
+    <script src="rank.js" onerror="alert('خطا: فایل rank.js یافت نشد! لطفا بررسی کنید.')"></script>
 
     <script>
         // ***********************************************
         // تنظیمات
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
-        // آدرس وب‌اپ خودت را اینجا بگذار (اگر در rank.js تعریف شده باشد از آنجا می‌خواند)
-        const REPORT_WEBAPP_URL_AZMOON = "https://script.google.com/macros/s/AKfycbx7Y3YavH825i9yzrX3UA5HP1vfrN4cnPWyAlHqk_imdnjj_wLabYGj3HTuuZcUCpSrjA/exec"; 
         const DB_KEY = "chamran_db_v20_"; 
         // ***********************************************
 
-        // تعریف متغیر گلوبال برای rank.js اگر تعریف نشده باشد
-        if(typeof REPORT_WEBAPP_URL === 'undefined') var REPORT_WEBAPP_URL = REPORT_WEBAPP_URL_AZMOON;
+        // تابع حیاتی برای تبدیل اعداد به فارسی
+        function toPersianNum(n) {
+            if (n === undefined || n === null) return "";
+            return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]);
+        }
 
         let currentUser = null;
         let examsMap = {}; 
@@ -101,8 +101,9 @@
         let userAnswers = {}; 
         let timerInterval; 
         let timeRemaining = 0;
+        let isExamActive = false; // برای جلوگیری از گزارش‌های اشتباه
 
-        // بررسی لاگین
+        // بررسی و لود اطلاعات
         function initAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
             if(!savedUser) { alert("لطفا ابتدا وارد کلاس شوید!"); window.location.href = 'index.html'; return; }
@@ -111,10 +112,9 @@
                 currentUser = JSON.parse(savedUser);
                 document.getElementById('welcomeText').innerText = `سلام ${currentUser.displayName} 👋`;
                 
-                // راه‌اندازی سیستم رنکینگ
                 if(typeof SyncManager !== 'undefined') {
                     SyncManager.init(currentUser.username, currentUser.password);
-                    RankSystem.init(currentUser.jsonData);
+                    RankSystem.init(currentUser.jsonData); // لود آخرین وضعیت از حافظه
                 }
             } catch(e) {
                 localStorage.removeItem(DB_KEY + 'creds');
@@ -129,7 +129,7 @@
                 const res = await fetch(url);
                 if(!res.ok) throw new Error(`خطای شبکه: ${res.status}`);
                 const text = await res.text();
-                if(!text || text.length < 10) throw new Error("فایل آزمون خالی است!");
+                if(!text || text.length < 10) throw new Error("لیست آزمون‌ها خالی است!");
                 parseExamCSV(text);
             } catch(e) {
                 console.error(e);
@@ -143,6 +143,7 @@
         function parseExamCSV(text) {
             const rows = text.split('\n');
             examsMap = {};
+            // پارسر پیشرفته CSV برای هندل کردن کاماهای داخل گیومه
             const parseLine = (line) => {
                 const result = []; let current = ''; let inQuote = false;
                 for (let i = 0; i < line.length; i++) {
@@ -158,7 +159,8 @@
                 const rowStr = rows[i].trim();
                 if(!rowStr) continue;
                 const col = parseLine(rowStr);
-                if(col[0] && !col[0].includes('EX-')) continue;
+                // فیلتر کردن هدرها و خطوط نامعتبر
+                if(col[0] && !col[0].includes('EX-')) continue; 
                 if(col.length < 11) continue; 
 
                 const exId = col[0].trim();
@@ -195,10 +197,13 @@
 
             ids.forEach(id => {
                 const exam = examsMap[id];
-                // چک کردن قفل بودن (از سیستم رنک + لوکال)
-                const takenLocal = localStorage.getItem('taken_' + id);
+                // چک کردن در حافظه ابری (برای هماهنگی بین دستگاه‌ها)
                 const takenCloud = RankSystem.data.exams && RankSystem.data.exams[id];
-                const isLocked = takenLocal || takenCloud;
+                // چک کردن در حافظه لوکال (برای اطمینان بیشتر)
+                const takenLocal = localStorage.getItem('taken_' + id);
+                
+                const isLocked = (takenCloud !== undefined) || takenLocal;
+                const scoreDisplay = takenCloud !== undefined ? takenCloud : 'ثبت شده';
                 
                 const btn = document.createElement('div');
                 btn.className = 'exam-item';
@@ -206,20 +211,24 @@
                 btn.style.background = isLocked ? '#f5f6fa' : '#fff';
                 
                 let btnHtml = '';
-                if(isLocked) btnHtml = `<span style="color:#7f8c8d; font-size:0.8rem;">🔒 نمره شما: ${takenCloud ? takenCloud : 'ثبت شده'}</span>`;
-                else {
+                if(isLocked) {
+                    btnHtml = `<span style="color:#7f8c8d; font-size:0.9rem; font-weight:bold;">🔒 نمره: ${toPersianNum(scoreDisplay)}</span>`;
+                } else {
                     const lockIcon = (exam.password && exam.password.length > 0) ? '🔑 ' : '';
                     btnHtml = `<button style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;" onclick="checkAndStart('${id}')">${lockIcon}شروع آزمون</button>`;
                 }
-                btn.innerHTML = `<div class="exam-info"><h4 style="${isLocked ? 'color:#7f8c8d':''}">${exam.title}</h4><small>⏱️ ${exam.duration} دقیقه</small></div>${btnHtml}`;
+                btn.innerHTML = `<div class="exam-info"><h4>${exam.title}</h4><small>⏱️ ${toPersianNum(exam.duration)} دقیقه</small></div>${btnHtml}`;
                 list.appendChild(btn);
             });
         }
 
         function checkAndStart(id) {
-            const exam = examsMap[id];
-            if(localStorage.getItem('taken_' + id) || (RankSystem.data.exams && RankSystem.data.exams[id])) return alert("⛔ شما قبلاً شرکت کرده‌اید.");
+            // دابل چک کردن قفل بودن
+            if((RankSystem.data.exams && RankSystem.data.exams[id] !== undefined) || localStorage.getItem('taken_' + id)) {
+                return alert("⛔ شما قبلاً در این آزمون شرکت کرده‌اید.");
+            }
             
+            const exam = examsMap[id];
             if(exam.password && exam.password.length > 0) {
                 const userPass = prompt("🔒 رمز آزمون را وارد کنید:");
                 if(userPass !== exam.password) return alert("❌ رمز اشتباه است.");
@@ -228,6 +237,7 @@
         }
 
         function startExam(id) {
+            isExamActive = true;
             currentExamId = id;
             currentQuestions = examsMap[id].questions;
             timeRemaining = parseInt(examsMap[id].duration) * 60;
@@ -238,7 +248,7 @@
             startTimer();
             showQuestion();
             
-            // گزارش شروع
+            // گزارش شروع (بدون نمره)
             SyncManager.addToQueue('report', {
                 lesson: `آزمون: ${examsMap[id].title}`,
                 status: 'شروع آزمون',
@@ -253,23 +263,25 @@
                 timeRemaining--;
                 const m = Math.floor(timeRemaining / 60);
                 const s = timeRemaining % 60;
-                timerDiv.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                timerDiv.innerText = toPersianNum(`${m}:${s < 10 ? '0'+s : s}`);
                 if(timeRemaining <= 0) { clearInterval(timerInterval); alert("⏰ زمان تمام شد!"); finishExam(); }
             }, 1000);
         }
 
         function renderContent(content) {
+            // تشخیص عکس یا متن
             if(content && (content.startsWith('http') || content.startsWith('data:image')) && 
               (content.includes('.jpg') || content.includes('.png') || content.includes('.jpeg') || content.includes('uupload'))) {
                 return `<img src="${content}" alt="option">`;
             }
-            return content;
+            // تبدیل اعداد انگلیسی متن به فارسی
+            return toPersianNum(content);
         }
 
         function showQuestion() {
             const q = currentQuestions[currentQIndex];
-            document.getElementById('qProgress').innerText = `سوال ${currentQIndex + 1} از ${currentQuestions.length}`;
-            document.getElementById('questionText').innerText = q.q;
+            document.getElementById('qProgress').innerText = `سوال ${toPersianNum(currentQIndex + 1)} از ${toPersianNum(currentQuestions.length)}`;
+            document.getElementById('questionText').innerText = toPersianNum(q.q);
             
             const qImg = document.getElementById('questionImage');
             if(q.img && q.img.length > 5) {
@@ -303,11 +315,14 @@
 
         function finishExam() {
             clearInterval(timerInterval);
+            isExamActive = false;
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
             
+            // 1. قفل کردن در لوکال
             localStorage.setItem('taken_' + currentExamId, 'done');
 
+            // 2. محاسبه نمره و جزئیات
             let correct = 0; let wrong = 0; let empty = 0;
             currentQuestions.forEach((q, idx) => {
                 const ans = userAnswers[idx];
@@ -315,47 +330,67 @@
             });
             
             const score = (correct / currentQuestions.length) * 20; 
-            const finalScore = parseFloat(score.toFixed(1));
+            const finalScore = parseFloat(score.toFixed(1)); // نمره رند شده (انگلیسی برای محاسبات)
             
+            // 3. نمایش کارنامه (فارسی)
             document.getElementById('reportTitle').innerText = examsMap[currentExamId].title;
-            document.getElementById('scoreNum').innerText = finalScore;
-            document.getElementById('statCorrect').innerText = correct;
-            document.getElementById('statWrong').innerText = wrong;
-            document.getElementById('statEmpty').innerText = empty;
+            document.getElementById('scoreNum').innerText = toPersianNum(finalScore);
+            document.getElementById('statCorrect').innerText = toPersianNum(correct);
+            document.getElementById('statWrong').innerText = toPersianNum(wrong);
+            document.getElementById('statEmpty').innerText = toPersianNum(empty);
             
-            // ذخیره نمره در پروفایل (برای هماهنگی ابری)
+            // 4. ذخیره نمره در پروفایل ابری (RankSystem)
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             RankSystem.data.exams[currentExamId] = finalScore;
             
-            // سیستم جایزه دهی
+            // 5. سیستم جایزه دهی
             let xpBonus = 0;
             if(finalScore >= 20) xpBonus = 300;
             else if(finalScore >= 17) xpBonus = 100;
             
             if(xpBonus > 0) {
-                RankSystem.addXP(xpBonus, `پاداش آزمون: ${examsMap[currentExamId].title}`, null); // null یعنی درس نیست، تکرار مهم نیست
+                // امتیاز جایزه را ثبت کن
+                RankSystem.addXP(xpBonus, `پاداش آزمون: ${examsMap[currentExamId].title}`, null);
                 document.getElementById('xpRewardMsg').style.display = 'block';
-                document.getElementById('xpAmount').innerText = xpBonus;
+                document.getElementById('xpAmount').innerText = toPersianNum(xpBonus);
             } else {
-                // اگر جایزه نگرفت، فقط ذخیره کن
+                // اگر جایزه نگرفت، فقط دیتا را ذخیره کن تا نمره در سرور بماند
                 RankSystem.saveToDisk();
             }
 
-            // ارسال گزارش نهایی به سرور (با متد جدید)
+            // 6. ارسال گزارش دقیق به سرور
+            const detailedStatus = `پایان آزمون (نمره: ${toPersianNum(finalScore)})`;
+            const detailedLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | ⚪ نزده: ${toPersianNum(empty)}`;
+
             SyncManager.addToQueue('report', {
                 lesson: `آزمون: ${examsMap[currentExamId].title}`,
-                status: `پایان آزمون (نمره: ${finalScore})`,
-                details: `صحیح: ${correct} | غلط: ${wrong} | نزده: ${empty}`,
+                status: detailedStatus,
+                details: detailedLog,
                 device: navigator.userAgent
             });
             
-            // نمایش وضعیت آفلاین
+            // 7. بررسی آفلاین بودن
             if(!navigator.onLine) {
                 document.getElementById('saveMsg').style.display = 'none';
                 document.getElementById('offlineMsg').style.display = 'block';
             }
         }
         
+        // ***********************************************
+        // امنیت و ضد تقلب (مشابه پلیر)
+        // ***********************************************
+        window.addEventListener('blur', () => {
+            if(isExamActive) {
+                SyncManager.addToQueue('report', {
+                    lesson: `آزمون: ${examsMap[currentExamId].title}`,
+                    status: '⚠️ رفتار مشکوک',
+                    details: 'خروج از صفحه آزمون (Minimizing)',
+                    device: navigator.userAgent
+                });
+            }
+        });
+
+        // لود آزمون‌ها در شروع
         loadExams();
     </script>
 </body>
