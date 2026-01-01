@@ -18,8 +18,20 @@
         #cheatAlert { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(231, 76, 60, 0.95); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
         
         /* استایل مودال عکس */
-        #screenCheckModal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        #videoElement { width: 100%; max-width: 300px; border-radius: 10px; margin-bottom: 10px; transform: scaleX(-1); /* آینه‌ای کردن دوربین */ border: 2px solid #fff; }
+        #screenCheckModal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.95); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        
+        /* استایل دوربین */
+        #videoElement { 
+            width: 100%; 
+            max-width: 320px; 
+            height: 240px; 
+            background: #000; 
+            border-radius: 15px; 
+            border: 2px solid #fff; 
+            object-fit: cover; 
+            transform: scaleX(-1); /* حالت آینه */
+            margin-bottom: 15px;
+        }
         #previewCanvas { display: none; }
     </style>
 </head>
@@ -34,14 +46,14 @@
 
     <div id="screenCheckModal">
         <div style="background: white; color: black; padding: 20px; border-radius: 15px; max-width: 350px; text-align: center; width: 90%;">
-            <h3>📸 احراز هویت تصویری</h3>
-            <p style="font-size: 0.9rem; color: #555;">برای شروع آزمون، سیستم یک عکس از چهره شما می‌گیرد.</p>
+            <h3>📸 احراز هویت</h3>
+            <p style="font-size: 0.8rem; color: #7f8c8d; margin-bottom:10px;">چهره خود را در کادر تنظیم کنید و دکمه ثبت را بزنید.</p>
             
-            <video id="videoElement" autoplay playsinline></video>
+            <video id="videoElement" autoplay playsinline muted></video>
             
-            <div id="uploadStatus" style="margin: 10px 0; font-weight: bold; font-size: 0.9rem;"></div>
+            <div id="uploadStatus" style="margin: 5px 0; font-weight: bold; font-size: 0.9rem; min-height: 20px;"></div>
             
-            <button id="btnCapture" class="btn" style="background: #2980b9; color: white;" onclick="captureCamera()">📷 گرفتن عکس و شروع</button>
+            <button id="btnCapture" class="btn" style="background: #2980b9; color: white;" onclick="captureAndSend()">📸 ثبت عکس و ورود</button>
             <button class="btn" style="background: #95a5a6; color: white; margin-top:5px" onclick="cancelScreen()">انصراف</button>
         </div>
     </div>
@@ -94,7 +106,7 @@
 
         let examsMap = {}; let currentExamId = null; let currentQuestions = []; let currentQIndex = 0; let userAnswers = {}; let timerInterval; let timeRemaining = 0;
         let cheatCount = 0; let isExamActive = false; let capturedScreenUrl = "";
-        let streamObj = null; // برای مدیریت دوربین
+        let streamObj = null;
 
         function getDeviceSignature() { return navigator.userAgent + "||" + window.screen.width + "x" + window.screen.height; }
 
@@ -106,55 +118,63 @@
         });
         function closeCheatAlert() { document.getElementById('cheatAlert').style.display = 'none'; }
 
-        // --- سیستم دوربین (Selfie) ---
+        // --- باز کردن دوربین (Live Preview) ---
         async function openCamera() {
             const statusDiv = document.getElementById('uploadStatus');
-            const btn = document.getElementById('btnCapture');
             const video = document.getElementById('videoElement');
-            
+            const btn = document.getElementById('btnCapture');
+
             try {
-                statusDiv.innerText = "⏳ در حال روشن کردن دوربین...";
+                // ریست کردن وضعیت
+                statusDiv.innerText = "⏳ دوربین در حال فعال‌سازی...";
                 btn.disabled = true;
-                
-                // درخواست دوربین جلو (user)
+                btn.style.opacity = "0.5";
+
+                // درخواست دوربین
                 streamObj = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = streamObj;
                 
-                statusDiv.innerText = "";
-                btn.disabled = false;
-                
+                // وقتی ویدیو لود شد، دکمه فعال شود
+                video.onloadedmetadata = () => {
+                    statusDiv.innerText = "✅ دوربین آماده است.";
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                };
+
             } catch (err) {
                 console.error(err);
-                statusDiv.innerHTML = "<span style='color:red'>دسترسی به دوربین داده نشد!<br>لطفاً در تنظیمات مرورگر اجازه دهید.</span>";
-                alert("برای شرکت در آزمون باید دسترسی دوربین را فعال کنید.");
+                statusDiv.innerHTML = "<span style='color:red'>دسترسی به دوربین داده نشد!</span>";
+                alert("لطفاً دسترسی دوربین را در مرورگر فعال کنید.");
             }
         }
 
-        async function captureCamera() {
+        // --- گرفتن عکس از تصویر زنده و ارسال ---
+        async function captureAndSend() {
             const statusDiv = document.getElementById('uploadStatus');
             const btn = document.getElementById('btnCapture');
             const video = document.getElementById('videoElement');
             const canvas = document.getElementById('previewCanvas');
 
-            if (!streamObj) return alert("دوربین فعال نیست!");
+            if (!streamObj) return;
 
             try {
-                // عکس گرفتن
+                // 1. فریز کردن دکمه‌ها
+                btn.innerText = "⏳ در حال ارسال...";
+                btn.disabled = true;
+
+                // 2. کشیدن فریم فعلی ویدیو روی بوم نقاشی
                 canvas.width = video.videoWidth; 
                 canvas.height = video.videoHeight;
                 canvas.getContext('2d').drawImage(video, 0, 0);
-                
-                // خاموش کردن دوربین
-                streamObj.getTracks().forEach(track => track.stop());
-                
-                // آپلود
-                statusDiv.innerText = "⏳ در حال آپلود تصویر...";
-                btn.innerText = "لطفا صبر کنید...";
-                btn.disabled = true;
 
+                // 3. خاموش کردن دوربین (صرفه‌جویی)
+                streamObj.getTracks().forEach(track => track.stop());
+
+                // 4. تبدیل به داده عکس
                 const base64Img = canvas.toDataURL('image/jpeg', 0.6);
+
+                // 5. ارسال به سرور
                 const data = { action: 'upload_image', name: currentUser, image: base64Img };
-                
                 const res = await fetch(REPORT_WEBAPP_URL, { method: 'POST', body: JSON.stringify(data) });
                 const url = await res.text();
 
@@ -166,10 +186,10 @@
 
             } catch (err) {
                 console.error(err);
-                statusDiv.innerText = "❌ خطا در آپلود. دوباره تلاش کنید.";
+                statusDiv.innerText = "❌ خطا. دوباره تلاش کنید.";
                 btn.disabled = false;
                 btn.innerText = "📷 تلاش مجدد";
-                openCamera(); // دوباره دوربین را روشن کن
+                openCamera(); // روشن کردن دوباره دوربین
             }
         }
 
@@ -178,7 +198,7 @@
             document.getElementById('screenCheckModal').style.display = 'none'; 
         }
 
-        // --- سایر توابع آزمون ---
+        // --- توابع آزمون (بدون تغییر) ---
         async function loadExams() {
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
@@ -237,7 +257,7 @@
                 if(p !== exam.password) return alert("❌ رمز اشتباه است.");
             }
             
-            // باز کردن مودال و روشن کردن دوربین
+            // نمایش مودال و باز کردن دوربین
             document.getElementById('screenCheckModal').style.display = 'flex';
             openCamera();
         }
