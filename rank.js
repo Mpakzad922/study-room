@@ -1,5 +1,5 @@
 // ********************************************
-// 🎮 فایل کمکی: rank.js (نسخه نهایی با هماهنگی زمان فیلم)
+// 🎮 فایل هسته: rank.js (نسخه اصلاح شده - سینک دوطرفه)
 // ********************************************
 
 const RankSystem = {
@@ -11,66 +11,69 @@ const RankSystem = {
         { min: 5000, title: "💎 اسطوره", color: "#c0392b" }
     ],
 
-    // دیتای پیش‌فرض
     data: {
         xp: 0,
         rank: "🐣 نوآموز",
         completed: [], 
-        playback: {}, // [جدید] محل ذخیره آخرین زمان مشاهده هر درس
+        playback: {}, 
         exams: {} 
     },
 
-    STORAGE_KEY: 'chamran_local_rank_v1',
+    STORAGE_KEY: 'chamran_local_rank_v2', // تغییر ورژن برای پاکسازی کش قبلی
 
+    // 1. شروع سیستم: اولویت با سرور است (برای حل مشکل سینک و بازنشانی)
     init: function(serverJson) {
-        // 1. خواندن از لوکال
-        const localData = localStorage.getItem(this.STORAGE_KEY);
-        if (localData) {
-            try { this.data = JSON.parse(localData); } catch (e) {}
-        }
-
-        // 2. ادغام با سرور (اگر سرور دیتای بهتری دارد)
+        let serverData = {};
+        
+        // تلاش برای خواندن دیتای سرور
         if(serverJson && serverJson !== "{}") {
             try {
-                const serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson;
-                
-                // ادغام XP (هرکدام بیشتر بود)
-                if ((serverData.xp || 0) > this.data.xp) {
-                    this.data.xp = serverData.xp;
-                    this.data.rank = serverData.rank;
-                    this.data.completed = serverData.completed || [];
-                }
-                
-                // ادغام زمان فیلم‌ها (playback)
-                // اگر سرور دیتای playback داشت، آن را با دیتای لوکال ترکیب کن
-                if(serverData.playback) {
-                    this.data.playback = { ...this.data.playback, ...serverData.playback };
-                }
-                
-                this.saveToDisk();
-            } catch(e) { console.error("Server Parse Error", e); }
+                serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson;
+            } catch(e) { console.error("Server JSON Error", e); }
         }
-        
+
+        // اگر دیتای سرور معتبر بود، آن را جایگزین دیتای لوکال کن (سینک اجباری)
+        if (serverData && (serverData.xp !== undefined || serverData.exams)) {
+            this.data = {
+                xp: serverData.xp || 0,
+                rank: serverData.rank || "🐣 نوآموز",
+                completed: serverData.completed || [],
+                playback: serverData.playback || {},
+                exams: serverData.exams || {}
+            };
+            this.saveToDisk(); // ذخیره در گوشی جدید
+        } else {
+            // اگر سرور خالی بود (کاربر جدید)، از لوکال بخوان
+            const localData = localStorage.getItem(this.STORAGE_KEY);
+            if (localData) {
+                try { this.data = JSON.parse(localData); } catch (e) {}
+            }
+        }
+
         this.updateUI();
         setTimeout(() => this.refreshListUI(), 500);
     },
 
-    // تابع جدید: ذخیره آخرین ثانیه مشاهده
+    // 2. ذخیره پوزیشن فیلم (با ارسال سریعتر به سرور)
     savePosition: function(id, time) {
         const sId = id.toString();
-        // فقط زمان‌های بیشتر را ذخیره کن (که عقبگرد نداشته باشیم)
-        const oldTime = this.data.playback[sId] || 0;
-        if(time > oldTime) {
+        // فقط اگر زمان جلوتر رفته ذخیره کن
+        if(time > (this.data.playback[sId] || 0)) {
             this.data.playback[sId] = Math.floor(time);
             this.saveToDisk();
+            
+            // [مهم] هر 1 دقیقه یکبار وضعیت را به سرور بفرست تا اگر گوشی عوض شد، جا نماند
+            if(Math.floor(time) % 60 === 0) {
+                 SyncManager.addToQueue('sync'); 
+            }
         }
     },
 
-    // تابع جدید: دریافت آخرین ثانیه برای پخش
     getLastPosition: function(id) {
         return this.data.playback[id.toString()] || 0;
     },
 
+    // 3. افزودن امتیاز و تکمیل (سینک فوری)
     addXP: function(amount, reason, uniqueId) {
         const sId = uniqueId.toString();
         if(uniqueId && this.data.completed.includes(sId)) return;
@@ -86,17 +89,16 @@ const RankSystem = {
         this.showToast(`⭐ +${amount} امتیاز: ${reason}`);
         this.saveToDisk();
         
+        // ارسال فوری تغییرات مهم به سرور
         SyncManager.addToQueue('report', {
             lesson: reason,
-            status: 'کسب امتیاز',
+            status: 'کسب امتیاز / تکمیل',
             details: `مجموع XP: ${this.data.xp}`,
             device: this.getDevice()
         });
     },
 
     saveToDisk: function() {
-        // اطمینان از اینکه playback وجود دارد
-        if(!this.data.playback) this.data.playback = {};
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
     },
 
@@ -109,9 +111,8 @@ const RankSystem = {
             }
         }
         if(this.data.rank !== currentRankTitle) {
-            const oldRank = this.data.rank;
             this.data.rank = currentRankTitle;
-            alert(`🎉 تبریک!\nشما از "${oldRank}" به درجه "${currentRankTitle}" ارتقا یافتید!`);
+            alert(`🎉 تبریک!\nشما به درجه "${currentRankTitle}" ارتقا یافتید!`);
             this.saveToDisk();
         }
     },
@@ -139,7 +140,7 @@ const RankSystem = {
 };
 
 // ********************************************
-// 📡 مدیریت صف ارسال
+// 📡 مدیریت صف ارسال (با قابلیت اطمینان بالا)
 // ********************************************
 const SyncManager = {
     queue: [],
@@ -149,33 +150,42 @@ const SyncManager = {
     init: function(user, pass) {
         this.username = user;
         this.password = pass;
-        this.queue = JSON.parse(localStorage.getItem('chamran_queue_v2') || "[]");
+        this.queue = JSON.parse(localStorage.getItem('chamran_queue_v3') || "[]");
         this.processQueue();
-        setInterval(() => this.syncProfile(), 60000);
+        // سینک دوره‌ای هر 30 ثانیه برای اطمینان از ذخیره شدن فیلم
+        setInterval(() => this.syncProfile(), 30000);
     },
 
     addToQueue: function(action, logData = null) {
+        // همیشه آخرین نسخه دیتا را بفرست
         const item = {
             action: action,
             username: this.username,
             password: this.password,
-            jsonData: JSON.stringify(RankSystem.data),
+            jsonData: JSON.stringify(RankSystem.data), // ارسال آخرین وضعیت
             logData: logData,
             timestamp: Date.now()
         };
-        this.queue.push(item);
+        
+        // جلوگیری از تکرار درخواست‌های sync پشت سر هم
+        if(action === 'sync' && this.queue.length > 0 && this.queue[this.queue.length-1].action === 'sync') {
+             this.queue[this.queue.length-1] = item; // آپدیت قبلی
+        } else {
+             this.queue.push(item);
+        }
+        
         this.saveQueue();
         this.processQueue();
     },
 
     saveQueue: function() {
-        localStorage.setItem('chamran_queue_v2', JSON.stringify(this.queue));
+        localStorage.setItem('chamran_queue_v3', JSON.stringify(this.queue));
         const badge = document.getElementById('offlineBadge');
         if(badge) {
             if(this.queue.length > 0) {
                 badge.style.display = 'block';
-                badge.innerText = `📡 ${toPersianNum(this.queue.length)} گزارش در صف...`;
-                badge.style.background = navigator.onLine ? "#f39c12" : "#c0392b";
+                badge.innerText = `📡 در حال ذخیره...`;
+                badge.style.background = navigator.onLine ? "#27ae60" : "#c0392b";
             } else {
                 badge.style.display = 'none';
             }
@@ -187,20 +197,22 @@ const SyncManager = {
     processQueue: function() {
         if(this.queue.length === 0 || !navigator.onLine) return;
         const item = this.queue[0];
-        item.jsonData = JSON.stringify(RankSystem.data); // آپدیت لحظه‌ای
+        
+        // آپدیت لحظه‌ای دیتا قبل از ارسال
+        item.jsonData = JSON.stringify(RankSystem.data); 
 
         if(typeof REPORT_WEBAPP_URL === 'undefined') return;
 
         fetch(REPORT_WEBAPP_URL, {
             method: 'POST',
-            mode: 'no-cors',
+            mode: 'no-cors', // برای سرعت بیشتر
             body: JSON.stringify(item),
             headers: { 'Content-Type': 'text/plain' }
         })
         .then(() => {
             this.queue.shift();
             this.saveQueue();
-            if(this.queue.length > 0) setTimeout(() => this.processQueue(), 500);
+            if(this.queue.length > 0) setTimeout(() => this.processQueue(), 1000);
         })
         .catch(err => console.log("Offline", err));
     }
