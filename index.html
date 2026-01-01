@@ -362,6 +362,7 @@
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
             document.getElementById('videoTitle').innerText = item.title;
+            // بررسی تکمیل از دیتای ابری
             isDone = RankSystem.data.completed.includes(item.id.toString());
             
             vid.src = item.file;
@@ -385,7 +386,7 @@
                 });
             }
 
-            // [اصلاح شده] اولویت با دیتای ابری است، بعد لوکال
+            // [مهم] اولویت با دیتای ابری است، بعد لوکال
             const cloudTime = RankSystem.getLastPosition(item.id);
             const localTime = parseFloat(localStorage.getItem(`${DB_KEY}${currentUser.username}_time_${item.id}`) || 0);
             maxTime = Math.max(cloudTime, localTime);
@@ -457,12 +458,27 @@
             lastActivityTime = Date.now(); 
         }
 
+        // [مهم] گزارش‌دهی هوشمند بر اساس سوابق قبلی
         function checkAndReport(statusMsg, forceSend) {
             if (!activeVid) return;
+            
+            // چک کن آیا قبلاً تمام کرده؟
+            const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
+            const currentMin = Math.floor(vid.currentTime/60);
+            
+            let finalStatus = statusMsg;
+            let finalDetails = `دقیقه ${currentMin}`;
+            
+            // اگر قبلا دیده، پیام را عوض کن که معلم بفهمد
+            if(isDonePreviously) {
+                finalStatus = statusMsg + " (قبلاً تکمیل شده ✅)";
+                finalDetails = `بازبینی مجدد | موقعیت فعلی: دقیقه ${currentMin}`;
+            }
+
             SyncManager.addToQueue('report', {
                 lesson: activeVid.title,
-                status: statusMsg,
-                details: `زمان ویدیو: ${Math.floor(vid.currentTime)} ثانیه`,
+                status: finalStatus,
+                details: finalDetails,
                 device: getDeviceInfo()
             });
         }
@@ -490,12 +506,16 @@
             }
         });
 
+        // خروج اضطراری (هوشمند)
         window.addEventListener('beforeunload', (e) => {
-            if (activeVid && !isDone) {
+            if (activeVid) {
+                const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
+                const statusText = isDonePreviously ? "⛔ خروج ناگهانی (قبلاً تکمیل شده)" : "⛔ خروج ناگهانی (بستن برنامه)";
+                
                 const data = {
                     lesson: activeVid.title,
-                    status: "⛔ خروج ناگهانی (بستن برنامه)",
-                    details: `در دقیقه ${Math.floor(vid.currentTime/60)} برنامه بسته شد`,
+                    status: statusText,
+                    details: `در دقیقه ${Math.floor(vid.currentTime/60)} بسته شد`,
                     device: getDeviceInfo(),
                     timestamp: Date.now()
                 };
