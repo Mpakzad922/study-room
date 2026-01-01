@@ -374,14 +374,15 @@
                 RankSystem.saveToDisk();
             }
 
-            const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | ⚪ نزده: ${toPersianNum(empty)}`;
+// در تابع finishExam در azmoon.html
+const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | نمره: ${toPersianNum(finalScore)}`;
             
-            SyncManager.addToQueue('report', {
-                lesson: `آزمون: ${examsMap[currentExamId].title}`,
-                status: `پایان آزمون (نمره: ${toPersianNum(finalScore)})`,
-                details: detailLog,
-                device: getDeviceInfo()
-            });
+SyncManager.addToQueue('report', {
+    lesson: `آزمون: ${examsMap[currentExamId].title}`,
+    status: `پایان آزمون (نمره: ${toPersianNum(finalScore)})`,
+    details: detailLog, // <--- این متغیر حتما باید پر شده باشد
+    device: getDeviceInfo()
+});
             
             if(!navigator.onLine) {
                 document.getElementById('saveMsg').style.display = 'none';
@@ -432,4 +433,5 @@
     </script>
 </body>
 </html>
+
 
