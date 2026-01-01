@@ -11,24 +11,20 @@
         :root { --primary: #2c3e50; --accent: #e67e22; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         
-        /* استایل کارت‌ها */
         .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
         .card.show-content { opacity: 1; }
         .active { display: block; }
 
-        /* استایل پنل کاربری */
         .user-panel { background: #2c3e50; color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3); position: relative; overflow: hidden; }
         .user-panel::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent); animation: shinePanel 5s infinite; }
         @keyframes shinePanel { 0% {transform: translateX(-100%);} 100% {transform: translateX(100%);} }
         .rank-badge { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; margin-top: 5px; display: inline-block; }
         
-        /* استایل آیتم‌های ویدیو */
         .video-item { background: #fff; border: 2px solid #f1f2f6; border-radius: 15px; margin-bottom: 15px; padding: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; text-align: right; }
         .video-item:active { transform: scale(0.98); border-color: var(--accent); }
         .video-item.done { border-color: var(--success); background: #f0fdf4; }
         .video-icon { font-size: 1.5rem; background: #f1f2f6; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--primary); }
         
-        /* دکمه‌ها و اینپوت‌ها */
         .logout-btn { font-size: 0.75rem; color: var(--danger); background: #ffebee; padding: 4px 10px; border-radius: 8px; cursor: pointer; border: 1px solid var(--danger); display: inline-block; margin-top: 5px; }
         input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #dfe6e9; border-radius: 15px; text-align: center; font-family: 'Montserrat', 'Vazirmatn'; font-size: 1.1rem; outline: none; box-sizing: border-box; }
         input:focus { border-color: var(--accent); }
@@ -41,14 +37,12 @@
         .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
         .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; }
         
-        /* دانلود باکس */
         #downloadContainer { margin-top: 20px; display: grid; gap: 10px; }
         .download-btn { background: #fff; color: #34495e; text-decoration: none; padding: 12px 15px; border-radius: 12px; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; border: 2px solid #ecf0f1; transition: 0.3s; }
         .dl-icon { font-size: 1.2rem; margin-left: 10px; }
         .dl-text { font-weight: bold; }
         .dl-arrow { color: var(--accent); font-size: 0.8rem; }
         
-        /* مودال امنیتی */
         #securityModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column; }
         .security-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; border: 4px solid var(--primary); }
         .math-question { font-size: 2rem; font-weight: bold; color: var(--primary); margin: 20px 0; direction: ltr; font-family: 'Vazirmatn', sans-serif; }
@@ -60,7 +54,6 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .fullscreen-btn { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin-top: 5px; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 
-        /* انیمیشن و امضا */
         #intro-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         #intro-overlay.move-down { top: 85%; transform: scale(0.6); opacity: 0; pointer-events: none; }
         .signature-container { text-align: center; direction: ltr; }
@@ -213,29 +206,19 @@
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
 
-// ***********************************************
-        // بخش بررسی ورود + آپدیت هوشمند از سرور
-        // ***********************************************
         function checkAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
             if(savedUser) {
                 try {
                     const creds = JSON.parse(savedUser);
                     currentUser = creds;
-                    
-                    // 1. نمایش فوری اطلاعات موجود در گوشی (برای اینکه کاربر معطل نشود)
                     SyncManager.init(creds.username, creds.password);
                     RankSystem.init(creds.jsonData);
                     document.getElementById('displayName').innerText = creds.displayName;
                     showScreen('screen-library');
                     fetchPlaylist();
-
-                    // 2. [جدید] دریافت آخرین وضعیت از گوگل شیت در پس‌زمینه
-                    // این باعث می‌شود اگر با گوشی دیگری امتیاز گرفته باشد، اینجا هم آپدیت شود
                     performSilentSync(creds.username, creds.password);
-
                 } catch(e) {
-                    // اگر فایل خراب بود، برو به لاگین
                     showScreen('screen-login');
                 }
             } else {
@@ -243,30 +226,21 @@
             }
         }
 
-        // تابع جدید: دریافت مخفیانه اطلاعات از سرور بدون مزاحمت برای کاربر
         async function performSilentSync(u, p) {
             try {
-                if(!navigator.onLine) return; // اگر اینترنت نیست، کاری نکن
-                
+                if(!navigator.onLine) return;
                 const res = await fetch(REPORT_WEBAPP_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'login', username: u, password: p })
                 });
                 const data = await res.json();
-                
                 if(data.status === 'success') {
-                    console.log("📥 آپدیت از سرور دریافت شد:", data.jsonData);
-                    
-                    // تزریق اطلاعات جدید به سیستم رنکینگ
+                    console.log("📥 Sync Update:", data.jsonData);
                     RankSystem.init(data.jsonData);
-                    
-                    // آپدیت کردن کارت شناسایی در حافظه گوشی
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
                 }
-            } catch(e) {
-                console.log("خطا در آپدیت مخفی (اشکالی ندارد، آفلاین کار میکند)");
-            }
+            } catch(e) {}
         }
 
         async function performLogin() {
@@ -291,11 +265,9 @@
                 if(data.status === 'success') {
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
-                    
                     currentUser = userData;
                     SyncManager.init(u, p);
                     RankSystem.init(data.jsonData);
-                    
                     document.getElementById('displayName').innerText = data.displayName;
                     showScreen('screen-library');
                     fetchPlaylist();
@@ -305,7 +277,6 @@
             } catch(e) {
                 msg.innerText = "خطا در اتصال به اینترنت. لطفا آنلاین شوید.";
             }
-            
             btn.classList.remove('btn-loading');
             btn.innerText = "ورود امن 🔐";
         }
@@ -327,7 +298,6 @@
         async function fetchPlaylist() {
             playlist = [];
             if (typeof LOCAL_PLAYLIST !== 'undefined' && Array.isArray(LOCAL_PLAYLIST)) {
-                console.log("Loading form Local data.js...");
                 playlist = [...LOCAL_PLAYLIST]; 
             }
             try {
@@ -415,11 +385,21 @@
                 });
             }
 
-            const savedTime = localStorage.getItem(`${DB_KEY}${currentUser.username}_time_${item.id}`);
-            maxTime = savedTime ? parseFloat(savedTime) : 0;
+            // [اصلاح شده] اولویت با دیتای ابری است، بعد لوکال
+            const cloudTime = RankSystem.getLastPosition(item.id);
+            const localTime = parseFloat(localStorage.getItem(`${DB_KEY}${currentUser.username}_time_${item.id}`) || 0);
+            maxTime = Math.max(cloudTime, localTime);
             nextCheckTime = maxTime + CHECK_INTERVAL; 
             
             showScreen('screen-player');
+            
+            // اگر قبلاً تمام کرده، نوار را پر نشان بده
+            if(isDone) {
+                 document.getElementById('progressBar').style.width = "100%";
+                 document.getElementById('viewPercent').innerText = "۱۰۰٪";
+                 document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
+            }
+            
             if(maxTime > 5 && !isDone) {
                 if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = maxTime;
             }
@@ -442,7 +422,6 @@
             else alert("مرورگر شما اجازه تمام صفحه نمی‌دهد.");
         }
 
-        // سوال امنیتی ریاضی
         function triggerSecurityCheck() {
             vid.pause();
             const n1 = Math.floor(Math.random()*10)+1; const n2 = Math.floor(Math.random()*10)+1;
@@ -478,7 +457,6 @@
             lastActivityTime = Date.now(); 
         }
 
-        // تابع کمکی برای ارسال گزارش سریع
         function checkAndReport(statusMsg, forceSend) {
             if (!activeVid) return;
             SyncManager.addToQueue('report', {
@@ -489,17 +467,11 @@
             });
         }
 
-        // ***********************************************
-        // 🛡️ بخش امنیت و گزارش‌گیری پیشرفته (Super Watchdog)
-        // ***********************************************
-
-        // 1. لیسنر اتصال اینترنت
         window.addEventListener('online', () => {
-            if(typeof processOfflineQueue === 'function') processOfflineQueue(); // جلوگیری از ارور اگر هنوز لود نشده
+            if(typeof processOfflineQueue === 'function') processOfflineQueue(); 
             else if(typeof SyncManager !== 'undefined') SyncManager.processQueue();
         });
 
-        // 2. تشخیص باز کردن برنامه دیگر روی فیلم (Focus Loss)
         window.addEventListener('blur', () => {
             if (activeVid && !vid.paused && !isDone) {
                 vid.pause();
@@ -507,10 +479,8 @@
             }
         });
 
-        // 3. تشخیص رفتن به تب دیگر یا مینییمایز کردن (Visibility)
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
-            
             if (document.visibilityState === 'hidden') {
                 vid.pause();
                 checkAndReport("⛔ توقف/خروج (مینیمایز)", true);
@@ -520,7 +490,6 @@
             }
         });
 
-        // 4. تشخیص بستن کامل برنامه یا دکمه ضربدر (The Killer Switch)
         window.addEventListener('beforeunload', (e) => {
             if (activeVid && !isDone) {
                 const data = {
@@ -530,21 +499,18 @@
                     device: getDeviceInfo(),
                     timestamp: Date.now()
                 };
-                // ذخیره مستقیم در صف لوکال استوریج (چون آبجکت SyncManager شاید از بین رفته باشد)
                 let q = JSON.parse(localStorage.getItem('chamran_queue_v2') || "[]");
                 q.push(data);
                 localStorage.setItem('chamran_queue_v2', JSON.stringify(q));
             }
         });
 
-        // 5. دکمه بازگشت موبایل (اصلاح شده)
         window.addEventListener('popstate', function(event) {
             if (document.getElementById('screen-player').classList.contains('active')) {
                 closePlayer(); 
             }
         });
 
-        // 6. تایمر هوشمند عدم فعالیت (اخطار خواب آلودگی)
         setInterval(() => {
             if (!activeVid || isDone || vid.paused) return; 
             const timeDiff = (Date.now() - lastActivityTime) / 1000;
@@ -554,10 +520,11 @@
             }
         }, 5000);
 
-        // 7. لاجیک آپدیت زمان و تکمیل درس
         vid.addEventListener('timeupdate', () => {
             if(!vid.seeking && vid.currentTime > maxTime) {
                 maxTime = vid.currentTime;
+                // ذخیره زمان در دیتای ابری
+                RankSystem.savePosition(activeVid.id, maxTime);
                 localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
                 lastActivityTime = Date.now();
                 idleReportSent = false; 
@@ -578,7 +545,6 @@
             }
         });
 
-        // 8. جلوگیری از جلو زدن
         vid.addEventListener('seeking', () => {
             if(!isDone && vid.currentTime > maxTime + 3) {
                 vid.currentTime = maxTime;
@@ -589,4 +555,3 @@
     </script>
 </body>
 </html>
-
