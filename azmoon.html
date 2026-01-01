@@ -9,30 +9,35 @@
         body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; }
         .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; }
         h2 { color: #2c3e50; margin: 0 0 15px 0; }
+        
         .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn-start { background: #8e44ad; color: white; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3); }
+        .btn-next { background: #2980b9; color: white; }
+        .btn-finish { background: #27ae60; color: white; display: none; }
+        .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
+
         .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
+        .exam-info h4 { margin: 0; color: #4a148c; }
+        .exam-info small { color: #7f8c8d; font-size: 0.8rem; }
+        
+        #examArea, #reportCard { display: none; }
+        .timer-box { font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px; display: inline-block; margin-bottom: 20px; width: 100px; }
+        
+        /* استایل گزینه ها (متن و عکس) */
         .option { display: flex; align-items: center; justify-content: start; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; min-height: 40px; }
+        .option:hover { background: #e8f5e9; border-color: #a5d6a7; }
         .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; }
         .option img { max-width: 100%; max-height: 120px; border-radius: 8px; margin: 5px 0; }
+        
+        /* استایل عکس سوال */
         #questionImage { width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px; margin-bottom: 15px; display: none; }
+
+        /* استایل هشدار تقلب (خروج از صفحه) */
         #cheatAlert { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(231, 76, 60, 0.95); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
-        
-        /* استایل مودال عکس */
-        #screenCheckModal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.95); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        
-        /* استایل دوربین */
-        #videoElement { 
-            width: 100%; 
-            max-width: 320px; 
-            height: 240px; 
-            background: #000; 
-            border-radius: 15px; 
-            border: 2px solid #fff; 
-            object-fit: cover; 
-            transform: scaleX(-1);
-            margin-bottom: 15px;
-        }
-        #previewCanvas { display: none; }
+
+        .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem; color: #2ecc71; font-weight: bold; }
+        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        #loading { color: #7f8c8d; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -40,24 +45,9 @@
     <div id="cheatAlert">
         <div style="font-size: 4rem;">⚠️</div>
         <h2>هشدار خروج از آزمون!</h2>
-        <p>شما از صفحه خارج شدید. این تخلف ثبت شد.</p>
-        <button class="btn" style="background: white; color: #c0392b; max-width: 200px;" onclick="closeCheatAlert()">بازگشت</button>
+        <p>شما از صفحه آزمون خارج شدید. این تخلف ثبت شد.</p>
+        <button class="btn" style="background: white; color: #c0392b; max-width: 200px;" onclick="closeCheatAlert()">بازگشت به آزمون</button>
     </div>
-
-    <div id="screenCheckModal">
-        <div style="background: white; color: black; padding: 20px; border-radius: 15px; max-width: 350px; text-align: center; width: 90%;">
-            <h3>📸 احراز هویت</h3>
-            <p style="font-size: 0.8rem; color: #7f8c8d; margin-bottom:10px;">چهره خود را تنظیم کنید و دکمه ثبت را بزنید.</p>
-            
-            <video id="videoElement" autoplay playsinline muted></video>
-            
-            <div id="uploadStatus" style="margin: 5px 0; font-weight: bold; font-size: 0.9rem; min-height: 20px;"></div>
-            
-            <button id="btnCapture" class="btn" style="background: #2980b9; color: white;" onclick="captureAndSend()">📸 ثبت عکس و ورود</button>
-            <button class="btn" style="background: #95a5a6; color: white; margin-top:5px" onclick="cancelScreen()">انصراف</button>
-        </div>
-    </div>
-    <canvas id="previewCanvas"></canvas>
 
     <div id="lobby" class="card">
         <div style="font-size: 3rem; margin-bottom: 10px;">📝</div>
@@ -65,40 +55,42 @@
         <p style="font-size: 0.9rem; color: #777;">آزمون مورد نظر را انتخاب کنید:</p>
         <div id="examList"></div>
         <div id="loading">⏳ در حال دریافت لیست آزمون‌ها...</div>
-        <button class="btn" style="background:#95a5a6;color:white;margin-top:20px" onclick="window.location.href='index.html'">🔙 بازگشت</button>
+        <button class="btn btn-back" onclick="window.location.href='index.html'">🔙 بازگشت به کلاس</button>
     </div>
 
-    <div id="examArea" class="card" style="display:none; max-width: 600px;">
+    <div id="examArea" class="card" style="max-width: 600px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <span id="qProgress" style="font-size: 0.9rem; color: #7f8c8d;">سوال ۱ از ۱۰</span>
-            <div id="timer" style="font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px;">00:00</div>
+            <div id="timer" class="timer-box">00:00</div>
         </div>
+        
         <img id="questionImage" src="" alt="تصویر سوال">
         <h3 id="questionText" style="text-align: right; line-height: 1.6; margin-bottom: 20px;">...</h3>
         <div id="optionsContainer"></div>
-        <button id="btnNext" class="btn" style="background:#2980b9;color:white" onclick="nextQuestion()">سوال بعدی ➜</button>
-        <button id="btnFinish" class="btn" style="background:#27ae60;color:white;display:none" onclick="finishExam()">ثبت نهایی آزمون ✅</button>
+        
+        <button id="btnNext" class="btn btn-next" onclick="nextQuestion()">سوال بعدی ➜</button>
+        <button id="btnFinish" class="btn btn-finish" onclick="finishExam()">ثبت نهایی آزمون ✅</button>
     </div>
 
-    <div id="reportCard" class="card" style="display:none">
-        <h2>📊 کارنامه</h2>
+    <div id="reportCard" class="card">
+        <h2>📊 کارنامه آزمون</h2>
         <h3 id="reportTitle" style="color:#8e44ad;"></h3>
-        <div class="score-circle" style="width:120px;height:120px;border-radius:50%;border:8px solid #2ecc71;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2rem;color:#2ecc71;font-weight:bold;"><span id="scoreNum">0</span><span style="font-size:0.8rem;">نمره</span></div>
-        <div class="stat-row" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;"><span>✅ صحیح:</span><span id="statCorrect">0</span></div>
-        <div class="stat-row" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;"><span>❌ غلط:</span><span id="statWrong">0</span></div>
-        <div class="stat-row" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;"><span>⚠️ تخلف:</span><span id="statCheat" style="color:red;font-weight:bold">0</span></div>
-        <div style="background:#fff3cd;color:#856404;padding:10px;border-radius:8px;margin-top:15px;font-size:0.8rem;">نمره ثبت شد.</div>
-        <button class="btn" style="background:#95a5a6;color:white;margin-top:20px" onclick="location.reload()">بازگشت</button>
+        <div class="score-circle"><span id="scoreNum">0</span><span style="font-size:0.8rem;">نمره نهایی</span></div>
+        <div class="stat-row"><span>✅ پاسخ صحیح:</span><span id="statCorrect">0</span></div>
+        <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
+        <div class="stat-row"><span>⚠️ تعداد تخلف (خروج):</span><span id="statCheat" style="color:red; font-weight:bold;">0</span></div>
+        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem;">نمره شما ذخیره شد.</div>
+        <button class="btn btn-back" onclick="location.reload()">بازگشت</button>
     </div>
 
     <script>
         // ***********************************************
-        // تنظیمات
+        // تنظیمات (لینک جدید شما قرار گرفت ✅)
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
         
-        // 👇 لینک جدید شما در خط زیر قرار گرفت:
-        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx57FD6abpRJLZZDcPvJ5M-Aun6sz4w5loy4R6uIBpFIJFm1FXtQAzP59PmG5JZzUP7_g/exec"; 
+        // 👇 لینک وب‌اپ جدید شما:
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxozJebpusEteS3fmOYtdbipI8FHG4F95FiUx0iz2kBdqahQug82O5-q3bETzBeRrjCvQ/exec"; 
         
         const DB_KEY = "chamran_db_v19_"; 
         // ***********************************************
@@ -108,11 +100,11 @@
         document.getElementById('welcomeText').innerText = `سلام ${currentUser} 👋`;
 
         let examsMap = {}; let currentExamId = null; let currentQuestions = []; let currentQIndex = 0; let userAnswers = {}; let timerInterval; let timeRemaining = 0;
-        let cheatCount = 0; let isExamActive = false; let capturedScreenUrl = "";
-        let streamObj = null;
+        let cheatCount = 0; let isExamActive = false;
 
         function getDeviceSignature() { return navigator.userAgent + "||" + window.screen.width + "x" + window.screen.height; }
 
+        // --- سیستم ردیاب خروج (سبک و پایدار) ---
         document.addEventListener("visibilitychange", function() {
             if (isExamActive && document.hidden) {
                 cheatCount++;
@@ -121,79 +113,7 @@
         });
         function closeCheatAlert() { document.getElementById('cheatAlert').style.display = 'none'; }
 
-        async function openCamera() {
-            const statusDiv = document.getElementById('uploadStatus');
-            const video = document.getElementById('videoElement');
-            const btn = document.getElementById('btnCapture');
-
-            try {
-                statusDiv.innerText = "⏳ دوربین در حال فعال‌سازی...";
-                btn.disabled = true;
-                btn.style.opacity = "0.5";
-
-                streamObj = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-                video.srcObject = streamObj;
-                
-                video.onloadedmetadata = () => {
-                    statusDiv.innerText = "✅ آماده.";
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                };
-
-            } catch (err) {
-                console.error(err);
-                statusDiv.innerHTML = "<span style='color:red'>دسترسی به دوربین داده نشد!</span>";
-                alert("لطفاً دسترسی دوربین را فعال کنید.");
-            }
-        }
-
-        async function captureAndSend() {
-            const statusDiv = document.getElementById('uploadStatus');
-            const btn = document.getElementById('btnCapture');
-            const video = document.getElementById('videoElement');
-            const canvas = document.getElementById('previewCanvas');
-
-            if (!streamObj) return;
-
-            try {
-                btn.innerText = "⏳ در حال ارسال...";
-                btn.disabled = true;
-
-                // کاهش سایز عکس به 320px برای سرعت بالا
-                const scale = 320 / video.videoWidth;
-                canvas.width = 320;
-                canvas.height = video.videoHeight * scale;
-                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                streamObj.getTracks().forEach(track => track.stop());
-
-                // فشرده‌سازی با کیفیت 0.5
-                const base64Img = canvas.toDataURL('image/jpeg', 0.5);
-
-                const data = { action: 'upload_image', name: currentUser, image: base64Img };
-                const res = await fetch(REPORT_WEBAPP_URL, { method: 'POST', body: JSON.stringify(data) });
-                const url = await res.text();
-
-                if (url.includes("Error") || url.includes("Exception")) throw new Error("خطا در سرور: " + url);
-                
-                capturedScreenUrl = url;
-                document.getElementById('screenCheckModal').style.display = 'none';
-                startExamLogic(currentExamId);
-
-            } catch (err) {
-                console.error(err);
-                statusDiv.innerHTML = `<span style='color:red; font-size:0.8rem'>❌ خطا: ${err.message}</span>`;
-                btn.disabled = false;
-                btn.innerText = "📷 تلاش مجدد";
-            }
-        }
-
-        function cancelScreen() { 
-            if(streamObj) streamObj.getTracks().forEach(track => track.stop());
-            document.getElementById('screenCheckModal').style.display = 'none'; 
-        }
-
-        // --- سایر توابع ---
+        // --- توابع آزمون ---
         async function loadExams() {
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
@@ -237,13 +157,13 @@
                 const btn = document.createElement('div'); btn.className = 'exam-item';
                 btn.style.borderColor = isLocked ? '#95a5a6' : '#e1bee7';
                 btn.style.background = isLocked ? '#f5f6fa' : '#fff';
-                let btnHtml = isLocked ? '<span style="color:#7f8c8d;font-size:0.8rem;">🔒 قبلاً شرکت کرده‌اید</span>' : `<button style="background:#27ae60;color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;" onclick="preStartCheck('${id}')">${(exam.password?'🔑 ':'')}شروع آزمون</button>`;
+                let btnHtml = isLocked ? '<span style="color:#7f8c8d;font-size:0.8rem;">🔒 قبلاً شرکت کرده‌اید</span>' : `<button style="background:#27ae60;color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;" onclick="checkAndStart('${id}')">${(exam.password?'🔑 ':'')}شروع آزمون</button>`;
                 btn.innerHTML = `<div class="exam-info"><h4 style="${isLocked?'color:#7f8c8d':''}">${exam.title}</h4><small>⏱️ ${exam.duration} دقیقه</small></div>${btnHtml}`;
                 list.appendChild(btn);
             });
         }
 
-        function preStartCheck(id) {
+        function checkAndStart(id) {
             currentExamId = id;
             const exam = examsMap[id];
             if(localStorage.getItem('taken_' + id)) return alert("⛔ شما قبلاً شرکت کرده‌اید.");
@@ -251,8 +171,7 @@
                 const p = prompt("🔒 رمز آزمون:");
                 if(p !== exam.password) return alert("❌ رمز اشتباه است.");
             }
-            document.getElementById('screenCheckModal').style.display = 'flex';
-            openCamera();
+            if(confirm(`آیا آماده شروع آزمون "${exam.title}" هستید؟`)) startExamLogic(id);
         }
 
         function startExamLogic(id) {
@@ -318,7 +237,7 @@
 
         function sendReport(t, s, c) {
             const p = `نمره: ${s}/20` + (c > 0 ? ` (⚠️ ${c} تخلف)` : "");
-            const data = { studentName: currentUser, lesson: `آزمون: ${t}`, status: `پایان آزمون (نمره: ${s})`, percent: p, deviceInfo: navigator.userAgent, screenshotUrl: capturedScreenUrl };
+            const data = { studentName: currentUser, lesson: `آزمون: ${t}`, status: `پایان آزمون (نمره: ${s})`, percent: p, deviceInfo: navigator.userAgent };
             fetch(REPORT_WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
         }
         
