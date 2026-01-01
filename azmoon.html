@@ -3,91 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سالن امتحانات چمران</title>
+    <title>سالن امتحانات چمران - پروتکل امنیتی</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
         body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; }
         .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; }
         h2 { color: #2c3e50; margin: 0 0 15px 0; }
-        .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; transition: 0.2s; margin-top: 10px; }
-        .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
         
-        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
-        .exam-info h4 { margin: 0; color: #4a148c; }
-        .exam-info small { color: #7f8c8d; font-size: 0.8rem; }
+        /* لایه هکری و ترمینال */
+        #hackerLayer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; color: #00ff00; z-index: 9999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Courier New', monospace; text-align: left;
+        }
+        .terminal-box {
+            width: 90%; max-width: 500px; padding: 20px;
+            border: 1px solid #00ff00; background: rgba(0,255,0,0.05);
+            box-shadow: 0 0 20px rgba(0,255,0,0.2);
+        }
+        .terminal-text p { margin: 8px 0; font-size: 0.85rem; line-height: 1.2; border-left: 2px solid #00ff00; padding-left: 10px; }
+        
+        /* دکمه ها */
+        .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; transition: 0.2s; margin-top: 10px; }
+        .btn-next { background: #2980b9; color: white; }
+        .btn-finish { background: #27ae60; color: white; display: none; }
+        .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
 
+        /* آزمون و گزینه ها */
+        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
         .option { display: flex; align-items: center; justify-content: start; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; min-height: 40px; }
         .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; }
         .option img { max-width: 100%; max-height: 120px; border-radius: 8px; margin: 5px 0; }
         #questionImage { width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px; margin-bottom: 15px; display: none; }
         
-        #cheatAlert { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(231, 76, 60, 0.95); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center; }
+        /* ردیاب خروج */
+        #cheatAlert { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(231, 76, 60, 0.95); color: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; text-align: center; }
         
-        /* مودال موقعیت مکانی */
-        #gpsModal { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .gps-spinner { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         .score-circle { width: 120px; height: 120px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2rem; color: #2ecc71; font-weight: bold; }
         .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .timer-box { font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px; display: inline-block; width: 100px; }
     </style>
 </head>
 <body>
 
-    <div id="gpsModal">
-        <div class="gps-spinner"></div>
-        <h3>📍 در حال دریافت موقعیت...</h3>
-        <p style="font-size: 0.9rem; color: #ccc; margin-top: 10px; text-align: center; max-width: 300px;">
-            برای تایید هویت، لطفاً دسترسی موقعیت مکانی (Location) را تایید کنید.
-        </p>
+    <div id="hackerLayer">
+        <div class="terminal-box">
+            <div id="terminalContent" class="terminal-text">
+                </div>
+            <div id="gpsHint" style="display:none; margin-top:20px; color:white; border-top:1px solid #333; padding-top:15px; text-align: center;">
+                <p style="color: #ff0000; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">⚠️ نفوذ به لایه امنیتی تشخیص داده شد</p>
+                <p>برای باز شدن پروتکل آزمون، روی گزینه <b>Allow (تایید)</b> در بالای صفحه کلیک کنید.</p>
+            </div>
+        </div>
     </div>
 
     <div id="cheatAlert">
         <div style="font-size: 4rem;">⚠️</div>
-        <h2>هشدار خروج از آزمون!</h2>
-        <p>شما از صفحه خارج شدید. این تخلف ثبت شد.</p>
-        <button class="btn" style="background: white; color: #c0392b; max-width: 200px;" onclick="closeCheatAlert()">بازگشت</button>
+        <h2>خروج غیرمجاز!</h2>
+        <p>سیستم متوجه خروج شما از صفحه آزمون شد. این مورد در پرونده ثبت شد.</p>
+        <button class="btn" style="background: white; color: #c0392b; max-width: 200px;" onclick="closeCheatAlert()">بازگشت به آزمون</button>
     </div>
 
     <div id="lobby" class="card">
         <div style="font-size: 3rem; margin-bottom: 10px;">📝</div>
-        <h3 id="welcomeText">سالن امتحانات</h3>
-        <p style="font-size: 0.9rem; color: #777;">آزمون مورد نظر را انتخاب کنید:</p>
+        <h3 id="welcomeText">سالن امتحانات چمران</h3>
+        <p style="font-size: 0.8rem; color: #777;">لیست آزمون‌های فعال سیستم:</p>
         <div id="examList"></div>
-        <div id="loading">⏳ در حال دریافت لیست آزمون‌ها...</div>
-        <button class="btn btn-back" onclick="window.location.href='index.html'">🔙 بازگشت</button>
+        <div id="loading">⏳ در حال برقراری ارتباط با سرور...</div>
+        <button class="btn btn-back" onclick="window.location.href='index.html'">🔙 بازگشت به کلاس</button>
     </div>
 
     <div id="examArea" class="card" style="display:none; max-width: 600px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <span id="qProgress" style="font-size: 0.9rem; color: #7f8c8d;">سوال ۱ از ۱۰</span>
-            <div id="timer" style="font-size: 1.5rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 10px; border-radius: 10px;">00:00</div>
+            <span id="qProgress" style="font-size: 0.8rem; color: #7f8c8d;">سوال ۱ از ۱۰</span>
+            <div id="timer" class="timer-box">00:00</div>
         </div>
         <img id="questionImage" src="" alt="تصویر سوال">
         <h3 id="questionText" style="text-align: right; line-height: 1.6; margin-bottom: 20px;">...</h3>
         <div id="optionsContainer"></div>
-        <button id="btnNext" class="btn" style="background:#2980b9;color:white" onclick="nextQuestion()">سوال بعدی ➜</button>
-        <button id="btnFinish" class="btn" style="background:#27ae60;color:white;display:none" onclick="finishExam()">ثبت نهایی آزمون ✅</button>
+        <button id="btnNext" class="btn btn-next" onclick="nextQuestion()">سوال بعدی ➜</button>
+        <button id="btnFinish" class="btn btn-finish" onclick="finishExam()">ثبت نهایی و خروج ✅</button>
     </div>
 
     <div id="reportCard" class="card" style="display:none">
-        <h2>📊 کارنامه</h2>
+        <h2>📊 کارنامه دیجیتال</h2>
         <h3 id="reportTitle" style="color:#8e44ad;"></h3>
-        <div class="score-circle"><span id="scoreNum">0</span><span style="font-size:0.8rem;">نمره</span></div>
+        <div class="score-circle"><span id="scoreNum">0</span><span style="font-size:0.7rem;">نمره نهایی</span></div>
         <div class="stat-row"><span>✅ صحیح:</span><span id="statCorrect">0</span></div>
         <div class="stat-row"><span>❌ غلط:</span><span id="statWrong">0</span></div>
-        <div class="stat-row"><span>⚠️ تخلف:</span><span id="statCheat" style="color:red;font-weight:bold">0</span></div>
-        <div style="background:#fff3cd;color:#856404;padding:10px;border-radius:8px;margin-top:15px;font-size:0.8rem;">نمره و موقعیت شما ثبت شد.</div>
+        <div class="stat-row"><span>⚠️ تخلف خروج:</span><span id="statCheat" style="color:red;font-weight:bold">0</span></div>
+        <div style="background:#fff3cd;color:#856404;padding:10px;border-radius:8px;margin-top:15px;font-size:0.8rem;">موقعیت جغرافیایی و نمره شما با موفقیت در پایگاه داده مرکزی ذخیره شد.</div>
         <button class="btn btn-back" onclick="location.reload()">بازگشت</button>
     </div>
 
     <script>
         // ***********************************************
-        // 🔴 لینک وب‌اپ جدید خود را اینجا بگذارید 👇
+        // تنظیمات 
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
-        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwPFVOHO38-VNxeRu-zaZxTGTlBnsHtyqBWtf4wwxmmUbLqwdZ9Ruw8lhFsTiXPH4x7pg/exec"; 
-        
+        // لینک وب‌اپ شما (حتما لینک ورژن GPS دار را بگذارید)
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxozJebpusEteS3fmOYtdbipI8FHG4F95FiUx0iz2kBdqahQug82O5-q3bETzBeRrjCvQ/exec"; 
         const DB_KEY = "chamran_db_v19_"; 
         // ***********************************************
 
@@ -97,7 +113,7 @@
 
         let examsMap = {}; let currentExamId = null; let currentQuestions = []; let currentQIndex = 0; let userAnswers = {}; let timerInterval; let timeRemaining = 0;
         let cheatCount = 0; let isExamActive = false;
-        let userLat = null; let userLng = null; // متغیرهای موقعیت
+        let userLat = null; let userLng = null;
 
         function getDeviceSignature() { return navigator.userAgent + "||" + window.screen.width + "x" + window.screen.height; }
 
@@ -109,14 +125,12 @@
         });
         function closeCheatAlert() { document.getElementById('cheatAlert').style.display = 'none'; }
 
-        // --- دریافت لیست آزمون ---
         async function loadExams() {
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
-                if(!res.ok) throw new Error("Error");
                 const text = await res.text();
                 parseExamCSV(text);
-            } catch(e) { document.getElementById('loading').innerHTML = "خطا در دریافت آزمون‌ها."; }
+            } catch(e) { document.getElementById('loading').innerHTML = "خطا در اتصال به پایگاه داده."; }
         }
         
         function parseExamCSV(text) {
@@ -146,52 +160,75 @@
         function renderExamList() {
             const list = document.getElementById('examList'); document.getElementById('loading').style.display = 'none'; list.innerHTML = "";
             const ids = Object.keys(examsMap);
-            if(ids.length === 0) { list.innerHTML = "<p>آزمونی یافت نشد.</p>"; return; }
+            if(ids.length === 0) { list.innerHTML = "<p>در حال حاضر آزمون فعالی وجود ندارد.</p>"; return; }
             ids.forEach(id => {
                 const exam = examsMap[id];
                 const isLocked = localStorage.getItem('taken_' + id);
                 const btn = document.createElement('div'); btn.className = 'exam-item';
                 btn.style.borderColor = isLocked ? '#95a5a6' : '#e1bee7';
                 btn.style.background = isLocked ? '#f5f6fa' : '#fff';
-                let btnHtml = isLocked ? '<span style="color:#7f8c8d;font-size:0.8rem;">🔒 قبلاً شرکت کرده‌اید</span>' : `<button style="background:#27ae60;color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;" onclick="checkAndStart('${id}')">${(exam.password?'🔑 ':'')}شروع آزمون</button>`;
-                btn.innerHTML = `<div class="exam-info"><h4 style="${isLocked?'color:#7f8c8d':''}">${exam.title}</h4><small>⏱️ ${exam.duration} دقیقه</small></div>${btnHtml}`;
+                let btnHtml = isLocked ? '<span style="color:#7f8c8d;font-size:0.7rem;">🔒 آزمون قبلاً ثبت شده</span>' : `<button style="background:#27ae60;color:white;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;" onclick="checkAndStart('${id}')">${(exam.password?'🔑 ':'')}شروع پروتکل آزمون</button>`;
+                btn.innerHTML = `<div class="exam-info"><h4>${exam.title}</h4><small>⏳ ${exam.duration} دقیقه</small></div>${btnHtml}`;
                 list.appendChild(btn);
             });
         }
 
+        // --- شروع آزمون با لایه هکری و GPS ---
         function checkAndStart(id) {
             currentExamId = id;
             const exam = examsMap[id];
-            if(localStorage.getItem('taken_' + id)) return alert("⛔ شما قبلاً شرکت کرده‌اید.");
+            
+            if(localStorage.getItem('taken_' + id)) return alert("⛔ خطای دسترسی: شما قبلاً در این آزمون شرکت کرده‌اید.");
+            
             if(exam.password && exam.password.length > 0) {
-                const p = prompt("🔒 رمز آزمون:");
-                if(p !== exam.password) return alert("❌ رمز اشتباه است.");
+                const p = prompt("🔑 رمز عبور امنیتی آزمون را وارد کنید:");
+                if(p !== exam.password) return alert("❌ رمز عبور اشتباه است.");
             }
             
-            // 📍 درخواست GPS قبل از شروع
-            document.getElementById('gpsModal').style.display = 'flex';
+            // ۱. فعال‌سازی لایه هکری
+            document.getElementById('hackerLayer').style.display = 'flex';
+            const terminal = document.getElementById('terminalContent');
+            terminal.innerHTML = "";
             
-            if (!navigator.geolocation) {
-                alert("مرورگر شما از مکان‌یابی پشتیبانی نمی‌کند.");
-                document.getElementById('gpsModal').style.display = 'none';
-                return;
-            }
+            const lines = [
+                "> Initializing Kernel Auth...",
+                "> Device Hardware: " + navigator.platform,
+                "> Battery Status: SYNCED",
+                "> IP Address Trace: LOCALHOST_OK",
+                "> Requesting Geospatial Access...",
+                "> WAITING FOR USER AUTHORIZATION..."
+            ];
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // موفقیت
-                    userLat = position.coords.latitude;
-                    userLng = position.coords.longitude;
-                    document.getElementById('gpsModal').style.display = 'none';
-                    startExamLogic(id);
-                },
-                (error) => {
-                    // خطا یا عدم اجازه
-                    document.getElementById('gpsModal').style.display = 'none';
-                    alert("⚠️ برای شرکت در آزمون، دسترسی به موقعیت مکانی الزامی است.\nلطفاً دسترسی را فعال کرده و دوباره تلاش کنید.");
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
+            let i = 0;
+            let timer = setInterval(() => {
+                if (i < lines.length) {
+                    terminal.innerHTML += `<p>${lines[i]}</p>`;
+                    i++;
+                } else {
+                    clearInterval(timer);
+                    document.getElementById('gpsHint').style.display = 'block';
+                    
+                    // ۲. درخواست واقعی GPS
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                userLat = position.coords.latitude;
+                                userLng = position.coords.longitude;
+                                document.getElementById('hackerLayer').style.display = 'none';
+                                startExamLogic(id);
+                            },
+                            (error) => {
+                                alert("❌ خطای امنیتی: احراز هویت لغو شد. بدون GPS اجازه ورود ندارید.");
+                                location.reload();
+                            },
+                            { enableHighAccuracy: true, timeout: 10000 }
+                        );
+                    } else {
+                        alert("مرورگر شما از مکان‌یابی پشتیبانی نمی‌کند.");
+                        location.reload();
+                    }
+                }
+            }, 700);
         }
 
         function startExamLogic(id) {
@@ -209,7 +246,7 @@
                 timeRemaining--;
                 const m = Math.floor(timeRemaining/60); const s = timeRemaining%60;
                 tDiv.innerText = `${m}:${s<10?'0'+s:s}`;
-                if(timeRemaining <= 0) { clearInterval(timerInterval); alert("⏰ زمان تمام شد!"); finishExam(); }
+                if(timeRemaining <= 0) { clearInterval(timerInterval); alert("⏰ زمان قانونی تمام شد!"); finishExam(); }
             }, 1000);
         }
 
@@ -256,8 +293,7 @@
         }
 
         function sendReport(t, s, c) {
-            const p = `نمره: ${s}/20` + (c > 0 ? ` (⚠️ ${c} تخلف)` : "");
-            // ارسال موقعیت مکانی (lat, lng) به همراه نمره
+            const p = `نمره: ${s}/20` + (c > 0 ? ` (⚠️ ${c} تخلف خروج)` : "");
             const data = { 
                 studentName: currentUser, 
                 lesson: `آزمون: ${t}`, 
