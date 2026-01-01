@@ -142,16 +142,12 @@
         // 💎 مدیریت دکمه بازگشت گوشی (History API)
         // *******************************************************
         
-        // وقتی دکمه بازگشت گوشی (یا مرورگر) زده شود، این تابع اجرا می‌شود
         window.addEventListener('popstate', function(event) {
-            // اگر کاربر در صفحه پلیر بود و دکمه بازگشت را زد:
             if (document.getElementById('screen-player').classList.contains('active')) {
-                // اجرای عملیات خروج و گزارش‌دهی
                 performExitLogic();
             }
         });
 
-        // تابعی که عملیات خروج را انجام می‌دهد (چه با دکمه گوشی، چه دکمه روی صفحه)
         function performExitLogic() {
             checkAndReport("خروج از درس 🔙", true); 
             vid.pause();
@@ -261,7 +257,7 @@
         function playVideo(item) {
             if(!item.file || item.file.length < 5) return alert("لینک معتبر نیست.");
             
-            // 💎 ترفند: اضافه کردن یک تاریخچه جعلی برای دکمه بازگشت
+            // اضافه کردن تاریخچه برای دکمه بازگشت گوشی
             history.pushState({ page: 'player' }, "Player", "#player");
 
             activeVid = item;
@@ -318,8 +314,9 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ******* سیستم امنیتی و نظارتی (بهینه شده برای موبایل) *******
+        // ******* سیستم امنیتی و نظارتی (فوق پیشرفته v28) *******
         
+        // 1. رویداد visibilitychange: برای Minimize شدن
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
             if (document.visibilityState === 'hidden') {
@@ -330,8 +327,15 @@
             }
         });
 
+        // 2. رویداد pagehide: برای بستن تب
         window.addEventListener('pagehide', () => {
              checkAndReport("⛔ بستن صفحه", true);
+        });
+
+        // 3. رویداد beforeunload: مخصوص دکمه ضربدر مرورگر (لایه امنیتی جدید)
+        window.addEventListener('beforeunload', (event) => {
+             // این رویداد در لحظه مرگ صفحه توسط ضربدر اجرا می‌شود
+             checkAndReport("⛔ بستن ناگهانی (X)", true);
         });
 
         setInterval(() => {
