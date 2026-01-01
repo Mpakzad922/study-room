@@ -3,7 +3,7 @@ const LOCAL_PLAYLIST = [
     { 
         id: "1", 
         title: "درس اول: آشنایی با کلاس", 
-        file: "https://dl.example.com/video1.mp4", 
+        file: "https://s6.uupload.ir/filelink/XVBYMDVSfc8L_6b49ffb4ca/karbarg5_tr6h.mp4", 
         attachment: "" 
     },
     { 
