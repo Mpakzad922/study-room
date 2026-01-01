@@ -1,5 +1,5 @@
 // ********************************************
-// 🎮 فایل کمکی: rank.js (نسخه نهایی هماهنگ با سرور)
+// 🎮 فایل کمکی: rank.js (نسخه نهایی با هماهنگی زمان فیلم)
 // ********************************************
 
 const RankSystem = {
@@ -16,41 +16,61 @@ const RankSystem = {
         xp: 0,
         rank: "🐣 نوآموز",
         completed: [], 
+        playback: {}, // [جدید] محل ذخیره آخرین زمان مشاهده هر درس
         exams: {} 
     },
 
-    // کلید ذخیره‌سازی اختصاصی
     STORAGE_KEY: 'chamran_local_rank_v1',
 
-    // 1. راه‌اندازی هوشمند (ادغام حافظه گوشی و سرور)
     init: function(serverJson) {
-        // الف) اول تلاش کن از حافظه گوشی بخوانی
+        // 1. خواندن از لوکال
         const localData = localStorage.getItem(this.STORAGE_KEY);
         if (localData) {
-            try {
-                this.data = JSON.parse(localData);
-            } catch (e) { console.error("Local Parse Error"); }
+            try { this.data = JSON.parse(localData); } catch (e) {}
         }
 
-        // ب) اگر سرور دیتایی فرستاده، چک کن کدام جدیدتر/بیشتر است
+        // 2. ادغام با سرور (اگر سرور دیتای بهتری دارد)
         if(serverJson && serverJson !== "{}") {
             try {
                 const serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson;
                 
-                // قانون طلایی: هر کدام XP بیشتری داشت، برنده است
+                // ادغام XP (هرکدام بیشتر بود)
                 if ((serverData.xp || 0) > this.data.xp) {
-                    this.data = { ...this.data, ...serverData };
-                    this.saveToDisk(); // آپدیت حافظه گوشی با دیتای سرور
+                    this.data.xp = serverData.xp;
+                    this.data.rank = serverData.rank;
+                    this.data.completed = serverData.completed || [];
                 }
+                
+                // ادغام زمان فیلم‌ها (playback)
+                // اگر سرور دیتای playback داشت، آن را با دیتای لوکال ترکیب کن
+                if(serverData.playback) {
+                    this.data.playback = { ...this.data.playback, ...serverData.playback };
+                }
+                
+                this.saveToDisk();
             } catch(e) { console.error("Server Parse Error", e); }
         }
         
-        // ج) اعمال تغییرات در ظاهر
         this.updateUI();
         setTimeout(() => this.refreshListUI(), 500);
     },
 
-    // 2. امتیازدهی با ذخیره فوری
+    // تابع جدید: ذخیره آخرین ثانیه مشاهده
+    savePosition: function(id, time) {
+        const sId = id.toString();
+        // فقط زمان‌های بیشتر را ذخیره کن (که عقبگرد نداشته باشیم)
+        const oldTime = this.data.playback[sId] || 0;
+        if(time > oldTime) {
+            this.data.playback[sId] = Math.floor(time);
+            this.saveToDisk();
+        }
+    },
+
+    // تابع جدید: دریافت آخرین ثانیه برای پخش
+    getLastPosition: function(id) {
+        return this.data.playback[id.toString()] || 0;
+    },
+
     addXP: function(amount, reason, uniqueId) {
         const sId = uniqueId.toString();
         if(uniqueId && this.data.completed.includes(sId)) return;
@@ -64,11 +84,8 @@ const RankSystem = {
         this.checkRankUp();
         this.updateUI();
         this.showToast(`⭐ +${amount} امتیاز: ${reason}`);
-        
-        // ذخیره فوری
         this.saveToDisk();
         
-        // ارسال به صف سرور
         SyncManager.addToQueue('report', {
             lesson: reason,
             status: 'کسب امتیاز',
@@ -78,6 +95,8 @@ const RankSystem = {
     },
 
     saveToDisk: function() {
+        // اطمینان از اینکه playback وجود دارد
+        if(!this.data.playback) this.data.playback = {};
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
     },
 
@@ -105,9 +124,7 @@ const RankSystem = {
     },
 
     refreshListUI: function() {
-        if(typeof renderList === 'function') {
-            renderList(); 
-        }
+        if(typeof renderList === 'function') renderList(); 
     },
     
     showToast: function(msg) {
@@ -118,9 +135,7 @@ const RankSystem = {
         setTimeout(() => t.remove(), 3000);
     },
 
-    getDevice: function() {
-        return /Mobile|Android/i.test(navigator.userAgent) ? "موبایل" : "کامپیوتر"; 
-    }
+    getDevice: function() { return /Mobile|Android/i.test(navigator.userAgent) ? "موبایل" : "کامپیوتر"; }
 };
 
 // ********************************************
@@ -167,15 +182,12 @@ const SyncManager = {
         }
     },
 
-    syncProfile: function() {
-        this.addToQueue('sync');
-    },
+    syncProfile: function() { this.addToQueue('sync'); },
 
     processQueue: function() {
         if(this.queue.length === 0 || !navigator.onLine) return;
         const item = this.queue[0];
-        // آپدیت لحظه‌ای
-        item.jsonData = JSON.stringify(RankSystem.data);
+        item.jsonData = JSON.stringify(RankSystem.data); // آپدیت لحظه‌ای
 
         if(typeof REPORT_WEBAPP_URL === 'undefined') return;
 
