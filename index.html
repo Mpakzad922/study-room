@@ -36,14 +36,15 @@
         .wrong-ans { border-color: red !important; background: #ffebee; }
         .timer-circle { width: 70px; height: 70px; background: var(--danger); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 10px auto; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); padding-top: 5px; }
         #loading { margin-top: 20px; display:none; color: #7f8c8d; }
-        .retry-btn { margin-top: 10px; background: #95a5a6; font-size: 0.9rem; padding: 10px 20px; }
-        .offline-badge { position:fixed; bottom:10px; left:10px; background:orange; color:white; padding:5px 10px; border-radius:20px; font-size:0.7rem; display:none; z-index:2000; }
+        .offline-badge { position:fixed; bottom:10px; left:10px; background:orange; color:white; padding:8px 15px; border-radius:30px; font-size:0.8rem; display:none; z-index:2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .fullscreen-btn { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin-top: 5px; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body>
 
     <div id="cheatAlert" class="alert-box">⛔ جلو زدن فیلم مجاز نیست!</div>
-    <div id="offlineBadge" class="offline-badge">📡 گزارش‌ها در صف ارسال...</div>
+    <div id="offlineBadge" class="offline-badge" onclick="processOfflineQueue()">📡 گزارش‌ها در صف ارسال... (کلیک برای تلاش مجدد)</div>
 
     <div id="securityModal">
         <div class="security-box">
@@ -87,7 +88,10 @@
             <strong id="videoTitle" style="font-size: 0.9rem;"></strong>
         </div>
         
-        <video id="myVideo" playsinline controls disablePictureInPicture controlsList="nodownload noplaybackrate"></video>
+        <video id="myVideo" playsinline controls controlsList="nodownload"></video>
+        <button class="fullscreen-btn" onclick="forceFullScreen()">
+            <span>⛶</span> تمام صفحه
+        </button>
         
         <div id="downloadContainer"></div>
 
@@ -102,7 +106,7 @@
 
     <script>
         // ***********************************************
-        // تنظیمات - حتما لینک‌های خودت را اینجا بگذار
+        // تنظیمات
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyTA9hNsiL9KPtq5u9Pav209AFvC6BVCiYfz3LEAqIbpNBaYju_zm_V_O8bjJjDP8FgDw/exec"; 
@@ -136,7 +140,14 @@
             return (isMobile ? "📱 Mobile" : "💻 PC") + " | " + navigator.userAgent;
         }
 
-        // ******* مدیریت دکمه بازگشت *******
+        // ******* حل مشکل تمام صفحه *******
+        function forceFullScreen() {
+            if (vid.requestFullscreen) vid.requestFullscreen();
+            else if (vid.webkitRequestFullscreen) vid.webkitRequestFullscreen(); // Safari
+            else if (vid.msRequestFullscreen) vid.msRequestFullscreen(); // IE11
+            else alert("مرورگر شما از تمام صفحه پشتیبانی نمی‌کند.");
+        }
+
         window.addEventListener('popstate', function(event) {
             if (document.getElementById('screen-player').classList.contains('active')) {
                 performExitLogic();
@@ -151,22 +162,15 @@
             showScreen('screen-library');
         }
 
-        // ******* استراتژی لود ترکیبی (گوگل + گیت‌هاب) *******
         async function fetchPlaylist() {
             document.getElementById('loading').style.display = 'block';
-            
-            // 1. اول چک میکنیم آیا فایل data.js لود شده است؟
             if (typeof LOCAL_PLAYLIST !== 'undefined' && LOCAL_PLAYLIST.length > 0) {
-                console.log("Using Local GitHub Data (Fast Mode)");
                 playlist = LOCAL_PLAYLIST;
                 initApp();
                 return;
             }
-
-            // 2. اگر فایل لوکال نبود، تلاش برای گوگل (با تایمر کوتاه)
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 ثانیه وقت برای گوگل
-
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now(), { signal: controller.signal });
                 clearTimeout(timeoutId);
@@ -176,13 +180,10 @@
                     initApp();
                     return;
                 }
-            } catch (err) {
-                console.log("Google failed, checking backup...");
-            }
+            } catch (err) { console.log("Google failed"); }
 
-            // 3. اگر هر دو شکست خوردند
             if(playlist.length === 0) {
-                document.getElementById('loading').innerHTML = "<p style='color:red'>⚠️ لیست درس‌ها بارگذاری نشد.</p><p>لطفاً اینترنت را بررسی کنید یا فایل data.js را بسازید.</p>";
+                document.getElementById('loading').innerHTML = "<p style='color:red'>⚠️ لیست درس‌ها بارگذاری نشد.</p>";
             }
         }
 
@@ -213,7 +214,7 @@
                 document.getElementById('displayName').innerText = user;
                 renderList();
                 showScreen('screen-library');
-                processOfflineQueue(); // تلاش برای ارسال گزارش‌های جامانده
+                processOfflineQueue(); // ارسال گزارش‌های جامانده
             } else {
                 showScreen('screen-login');
             }
@@ -295,13 +296,7 @@
                     btn.className = 'download-btn';
                     btn.href = fileLink;
                     btn.target = "_blank";
-                    btn.innerHTML = `
-                        <div style="display:flex; align-items:center;">
-                            <span class="dl-icon">📥</span>
-                            <span class="dl-text">${fileName}</span>
-                        </div>
-                        <span class="dl-arrow">دریافت ➜</span>
-                    `;
+                    btn.innerHTML = `<div style="display:flex; align-items:center;"><span class="dl-icon">📥</span><span class="dl-text">${fileName}</span></div><span class="dl-arrow">دریافت ➜</span>`;
                     dlContainer.appendChild(btn);
                 });
             }
@@ -320,7 +315,6 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ******* سیستم امنیتی و نظارتی *******
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
             if (document.visibilityState === 'hidden') {
@@ -328,11 +322,11 @@
                 vid.pause();
             } else {
                 if(backgroundTimer) clearTimeout(backgroundTimer);
+                processOfflineQueue(); // تلاش مجدد هنگام بازگشت به برنامه
             }
         });
 
-        window.addEventListener('pagehide', () => { checkAndReport("⛔ بستن صفحه", true); });
-        window.addEventListener('beforeunload', () => { checkAndReport("⛔ بستن ناگهانی (X)", true); });
+        window.addEventListener('online', processOfflineQueue); // گوش‌به‌زنگ وصل شدن نت
 
         setInterval(() => {
             if (!activeVid || isDone || vid.paused) return; 
@@ -392,8 +386,6 @@
             timerInterval = setInterval(() => {
                 timeLeft--;
                 timerDisplay.innerText = toPersianNum(timeLeft);
-                if(timeLeft < 10) timerDisplay.style.background = "#b71c1c";
-                else timerDisplay.style.background = "#c0392b";
                 if(timeLeft <= 0) { clearInterval(timerInterval); punishUser(); }
             }, 1000);
         }
@@ -421,7 +413,8 @@
             } else { document.getElementById('mathAns').classList.add('wrong-ans'); }
         }
 
-        // ******* سیستم گزارش‌دهی آفلاین-فرست (ضد فیلتر) *******
+        // ******* سیستم گزارش‌دهی هوشمند (صف ارسال) *******
+        // این بخش قلب تپنده است: همیشه اول ذخیره می‌کند، بعد ارسال
         function checkAndReport(statusOverride, force = false) {
             if(!activeVid) return;
             let pText = document.getElementById('viewPercent').innerText;
@@ -438,34 +431,14 @@
                 timestamp: Date.now()
             };
 
-            const jsonData = JSON.stringify(data);
-
-            // اگر خروج اضطراری بود، سعی کن بفرستی، نشد ذخیره کن
-            if (force && navigator.sendBeacon) {
-                const blob = new Blob([jsonData], {type: 'text/plain'});
-                if(!navigator.sendBeacon(REPORT_WEBAPP_URL, blob)) {
-                    saveToOfflineQueue(data);
-                }
-            } else {
-                sendViaFetch(data);
-            }
+            // 1. اضافه کردن به صف امن (همیشه)
+            addToQueue(data);
+            
+            // 2. تلاش برای ارسال
+            processOfflineQueue();
         }
 
-        function sendViaFetch(dataObj) {
-            fetch(REPORT_WEBAPP_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(dataObj),
-                headers: { 'Content-Type': 'text/plain' }
-            })
-            .then(() => { processOfflineQueue(); }) // اگر موفق بود، صف قبلی‌ها را هم بفرست
-            .catch(err => {
-                console.log("Send failed, saving offline...");
-                saveToOfflineQueue(dataObj);
-            });
-        }
-
-        function saveToOfflineQueue(data) {
+        function addToQueue(data) {
             let queue = JSON.parse(localStorage.getItem(DB_KEY + 'offline_queue') || "[]");
             queue.push(data);
             localStorage.setItem(DB_KEY + 'offline_queue', JSON.stringify(queue));
@@ -474,10 +447,15 @@
 
         function processOfflineQueue() {
             let queue = JSON.parse(localStorage.getItem(DB_KEY + 'offline_queue') || "[]");
-            if(queue.length === 0) return;
+            if(queue.length === 0) { updateOfflineBadge(0); return; }
 
-            // تلاش برای ارسال اولین آیتم صف
-            const item = queue[0];
+            if (!navigator.onLine) {
+                updateOfflineBadge(queue.length); // نت نیست، فقط بج آپدیت شود
+                return;
+            }
+
+            const item = queue[0]; // برداشتن اولین آیتم
+            
             fetch(REPORT_WEBAPP_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -485,20 +463,23 @@
                 headers: { 'Content-Type': 'text/plain' }
             })
             .then(() => {
-                // اگر موفق بود، از صف حذف کن و بعدی را بفرست
-                queue.shift();
+                // ارسال موفق (فرض بر موفقیت در حالت no-cors)
+                queue.shift(); // حذف از صف
                 localStorage.setItem(DB_KEY + 'offline_queue', JSON.stringify(queue));
                 updateOfflineBadge(queue.length);
-                if(queue.length > 0) setTimeout(processOfflineQueue, 1000); // ارسال بعدی با وقفه کوتاه
+                if(queue.length > 0) processOfflineQueue(); // بعدی را بفرست
             })
-            .catch(err => console.log("Still offline... keeping queue."));
+            .catch(err => {
+                console.log("Send failed, keeping in queue.");
+            });
         }
 
         function updateOfflineBadge(count) {
             const badge = document.getElementById('offlineBadge');
             if(count > 0) {
                 badge.style.display = 'block';
-                badge.innerText = `📡 ${toPersianNum(count)} گزارش در صف ارسال...`;
+                badge.innerText = `📡 ${toPersianNum(count)} گزارش در صف ارسال... (در انتظار اینترنت)`;
+                badge.style.background = navigator.onLine ? "#f39c12" : "#c0392b"; // زرد اگر نت هست ولی هنوز نرفته، قرمز اگر نت نیست
             } else {
                 badge.style.display = 'none';
             }
