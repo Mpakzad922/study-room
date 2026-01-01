@@ -226,311 +226,307 @@
 
     <script src="data.js"></script>
 
-    <script>
-        // *************************************************************
-        // ⚠️ مهم: آدرس وب‌اپ اسکریپت جدید را اینجا حتما جایگزین کنید
-        // *************************************************************
-        const API_URL = "https://script.google.com/macros/s/AKfycbzRxLq97RoOcJCZg_WqQ8byHCd2GslaGh3D0A1NRsxLGpfdCQNdg2cRXp-VlmVbfsDGIA/exec"; 
-        
-        const ADMIN_TOKEN_KEY = "chamran_admin_2025_secret_key";
-        
-        let ALL_USERS = [];
-        let META_EXAMS = {};   
-        let META_LESSONS = {}; 
-        let STATIC_LESSONS = [];
+<script>
+    // *************************************************************
+    // ⚠️ لینک وب‌اپ خود را اینجا بگذارید
+    // *************************************************************
+    const API_URL = "LINK_WEB_APP_SHOMA"; // <--- اینجا لینک را بگذارید
+    const ADMIN_TOKEN_KEY = "chamran_admin_2025_secret_key";
+    
+    let ALL_USERS = [];
+    let META_EXAMS = {};   
+    let META_LESSONS = {}; 
 
-        // --- 1. ورود و دریافت اطلاعات ---
-        function doLogin() {
-            const pass = document.getElementById('adminPass').value;
-            if(pass === ADMIN_TOKEN_KEY) {
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                // بارگذاری دیتای اولیه از فایل محلی (اگر باشد)
-                if(typeof LOCAL_PLAYLIST !== 'undefined') {
-                    STATIC_LESSONS = LOCAL_PLAYLIST;
-                    STATIC_LESSONS.forEach(l => META_LESSONS[l.id] = l.title);
-                }
-                fetchData();
-            } else { alert("❌ رمز عبور اشتباه است"); }
-        }
+    function doLogin() {
+        const pass = document.getElementById('adminPass').value;
+        if(pass === ADMIN_TOKEN_KEY) {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            fetchData();
+        } else { alert("❌ رمز عبور اشتباه است"); }
+    }
 
-        async function fetchData() {
-            document.getElementById('loadingBox').style.display = 'flex';
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'get_all_users', admin_token: ADMIN_TOKEN_KEY })
-                });
-                const data = await res.json();
-                
-                if(data.status === 'success') {
-                    ALL_USERS = data.users.map(u => {
-                        try { u.parsedData = JSON.parse(u.json); } catch(e) { u.parsedData = {}; }
-                        return u;
-                    });
-
-                    // ترکیب متادیتای سرور با دیتای محلی
-                    if(data.meta) {
-                        if(data.meta.exams) META_EXAMS = data.meta.exams;
-                        if(data.meta.lessons) Object.assign(META_LESSONS, data.meta.lessons);
-                    }
-
-                    processData();
-                    document.getElementById('lastUpdate').innerText = 'بروزرسانی: ' + new Date().toLocaleTimeString('fa-IR');
-                } else { alert("خطا: " + data.message); }
-            } catch(e) { console.error(e); alert("❌ خطای ارتباط با سرور"); }
-            document.getElementById('loadingBox').style.display = 'none';
-        }
-
-        function processData() {
-            renderUsersList(ALL_USERS);
-            renderLessonsStats();
-            renderExamsStats();
-            renderRanking();
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-'+tabId).classList.add('active');
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-        }
-
-        // --- 2. مدیریت تب کاربران ---
-        function renderUsersList(users) {
-            const container = document.getElementById('usersList');
-            container.innerHTML = '';
-            if(users.length === 0) { container.innerHTML = '<p style="text-align:center;color:#777">کاربری یافت نشد.</p>'; return; }
-
-            users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'card user-card';
-                div.onclick = () => showUserDetail(u);
-                
-                const role = u.parsedData.rank || 'نوآموز';
-                let borderColor = '#ccc';
-                if(role.includes('اسطوره')) borderColor = '#c0392b';
-                else if(role.includes('فرمانده')) borderColor = '#8e44ad';
-                
-                div.style.borderRightColor = borderColor;
-                div.innerHTML = `
-                    <div>
-                        <div style="font-weight:bold; color:#2c3e50; font-size:1.05rem;">${u.n}</div>
-                        <div style="font-size:0.8rem; color:#7f8c8d; margin-top:2px;">${u.u}</div>
-                    </div>
-                    <div style="text-align:left;">
-                        <span class="badge bg-blue">${u.parsedData.xp||0} XP</span>
-                        <div style="font-size:0.7rem; color:#95a5a6; margin-top:5px;">${role}</div>
-                    </div>`;
-                container.appendChild(div);
+    async function fetchData() {
+        document.getElementById('loadingBox').style.display = 'flex';
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'get_all_users', admin_token: ADMIN_TOKEN_KEY })
             });
-        }
-
-        function filterUsers() {
-            const q = document.getElementById('searchBox').value.toLowerCase();
-            renderUsersList(ALL_USERS.filter(u => u.n.includes(q) || u.u.toLowerCase().includes(q)));
-        }
-
-        // --- 3. نمایش جزئیات و عملیات (مهم: تفکیک شده) ---
-        function showUserDetail(user) {
-            document.getElementById('modalTitle').innerText = user.n;
-            const body = document.getElementById('modalBody');
-            const d = user.parsedData;
+            const data = await res.json();
             
-            // الف: ساخت لیست آزمون‌ها
-            let examsHtml = '';
-            if(d.exams && Object.keys(d.exams).length > 0) {
-                examsHtml = '<table><tr><th>نام آزمون</th><th>نمره</th><th>عملیات</th></tr>';
-                for(let [eid, score] of Object.entries(d.exams)) {
-                    const examName = META_EXAMS[eid] || 'آزمون قدیمی';
-                    const color = score >= 17 ? 'green' : (score < 10 ? 'red' : 'black');
-                    examsHtml += `<tr>
-                        <td style="text-align:right;">${examName}<br><span style="font-size:0.7rem;color:#aaa">(${eid})</span></td>
-                        <td style="font-weight:bold; color:${color}; font-size:1.1rem;">${score}</td>
-                        <td><button class="op-btn" onclick="performAdminOp('reset_exam', '${user.u}', '${eid}')">♻️ ریست</button></td>
-                    </tr>`;
-                }
-                examsHtml += '</table>';
-            } else { examsHtml = '<div style="background:#fff; border:1px dashed #ccc; padding:10px; text-align:center; border-radius:10px; color:#999; margin-top:10px;">❌ هیچ آزمونی ثبت نشده است.</div>'; }
-
-            // ب: ساخت لیست فیلم‌ها
-            let lessonsHtml = '';
-            if(d.completed && d.completed.length > 0) {
-                lessonsHtml = '<table><tr><th>نام درس</th><th>وضعیت</th><th>عملیات</th></tr>';
-                d.completed.forEach(lid => {
-                    const lessonName = META_LESSONS[lid] || 'درس ناشناس';
-                    lessonsHtml += `<tr>
-                        <td style="text-align:right;">${lessonName}<br><span style="font-size:0.7rem;color:#aaa">(${lid})</span></td>
-                        <td style="color:#27ae60; font-weight:bold;">✅ مشاهده شد</td>
-                        <td><button class="op-btn" onclick="performAdminOp('reset_video', '${user.u}', '${lid}')">♻️ ریست</button></td>
-                    </tr>`;
+            if(data.status === 'success') {
+                ALL_USERS = data.users.map(u => {
+                    try { u.parsedData = JSON.parse(u.json); } catch(e) { u.parsedData = {}; }
+                    return u;
                 });
-                lessonsHtml += '</table>';
-            } else { lessonsHtml = '<div style="background:#fff; border:1px dashed #ccc; padding:10px; text-align:center; border-radius:10px; color:#999; margin-top:10px;">❌ هیچ فیلمی کامل دیده نشده است.</div>'; }
 
-            body.innerHTML = `
-                <div class="detail-header">
-                    <div style="font-size:2.5rem; font-weight:bold; color:#f39c12; line-height:1;">${d.xp || 0}</div>
-                    <div style="color:#7f8c8d; font-size:0.8rem; margin-bottom:10px;">مجموع امتیاز (XP)</div>
-                    <div style="background:#f8f9fa; padding:8px; border-radius:8px; display:inline-block; font-size:0.9rem;">
-                        رمز عبور: <strong>${user.p}</strong>
-                    </div>
-                    <div style="margin-top:10px;">
-                        <button onclick="performAdminOp('give_xp', '${user.u}', 0)" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">🎁 اهدای امتیاز</button>
-                        <button onclick="performAdminOp('ban_user', '${user.u}', 0)" style="background:#c0392b; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; margin-right:5px;">🚫 مسدود</button>
-                    </div>
+                if(data.meta) {
+                    if(data.meta.exams) META_EXAMS = data.meta.exams;
+                    if(data.meta.lessons) META_LESSONS = data.meta.lessons;
+                }
+                processData();
+                document.getElementById('lastUpdate').innerText = 'بروزرسانی: ' + new Date().toLocaleTimeString('fa-IR');
+            } else { alert("خطا: " + data.message); }
+        } catch(e) { console.error(e); alert("❌ خطای ارتباط با سرور"); }
+        document.getElementById('loadingBox').style.display = 'none';
+    }
+
+    function processData() {
+        renderUsersList(ALL_USERS);
+        renderLessonsStats();
+        renderExamsStats();
+        renderRanking();
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-'+tabId).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    // --- لیست کاربران ---
+    function renderUsersList(users) {
+        const container = document.getElementById('usersList');
+        container.innerHTML = '';
+        if(users.length === 0) { container.innerHTML = '<p style="text-align:center;color:#777">کاربری یافت نشد.</p>'; return; }
+
+        users.forEach(u => {
+            const div = document.createElement('div');
+            div.className = 'card user-card';
+            div.onclick = () => showUserDetail(u);
+            const role = u.parsedData.rank || 'نوآموز';
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight:bold; color:#2c3e50;">${u.n}</div>
+                    <div style="font-size:0.8rem; color:#7f8c8d;">${u.u}</div>
                 </div>
-                
-                <h4 style="color:#8e44ad; border-bottom:2px solid #8e44ad; padding-bottom:5px; margin:0;">📝 سوابق آزمون‌ها</h4>
-                ${examsHtml}
-                
-                <h4 style="color:#27ae60; border-bottom:2px solid #27ae60; padding-bottom:5px; margin:30px 0 0 0;">🎬 سوابق فیلم‌ها (درس‌ها)</h4>
-                ${lessonsHtml}
-            `;
-            document.getElementById('detailModal').style.display = 'flex';
-        }
+                <div style="text-align:left;">
+                    <span class="badge bg-blue">${u.parsedData.xp||0} XP</span>
+                    <div style="font-size:0.7rem; color:#95a5a6;">${role}</div>
+                </div>`;
+            container.appendChild(div);
+        });
+    }
 
-        function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
+    function filterUsers() {
+        const q = document.getElementById('searchBox').value.toLowerCase();
+        renderUsersList(ALL_USERS.filter(u => u.n.includes(q) || u.u.toLowerCase().includes(q)));
+    }
 
-        // --- 4. انجام عملیات ---
-        async function performAdminOp(type, username, itemId) {
-            let body = { action: 'admin_op', admin_token: ADMIN_TOKEN_KEY, target_user: username, op_type: type };
-            
-            if(type === 'give_xp') {
-                const amt = prompt("مقدار امتیاز؟ (مثلا 50)");
-                if(!amt) return; body.amount = amt;
-            } else if(type === 'ban_user') {
-                if(!confirm("آیا مطمئن هستید که می‌خواهید این دانش‌آموز را مسدود کنید؟")) return;
-            } else {
-                if(!confirm("آیا از انجام این عملیات اطمینان دارید؟")) return;
-                if(type === 'reset_exam') body.exam_id = itemId;
-                if(type === 'reset_video') body.video_id = itemId;
+    // --- [اصلاح شده] نمایش جزئیات کامل (همه درس‌ها و آزمون‌ها) ---
+    function showUserDetail(user) {
+        document.getElementById('modalTitle').innerText = user.n;
+        const body = document.getElementById('modalBody');
+        const d = user.parsedData;
+        const pb = d.playback || {};
+        
+        // 1. لیست کامل آزمون‌ها (شرکت کرده و نکرده)
+        let examsHtml = '<table><tr><th>نام آزمون</th><th>وضعیت/نمره</th><th>عملیات</th></tr>';
+        
+        // تمام آزمون‌های موجود در سیستم را چک کن
+        Object.keys(META_EXAMS).forEach(eid => {
+            const examName = META_EXAMS[eid];
+            let statusHtml = '<span style="color:red; font-size:0.8rem;">❌ شرکت نکرده</span>';
+            let opHtml = '-';
+
+            // اگر کاربر شرکت کرده باشد
+            if(d.exams && d.exams[eid] !== undefined) {
+                const score = d.exams[eid];
+                const color = score >= 17 ? 'green' : (score < 10 ? 'red' : 'black');
+                statusHtml = `<span style="font-weight:bold; color:${color}; font-size:1.1rem;">${score}</span>`;
+                opHtml = `<button class="op-btn" onclick="performAdminOp('reset_exam', '${user.u}', '${eid}')">♻️ ریست</button>`;
             }
 
-            if(event.target.tagName === 'BUTTON') { event.target.innerText = '⏳...'; event.target.disabled = true; }
+            examsHtml += `<tr>
+                <td style="text-align:right;">${examName}<br><span style="font-size:0.7rem;color:#aaa">(${eid})</span></td>
+                <td>${statusHtml}</td>
+                <td>${opHtml}</td>
+            </tr>`;
+        });
+        examsHtml += '</table>';
 
-            try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) });
-                const data = await res.json();
-                if(data.status === 'success') { 
-                    alert("✅ عملیات با موفقیت انجام شد."); 
-                    fetchData(); 
-                    closeModal(); 
-                } else { alert("❌ خطا: " + data.message); }
-            } catch(e) { alert("❌ خطای شبکه"); }
+        // 2. لیست کامل درس‌ها (فیلم‌ها)
+        let lessonsHtml = '<table><tr><th>نام درس</th><th>وضعیت مشاهده</th><th>عملیات</th></tr>';
+        
+        Object.keys(META_LESSONS).forEach(lid => {
+            const lessonName = META_LESSONS[lid];
+            const isCompleted = d.completed && d.completed.includes(lid.toString());
+            const lastTime = pb[lid.toString()] || 0;
+            
+            let statusHtml = '';
+            let opHtml = '-';
+
+            if(isCompleted) {
+                statusHtml = '<span style="color:#27ae60; font-weight:bold;">✅ کامل (۱۰۰٪)</span>';
+                opHtml = `<button class="op-btn" onclick="performAdminOp('reset_video', '${user.u}', '${lid}')">♻️ ریست</button>`;
+            } else if (lastTime > 0) {
+                // اگر درس تایم دارد (مثلا 10 دقیقه)، اینجا تقریبی مینویسیم یا دقیقه را نشان میدهیم
+                statusHtml = `<span style="color:#e67e22;">⚠️ ناقص (تا ثانیه ${lastTime})</span>`;
+                 opHtml = `<button class="op-btn" onclick="performAdminOp('reset_video', '${user.u}', '${lid}')">♻️ ریست</button>`;
+            } else {
+                statusHtml = '<span style="color:#95a5a6; font-size:0.8rem;">⭕ دیده نشده</span>';
+            }
+
+            lessonsHtml += `<tr>
+                <td style="text-align:right;">${lessonName}</td>
+                <td>${statusHtml}</td>
+                <td>${opHtml}</td>
+            </tr>`;
+        });
+        lessonsHtml += '</table>';
+
+        body.innerHTML = `
+            <div class="detail-header">
+                <div style="font-size:2.5rem; font-weight:bold; color:#f39c12;">${d.xp || 0}</div>
+                <div style="color:#7f8c8d;">XP</div>
+                <div style="margin-top:10px;">
+                    <button onclick="performAdminOp('give_xp', '${user.u}', 0)" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:8px;">🎁 امتیاز</button>
+                    <button onclick="performAdminOp('ban_user', '${user.u}', 0)" style="background:#c0392b; color:white; border:none; padding:8px 15px; border-radius:8px;">🚫 مسدود</button>
+                </div>
+            </div>
+            <h4 style="color:#8e44ad; border-bottom:2px solid #8e44ad;">📝 وضعیت آزمون‌ها</h4>
+            ${examsHtml}
+            <h4 style="color:#27ae60; border-bottom:2px solid #27ae60; margin-top:30px;">🎬 وضعیت درس‌ها</h4>
+            ${lessonsHtml}
+        `;
+        document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
+
+    // --- عملیات سرور ---
+    async function performAdminOp(type, username, itemId) {
+        let body = { action: 'admin_op', admin_token: ADMIN_TOKEN_KEY, target_user: username, op_type: type };
+        
+        if(type === 'give_xp') {
+            const amt = prompt("مقدار امتیاز؟");
+            if(!amt) return; body.amount = amt;
+        } else if(type === 'reset_exam' || type === 'reset_video') {
+            if(!confirm("آیا از بازنشانی (پاک کردن سابقه) اطمینان دارید؟")) return;
+            if(type === 'reset_exam') body.exam_id = itemId;
+            if(type === 'reset_video') body.video_id = itemId;
+        } else if(type === 'ban_user') {
+            if(!confirm("مسدود شود؟")) return;
         }
 
-        // --- 5. آمار درس‌ها (با قابلیت باز شدن لیست اسامی) ---
-        function renderLessonsStats() {
-            const container = document.getElementById('lessonsStats');
-            container.innerHTML = '';
-            const lessonIds = Object.keys(META_LESSONS);
-            if(lessonIds.length === 0) { container.innerHTML = '<p style="text-align:center; color:#999">هنوز درسی ثبت نشده است.</p>'; return; }
+        try {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(body) });
+            const data = await res.json();
+            if(data.status === 'success') { 
+                alert("✅ انجام شد."); 
+                fetchData(); 
+                closeModal(); 
+            } else { alert("❌ خطا: " + data.message); }
+        } catch(e) { alert("❌ خطای شبکه"); }
+    }
 
-            lessonIds.forEach(lid => {
-                let count = 0;
-                let seenList = [];
-                let notSeenList = [];
+    // --- [اصلاح شده] آمار آزمون (لیست غایبین و حاضرین) ---
+    function renderExamsStats() {
+        const container = document.getElementById('examsStats');
+        container.innerHTML = '';
+        
+        // حلقه روی تمام آزمون‌های تعریف شده
+        Object.keys(META_EXAMS).forEach(eid => {
+            const title = META_EXAMS[eid];
+            let count = 0;
+            let sum = 0;
+            let participants = [];
+            let absents = [];
 
-                ALL_USERS.forEach(u => {
-                    if(u.parsedData.completed && u.parsedData.completed.includes(lid.toString())) {
-                        count++;
-                        seenList.push(u.n);
-                    } else {
-                        notSeenList.push(u.n);
-                    }
-                });
-
-                const percent = Math.round((count / ALL_USERS.length) * 100) || 0;
-                
-                const div = document.createElement('div');
-                div.className = 'card lesson-card';
-                div.style.borderRightColor = '#e67e22';
-                div.style.display = 'block'; 
-                
-                // قابلیت باز و بسته شدن (Toggle)
-                div.onclick = function(e) {
-                    const listContainer = this.querySelector('.student-list-container');
-                    const isHidden = listContainer.style.display === 'none' || listContainer.style.display === '';
-                    listContainer.style.display = isHidden ? 'block' : 'none';
-                };
-
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>${META_LESSONS[lid]}</strong>
-                        <span class="badge" style="background:#e67e22">${count} / ${ALL_USERS.length}</span>
-                    </div>
-                    <div style="background:#eee; height:8px; border-radius:4px; margin-top:10px; overflow:hidden;">
-                        <div style="background:var(--accent); width:${percent}%; height:100%;"></div>
-                    </div>
-                    <div style="font-size:0.75rem; text-align:left; color:#999; margin-top:3px;">${percent}% تکمیل</div>
-                    
-                    <div class="student-list-container">
-                        <div style="color:#27ae60; font-weight:bold; margin-bottom:5px;">✅ دیده‌اند (${seenList.length}):</div>
-                        <div style="color:#555; line-height:1.6;">${seenList.length ? seenList.join(' ، ') : '(هیچکس)'}</div>
-                        
-                        <div style="color:#c0392b; font-weight:bold; margin-top:10px; margin-bottom:5px;">❌ ندیده‌اند (${notSeenList.length}):</div>
-                        <div style="color:#7f8c8d; line-height:1.6;">${notSeenList.length ? notSeenList.join(' ، ') : '(همه دیده اند)'}</div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // --- 6. آمار آزمون‌ها ---
-        function renderExamsStats() {
-            const container = document.getElementById('examsStats');
-            container.innerHTML = '';
-            const stats = {};
             ALL_USERS.forEach(u => {
-                if(u.parsedData.exams) {
-                    for(let [eid, score] of Object.entries(u.parsedData.exams)) {
-                        if(!stats[eid]) stats[eid] = { count: 0, sum: 0 };
-                        stats[eid].count++; stats[eid].sum += parseFloat(score);
-                    }
+                const d = u.parsedData;
+                if(d.exams && d.exams[eid] !== undefined) {
+                    count++;
+                    sum += parseFloat(d.exams[eid]);
+                    participants.push(`${u.n} (${d.exams[eid]})`);
+                } else {
+                    absents.push(u.n);
                 }
             });
-            const examIds = Object.keys(stats);
-            if(examIds.length === 0) { container.innerHTML = '<p style="text-align:center; color:#999">هنوز آزمونی برگزار نشده است.</p>'; return; }
 
-            examIds.forEach(eid => {
-                const s = stats[eid];
-                const avg = (s.sum / s.count).toFixed(1);
-                const title = META_EXAMS[eid] || eid;
+            const avg = count > 0 ? (sum / count).toFixed(1) : 0;
+
+            const div = document.createElement('div');
+            div.className = 'card lesson-card'; // استفاده از کلاس lesson-card برای قابلیت کلیک
+            div.style.borderRightColor = '#8e44ad';
+            
+            // قابلیت باز شدن لیست
+            div.onclick = function() {
+                const lc = this.querySelector('.student-list-container');
+                lc.style.display = (lc.style.display === 'none' || lc.style.display === '') ? 'block' : 'none';
+            };
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${title}</strong>
+                    <span class="badge" style="background:#8e44ad">${count} شرکت‌کننده</span>
+                </div>
+                <div style="margin-top:5px; font-size:0.9rem; color:#555;">میانگین: <b>${avg}</b></div>
                 
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.style.borderRightColor = '#8e44ad';
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; width:100%;">
-                        <strong>${title}</strong>
-                        <span class="badge" style="background:#8e44ad">${s.count} نفر</span>
-                    </div>
-                    <div style="margin-top:10px; font-size:0.9rem; color:#555;">
-                        میانگین کلاس: <b style="font-size:1.1rem; color:#2c3e50;">${avg}</b>
-                    </div>`;
-                container.appendChild(div);
-            });
-        }
+                <div class="student-list-container">
+                    <div style="color:#27ae60; font-weight:bold; margin-bottom:5px;">✅ شرکت‌کنندگان:</div>
+                    <div style="color:#555; font-size:0.85rem; line-height:1.6;">${participants.length ? participants.join(' ، ') : '-'}</div>
+                    
+                    <div style="color:#c0392b; font-weight:bold; margin-top:10px; margin-bottom:5px;">❌ غایبین:</div>
+                    <div style="color:#7f8c8d; font-size:0.85rem; line-height:1.6;">${absents.length ? absents.join(' ، ') : '(همه شرکت کردند)'}</div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
 
-        // --- 7. رنکینگ ---
-        function renderRanking() {
-            const sorted = [...ALL_USERS].sort((a,b) => (b.parsedData.xp || 0) - (a.parsedData.xp || 0)).slice(0, 10);
-            const container = document.getElementById('rankingList');
-            container.innerHTML = '';
-            sorted.forEach((u, idx) => {
-                const div = document.createElement('div');
-                div.className = 'card';
-                let medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : `<span style="display:inline-block;width:25px;text-align:center;font-weight:bold;color:#777">#${idx+1}</span>`));
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center;">
-                        <div style="font-size:1.4rem; margin-left:10px;">${medal}</div>
-                        <b>${u.n}</b>
-                    </div>
-                    <span class="badge bg-gold">${u.parsedData.xp || 0} XP</span>`;
-                container.appendChild(div);
+    // --- آمار درس‌ها ---
+    function renderLessonsStats() {
+        const container = document.getElementById('lessonsStats');
+        container.innerHTML = '';
+        Object.keys(META_LESSONS).forEach(lid => {
+            const title = META_LESSONS[lid];
+            let count = 0;
+            let seen = [];
+            let notSeen = [];
+            
+            ALL_USERS.forEach(u => {
+                if(u.parsedData.completed && u.parsedData.completed.includes(lid.toString())) {
+                    count++; seen.push(u.n);
+                } else {
+                    notSeen.push(u.n);
+                }
             });
-        }
-    </script>
+            
+            const percent = Math.round((count / ALL_USERS.length) * 100) || 0;
+            const div = document.createElement('div');
+            div.className = 'card lesson-card';
+            div.style.borderRightColor = '#e67e22';
+            div.onclick = function() {
+                const lc = this.querySelector('.student-list-container');
+                lc.style.display = (lc.style.display === 'none' || lc.style.display === '') ? 'block' : 'none';
+            };
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${title}</strong>
+                    <span class="badge" style="background:#e67e22">${count} / ${ALL_USERS.length}</span>
+                </div>
+                <div style="background:#eee; height:8px; border-radius:4px; margin-top:10px;"><div style="background:#e67e22; width:${percent}%; height:100%;"></div></div>
+                <div class="student-list-container">
+                    <div style="color:#27ae60;">✅ دیده‌اند: ${seen.join(' ، ')}</div>
+                    <div style="color:#c0392b; margin-top:5px;">❌ ندیده‌اند: ${notSeen.join(' ، ')}</div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function renderRanking() {
+        const sorted = [...ALL_USERS].sort((a,b) => (b.parsedData.xp || 0) - (a.parsedData.xp || 0)).slice(0, 10);
+        const container = document.getElementById('rankingList');
+        container.innerHTML = '';
+        sorted.forEach((u, idx) => {
+            container.innerHTML += `<div class="card" style="display:flex; justify-content:space-between;"><div>#${idx+1} <b>${u.n}</b></div><span class="badge bg-gold">${u.parsedData.xp||0} XP</span></div>`;
+        });
+    }
+</script>
 </body>
 </html>
