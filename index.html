@@ -62,7 +62,8 @@
         <button class="btn-main" onclick="login()">ورود</button>
         <div id="loading"><p>⏳ در حال دریافت لیست درس‌ها...</p></div>
         <div id="error-msg" style="display:none; color:#c0392b; margin-top:10px;">
-            <p>خطا در اتصال به پنل!</p>
+            <p>❌ عدم اتصال به سرور</p>
+            <p style="font-size:0.8rem; color:#7f8c8d">ممکن است اینترنت ضعیف باشد.</p>
             <button class="btn-main retry-btn" onclick="location.reload()">تلاش مجدد 🔄</button>
         </div>
     </div>
@@ -104,10 +105,8 @@
         // ***********************************************
         // تنظیمات پنل
         // ***********************************************
-        
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyTA9hNsiL9KPtq5u9Pav209AFvC6BVCiYfz3LEAqIbpNBaYju_zm_V_O8bjJjDP8FgDw/exec"; 
-        
         // ***********************************************
         
         const CHECK_INTERVAL = 300; 
@@ -139,9 +138,8 @@
         }
 
         // *******************************************************
-        // 💎 مدیریت دکمه بازگشت گوشی (History API)
+        // مدیریت دکمه بازگشت
         // *******************************************************
-        
         window.addEventListener('popstate', function(event) {
             if (document.getElementById('screen-player').classList.contains('active')) {
                 performExitLogic();
@@ -157,12 +155,23 @@
         }
 
         // *******************************************************
-
+        // ⚡ آپدیت جدید: اتصال هوشمند با تایمر قطع‌کن (Timeout)
+        // *******************************************************
         async function fetchPlaylist() {
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error-msg').style.display = 'none';
+            
+            // تنظیم تایمر ۱۰ ثانیه‌ای برای قطع اتصال اگر اینترنت خیلی کند بود
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 ثانیه زمان انتظار
+
             try {
-                const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
+                const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now(), {
+                    signal: controller.signal,
+                    cache: "no-store" // جلوگیری از کش شدن در موبایل
+                });
+                clearTimeout(timeoutId); // اگر موفق شد، تایمر را پاک کن
+
                 if(!res.ok) throw new Error("Network error");
                 const data = await res.text();
                 parseCSV(data);
@@ -257,7 +266,6 @@
         function playVideo(item) {
             if(!item.file || item.file.length < 5) return alert("لینک معتبر نیست.");
             
-            // اضافه کردن تاریخچه برای دکمه بازگشت گوشی
             history.pushState({ page: 'player' }, "Player", "#player");
 
             activeVid = item;
@@ -314,9 +322,7 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ******* سیستم امنیتی و نظارتی (فوق پیشرفته v28) *******
-        
-        // 1. رویداد visibilitychange: برای Minimize شدن
+        // ******* سیستم امنیتی و نظارتی (نسخه نهایی) *******
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
             if (document.visibilityState === 'hidden') {
@@ -327,14 +333,11 @@
             }
         });
 
-        // 2. رویداد pagehide: برای بستن تب
         window.addEventListener('pagehide', () => {
              checkAndReport("⛔ بستن صفحه", true);
         });
 
-        // 3. رویداد beforeunload: مخصوص دکمه ضربدر مرورگر (لایه امنیتی جدید)
         window.addEventListener('beforeunload', (event) => {
-             // این رویداد در لحظه مرگ صفحه توسط ضربدر اجرا می‌شود
              checkAndReport("⛔ بستن ناگهانی (X)", true);
         });
 
