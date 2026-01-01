@@ -292,23 +292,37 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
+// ***********************************************
+        // اصلاحیه بخش دریافت لیست (ادغام data.js و گوگل شیت)
+        // ***********************************************
+
         async function fetchPlaylist() {
-            if (typeof LOCAL_PLAYLIST !== 'undefined' && LOCAL_PLAYLIST.length > 0) {
-                playlist = LOCAL_PLAYLIST;
-                renderList();
-                return;
+            // 1. ابتدا لیست را خالی می‌کنیم
+            playlist = [];
+
+            // 2. اگر فایل لوکال (data.js) وجود دارد، آن را اضافه کن
+            if (typeof LOCAL_PLAYLIST !== 'undefined' && Array.isArray(LOCAL_PLAYLIST)) {
+                console.log("Loading form Local data.js...");
+                playlist = [...LOCAL_PLAYLIST]; // کپی کردن داده‌های لوکال
             }
+
+            // 3. حالا برو سراغ گوگل شیت و داده‌های آن را هم بگیر
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
                 if(res.ok) {
-                    parseCSV(await res.text());
-                    renderList();
+                    const csvText = await res.text();
+                    parseCSV(csvText); // این تابع به لیست فعلی اضافه می‌کند
                 }
-            } catch (err) { console.log("Google CSV failed"); }
+            } catch (err) { 
+                console.log("Google CSV failed or offline"); 
+            }
+
+            // 4. در نهایت لیست را نمایش بده
+            renderList();
         }
 
         function parseCSV(csvText) {
-            playlist = [];
+            // نکته مهم: اینجا دیگر playlist = [] را نمی‌نویسیم تا داده‌های قبلی پاک نشوند
             const rows = csvText.split('\n');
             for(let i=1; i<rows.length; i++) {
                 const row = rows[i].split(',');
@@ -317,12 +331,18 @@
                     const title = row[1].trim(); 
                     const file = row[2].trim();
                     let attachment = "";
-                    if(row.length > 3) attachment = rows[i].substring(rows[i].indexOf(file) + file.length).trim().replace(/^,|,$/g, '');
-                    if(id && title && file) playlist.push({ id, title, file, attachment });
+                    if(row.length > 3) {
+                        const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
+                        attachment = remaining.trim().replace(/^,|,$/g, ''); 
+                    }
+                    // چک می‌کنیم که آیدی تکراری نباشد (اولویت با دیتای گوگل شیت است)
+                    const exists = playlist.find(p => p.id === id);
+                    if(id && title && file && !exists) {
+                        playlist.push({ id, title, file, attachment });
+                    }
                 }
             }
         }
-
         function renderList() {
             const list = document.getElementById('video-list-container');
             list.innerHTML = "";
@@ -497,3 +517,4 @@
     </script>
 </body>
 </html>
+
