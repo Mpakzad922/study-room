@@ -165,10 +165,15 @@
 
     <script>
         // ***********************************************
-        // تنظیمات اصلی
+        // تنظیمات اصلی - این بخش را با دقت پر کنید
         // ***********************************************
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
-        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbySE6sKxzPB4Lg-zreDERQnQ3qse8FS_r6lHAVqIUFFS6VSG30r-r_7MshmlvdHad_T/exec"; 
+        
+        // 1. لینک CSV شیت جدید Lessons را اینجا بگذارید (از منوی File > Share > Publish to Web)
+        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=620035076&single=true&output=csv"; 
+
+        // 2. آدرس وب‌اپ جدید شما (قبلاً جایگزین کردم اما چک کنید)
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzRxLq97RoOcJCZg_WqQ8byHCd2GslaGh3D0A1NRsxLGpfdCQNdg2cRXp-VlmVbfsDGIA/exec"; 
+        
         // ***********************************************
         
         const CHECK_INTERVAL = 300; 
@@ -297,14 +302,19 @@
 
         async function fetchPlaylist() {
             playlist = [];
+            // ابتدا از فایل data.js بخوان
             if (typeof LOCAL_PLAYLIST !== 'undefined' && Array.isArray(LOCAL_PLAYLIST)) {
                 playlist = [...LOCAL_PLAYLIST]; 
             }
+            // سپس از گوگل شیت بخوان و اضافه کن
             try {
-                const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
-                if(res.ok) {
-                    const csvText = await res.text();
-                    parseCSV(csvText); 
+                // چک می‌کنیم اگر لینک هنوز پیش‌فرض است، درخواست ندهیم
+                if(SHEET_CSV_URL.includes('http')) {
+                    const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
+                    if(res.ok) {
+                        const csvText = await res.text();
+                        parseCSV(csvText); 
+                    }
                 }
             } catch (err) { console.log("Google CSV failed or offline"); }
             renderList();
@@ -313,6 +323,7 @@
         function parseCSV(csvText) {
             const rows = csvText.split('\n');
             for(let i=1; i<rows.length; i++) {
+                // پارس کردن دقیق‌تر CSV برای جلوگیری از مشکل کاما در متن
                 const row = rows[i].split(',');
                 if(row.length >= 3) {
                     const id = row[0].trim();
@@ -323,7 +334,7 @@
                         const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
                         attachment = remaining.trim().replace(/^,|,$/g, ''); 
                     }
-                    const exists = playlist.find(p => p.id === id);
+                    const exists = playlist.find(p => p.id == id); // مقایسه شل برای تطبیق string/number
                     if(id && title && file && !exists) {
                         playlist.push({ id, title, file, attachment });
                     }
@@ -575,4 +586,3 @@
     </script>
 </body>
 </html>
-
