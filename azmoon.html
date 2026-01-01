@@ -93,10 +93,13 @@
 
     <script>
         // ***********************************************
-        // تنظیمات
+        // تنظیمات (لینک جدید شما قرار داده شد ✅)
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
-        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycby6yeLVbpSJw1jtsET3fNfRWkno4nZH5Q3yBw7MCBqoSzT_jlllZp2YLM6IEtEHPqj2cQ/exec"; 
+        
+        // لینک وب‌اپ جدید شما:
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw_D_VLQs9pRtNIsDKzDIkZ5HXfAkJXX_keRRP53JPux0sDH5Jgj_AKsljdz9Xu528VBA/exec"; 
+        
         const DB_KEY = "chamran_db_v19_"; 
         // ***********************************************
 
@@ -140,7 +143,7 @@
             } catch (err) {
                 console.error(err);
                 statusDiv.innerHTML = "<span style='color:red'>دسترسی به دوربین داده نشد!</span>";
-                alert("لطفاً دسترسی دوربین را فعال کنید.");
+                alert("لطفاً دسترسی دوربین را در مرورگر فعال کنید.");
             }
         }
 
@@ -156,8 +159,8 @@
                 btn.innerText = "⏳ در حال ارسال...";
                 btn.disabled = true;
 
-                // **تغییر مهم: کوچک کردن سایز عکس برای ارسال سریع**
-                // به جای سایز اصلی، سایز 320 پیکسل را تنظیم می‌کنیم
+                // ⚡ فشرده‌سازی و تغییر سایز عکس (برای رفع مشکل آپلود)
+                // عرض عکس روی 320 پیکسل تنظیم می‌شود تا حجم بسیار کم شود
                 const scale = 320 / video.videoWidth;
                 canvas.width = 320;
                 canvas.height = video.videoHeight * scale;
@@ -165,7 +168,7 @@
 
                 streamObj.getTracks().forEach(track => track.stop());
 
-                // کیفیت پایین (0.5) برای حجم کم
+                // کیفیت 0.5 (متوسط)
                 const base64Img = canvas.toDataURL('image/jpeg', 0.5);
 
                 const data = { action: 'upload_image', name: currentUser, image: base64Img };
@@ -180,13 +183,9 @@
 
             } catch (err) {
                 console.error(err);
-                // **تغییر مهم: نمایش دقیق خطا به جای ریست شدن**
                 statusDiv.innerHTML = `<span style='color:red; font-size:0.8rem'>❌ خطا: ${err.message}</span>`;
                 btn.disabled = false;
                 btn.innerText = "📷 تلاش مجدد";
-                
-                // نکته: اینجا دیگر openCamera را صدا نمی‌زنیم تا لوپ نشود
-                // کاربر باید خودش دکمه تلاش مجدد را بزند
             }
         }
 
@@ -195,7 +194,7 @@
             document.getElementById('screenCheckModal').style.display = 'none'; 
         }
 
-        // --- سایر توابع (بدون تغییر) ---
+        // --- توابع آزمون (بدون تغییر) ---
         async function loadExams() {
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
