@@ -93,12 +93,12 @@
 
     <script>
         // ***********************************************
-        // تنظیمات (لینک جدید شما قرار داده شد ✅)
+        // تنظیمات
         // ***********************************************
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
         
-        // لینک وب‌اپ جدید شما:
-        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbw_D_VLQs9pRtNIsDKzDIkZ5HXfAkJXX_keRRP53JPux0sDH5Jgj_AKsljdz9Xu528VBA/exec"; 
+        // 👇 لینک جدید شما در خط زیر قرار گرفت:
+        const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx57FD6abpRJLZZDcPvJ5M-Aun6sz4w5loy4R6uIBpFIJFm1FXtQAzP59PmG5JZzUP7_g/exec"; 
         
         const DB_KEY = "chamran_db_v19_"; 
         // ***********************************************
@@ -143,7 +143,7 @@
             } catch (err) {
                 console.error(err);
                 statusDiv.innerHTML = "<span style='color:red'>دسترسی به دوربین داده نشد!</span>";
-                alert("لطفاً دسترسی دوربین را در مرورگر فعال کنید.");
+                alert("لطفاً دسترسی دوربین را فعال کنید.");
             }
         }
 
@@ -159,8 +159,7 @@
                 btn.innerText = "⏳ در حال ارسال...";
                 btn.disabled = true;
 
-                // ⚡ فشرده‌سازی و تغییر سایز عکس (برای رفع مشکل آپلود)
-                // عرض عکس روی 320 پیکسل تنظیم می‌شود تا حجم بسیار کم شود
+                // کاهش سایز عکس به 320px برای سرعت بالا
                 const scale = 320 / video.videoWidth;
                 canvas.width = 320;
                 canvas.height = video.videoHeight * scale;
@@ -168,7 +167,7 @@
 
                 streamObj.getTracks().forEach(track => track.stop());
 
-                // کیفیت 0.5 (متوسط)
+                // فشرده‌سازی با کیفیت 0.5
                 const base64Img = canvas.toDataURL('image/jpeg', 0.5);
 
                 const data = { action: 'upload_image', name: currentUser, image: base64Img };
@@ -194,7 +193,7 @@
             document.getElementById('screenCheckModal').style.display = 'none'; 
         }
 
-        // --- توابع آزمون (بدون تغییر) ---
+        // --- سایر توابع ---
         async function loadExams() {
             try {
                 const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
