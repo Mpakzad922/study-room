@@ -87,14 +87,10 @@
         const DB_KEY = "chamran_db_v20_"; 
         // ***********************************************
 
-        // تعریف متغیر گلوبال برای rank.js
-        // اگر REPORT_WEBAPP_URL در rank.js نباشد، اینجا تعریف می‌کنیم
         if(typeof REPORT_WEBAPP_URL === 'undefined') {
-             // آدرس دقیق وب‌اپ اسکریپت خودتان را اینجا حتما چک کنید
              var REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx7Y3YavH825i9yzrX3UA5HP1vfrN4cnPWyAlHqk_imdnjj_wLabYGj3HTuuZcUCpSrjA/exec";
         }
 
-        // تابع تبدیل اعداد به فارسی
         function toPersianNum(n) {
             if (n === undefined || n === null) return "";
             return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]);
@@ -108,7 +104,7 @@
         let userAnswers = {}; 
         let timerInterval; 
         let timeRemaining = 0;
-        let isExamActive = false; // وضعیت آزمون برای کنترل گزارش‌ها
+        let isExamActive = false;
 
         function initAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
@@ -121,12 +117,38 @@
                 if(typeof SyncManager !== 'undefined') {
                     SyncManager.init(currentUser.username, currentUser.password);
                     RankSystem.init(currentUser.jsonData);
+                    
+                    // [اصلاح شده] سینک فوری برای اینکه اگر قبلاً امتحان داده، بفهمیم
+                    performSilentSync(currentUser.username, currentUser.password);
                 }
             } catch(e) {
                 localStorage.removeItem(DB_KEY + 'creds');
                 window.location.href = 'index.html';
             }
         }
+
+        // تابع جدید برای همگام‌سازی در صفحه آزمون
+        async function performSilentSync(u, p) {
+            try {
+                if(!navigator.onLine) return;
+                const res = await fetch(REPORT_WEBAPP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'login', username: u, password: p })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    console.log("📥 Sync Exam Data:", data.jsonData);
+                    // آپدیت رنکینگ و نمرات با دیتای سرور
+                    RankSystem.init(data.jsonData); 
+                    // آپدیت حافظه لوکال
+                    const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
+                    localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
+                    // رفرش لیست آزمون‌ها (برای اینکه قفل‌ها ظاهر شوند)
+                    renderExamList(); 
+                }
+            } catch(e) { console.log("Sync failed in exam page"); }
+        }
+
         initAuth();
 
         async function loadExams() {
@@ -201,8 +223,10 @@
 
             ids.forEach(id => {
                 const exam = examsMap[id];
+                // هماهنگی دقیق بین دیتای ابری و لوکال
                 const takenCloud = RankSystem.data.exams && RankSystem.data.exams[id];
                 const takenLocal = localStorage.getItem('taken_' + id);
+                
                 const isLocked = (takenCloud !== undefined) || takenLocal;
                 const scoreDisplay = takenCloud !== undefined ? takenCloud : 'ثبت شده';
                 
@@ -237,7 +261,7 @@
         }
 
         function startExam(id) {
-            isExamActive = true; // آزمون شروع شد
+            isExamActive = true; 
             currentExamId = id;
             currentQuestions = examsMap[id].questions;
             timeRemaining = parseInt(examsMap[id].duration) * 60;
@@ -249,7 +273,6 @@
             startTimer();
             showQuestion();
             
-            // گزارش شروع آزمون (فوری)
             SyncManager.addToQueue('report', {
                 lesson: `آزمون: ${examsMap[id].title}`,
                 status: 'شروع آزمون',
@@ -314,12 +337,11 @@
 
         function finishExam() {
             clearInterval(timerInterval);
-            isExamActive = false; // آزمون تمام شد، دیگر گزارش مشکوک نفرست
+            isExamActive = false; // پایان وضعیت فعال آزمون
             
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
             
-            // قفل کردن آزمون
             localStorage.setItem('taken_' + currentExamId, 'done');
 
             let correct = 0; let wrong = 0; let empty = 0;
@@ -331,39 +353,32 @@
             const score = (correct / currentQuestions.length) * 20; 
             const finalScore = parseFloat(score.toFixed(1));
             
-            // نمایش نتایج
             document.getElementById('reportTitle').innerText = examsMap[currentExamId].title;
             document.getElementById('scoreNum').innerText = toPersianNum(finalScore);
             document.getElementById('statCorrect').innerText = toPersianNum(correct);
             document.getElementById('statWrong').innerText = toPersianNum(wrong);
             document.getElementById('statEmpty').innerText = toPersianNum(empty);
             
-            // ذخیره در سیستم ابری
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             RankSystem.data.exams[currentExamId] = finalScore;
             
-            // سیستم امتیازدهی (XP)
             let xpBonus = 0;
             if(finalScore >= 20) xpBonus = 300;
             else if(finalScore >= 17) xpBonus = 100;
             
             if(xpBonus > 0) {
-                // ارسال امتیاز به rank.js
-                // نکته مهم: آیدی آزمون را به عنوان uniqueId می‌فرستیم که تکراری ندهد
                 RankSystem.addXP(xpBonus, `پاداش آزمون: ${examsMap[currentExamId].title}`, 'exam_'+currentExamId);
-                
                 document.getElementById('xpRewardMsg').style.display = 'block';
                 document.getElementById('xpAmount').innerText = toPersianNum(xpBonus);
             } else {
                 RankSystem.saveToDisk();
             }
 
-            // ارسال گزارش نهایی و دقیق
-            const detailLog = `✅ درست: ${correct} | ❌ غلط: ${wrong} | ⚪ نزده: ${empty}`;
+            const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | ⚪ نزده: ${toPersianNum(empty)}`;
             
             SyncManager.addToQueue('report', {
                 lesson: `آزمون: ${examsMap[currentExamId].title}`,
-                status: `پایان آزمون (نمره: ${finalScore})`,
+                status: `پایان آزمون (نمره: ${toPersianNum(finalScore)})`,
                 details: detailLog,
                 device: getDeviceInfo()
             });
@@ -374,26 +389,24 @@
             }
         }
         
-        // بازگشت امن به خانه
         function goToHome() {
             isExamActive = false;
             window.location.href = 'index.html';
         }
 
-        // تابع کمکی دیوایس اینفو
         function getDeviceInfo() {
             return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC";
         }
         
         // ***********************************************
-        // امنیت و ضد تقلب (فقط وقتی آزمون فعال است)
+        // امنیت اصلاح شده: استفاده از visibilitychange بجای blur
         // ***********************************************
-        window.addEventListener('blur', () => {
-            if(isExamActive) {
+        document.addEventListener("visibilitychange", () => {
+            if(isExamActive && document.visibilityState === 'hidden') {
                 SyncManager.addToQueue('report', {
                     lesson: `آزمون: ${examsMap[currentExamId].title}`,
                     status: '⚠️ رفتار مشکوک',
-                    details: 'خروج از صفحه (تقلب احتمالی)',
+                    details: 'خروج از صفحه (Minimizing/Tab Switch)',
                     device: getDeviceInfo()
                 });
             }
