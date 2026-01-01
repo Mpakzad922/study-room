@@ -76,16 +76,16 @@
             <div class="logout-btn" onclick="logout()">خروج 🚪</div>
         </div>
         <div style="margin-bottom: 20px;">
-    <button onclick="window.location.href='azmoon.html'" style="background: #8e44ad; color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-family: inherit; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);">
-        📝 ورود به آزمون آنلاین
-    </button>
-</div>
+            <button onclick="window.location.href='azmoon.html'" style="background: #8e44ad; color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-family: inherit; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);">
+                📝 ورود به آزمون آنلاین
+            </button>
+        </div>
         <div id="video-list-container"></div>
     </div>
 
     <div id="screen-player" class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button class="back-btn" onclick="backToLib()">بازگشت</button>
+            <button class="back-btn" onclick="history.back()">بازگشت</button>
             <strong id="videoTitle" style="font-size: 0.9rem;"></strong>
         </div>
         
@@ -102,13 +102,10 @@
 
     <script>
         // ***********************************************
-        // تنظیمات پنل (لینک‌های متصل شده)
+        // تنظیمات پنل
         // ***********************************************
         
-        // 1. لینک CSV لیست درس‌ها
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
-        
-        // 2. لینک Web App برای ثبت گزارش
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyTA9hNsiL9KPtq5u9Pav209AFvC6BVCiYfz3LEAqIbpNBaYju_zm_V_O8bjJjDP8FgDw/exec"; 
         
         // ***********************************************
@@ -116,8 +113,7 @@
         const CHECK_INTERVAL = 300; 
         const ANSWER_TIMEOUT = 60;
         const IDLE_TIMEOUT = 120;
-        const BACKGROUND_TIMEOUT = 120;
-
+        
         let playlist = []; 
         const DB_KEY = "chamran_db_v19_"; 
         let user = "";
@@ -138,10 +134,33 @@
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
         
         function getDeviceInfo() {
-            // تشخیص موبایل یا دسکتاپ برای گزارش دقیق‌تر
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             return (isMobile ? "📱 Mobile" : "💻 PC") + " | " + navigator.userAgent;
         }
+
+        // *******************************************************
+        // 💎 مدیریت دکمه بازگشت گوشی (History API)
+        // *******************************************************
+        
+        // وقتی دکمه بازگشت گوشی (یا مرورگر) زده شود، این تابع اجرا می‌شود
+        window.addEventListener('popstate', function(event) {
+            // اگر کاربر در صفحه پلیر بود و دکمه بازگشت را زد:
+            if (document.getElementById('screen-player').classList.contains('active')) {
+                // اجرای عملیات خروج و گزارش‌دهی
+                performExitLogic();
+            }
+        });
+
+        // تابعی که عملیات خروج را انجام می‌دهد (چه با دکمه گوشی، چه دکمه روی صفحه)
+        function performExitLogic() {
+            checkAndReport("خروج از درس 🔙", true); 
+            vid.pause();
+            if(backgroundTimer) clearTimeout(backgroundTimer);
+            renderList();
+            showScreen('screen-library');
+        }
+
+        // *******************************************************
 
         async function fetchPlaylist() {
             document.getElementById('loading').style.display = 'block';
@@ -242,6 +261,9 @@
         function playVideo(item) {
             if(!item.file || item.file.length < 5) return alert("لینک معتبر نیست.");
             
+            // 💎 ترفند: اضافه کردن یک تاریخچه جعلی برای دکمه بازگشت
+            history.pushState({ page: 'player' }, "Player", "#player");
+
             activeVid = item;
             document.getElementById('videoTitle').innerText = item.title;
             isDone = false;
@@ -291,14 +313,6 @@
             }
         }
 
-        function backToLib() {
-            checkAndReport("خروج از درس 🔙", true); 
-            vid.pause();
-            if(backgroundTimer) clearTimeout(backgroundTimer);
-            renderList();
-            showScreen('screen-library');
-        }
-
         function showScreen(id) {
             document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
             document.getElementById(id).classList.add('active');
@@ -306,21 +320,16 @@
 
         // ******* سیستم امنیتی و نظارتی (بهینه شده برای موبایل) *******
         
-        // 1. اولویت اول برای موبایل: وقتی صفحه مخفی شد (سوییچ اپ یا بستن تب)
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
-
             if (document.visibilityState === 'hidden') {
-                // بلافاصله گزارش خروج را می‌فرستیم چون در موبایل ممکن است پروسه بسته شود
                 checkAndReport("⛔ توقف/خروج (بستن برنامه)", true);
                 vid.pause();
             } else {
-                // برگشت به برنامه
                 if(backgroundTimer) clearTimeout(backgroundTimer);
             }
         });
 
-        // 2. اولویت دوم: رویداد استاندارد بستن صفحه
         window.addEventListener('pagehide', () => {
              checkAndReport("⛔ بستن صفحه", true);
         });
@@ -417,9 +426,6 @@
             }
         }
         
-        // ***********************************************
-        // تابع گزارش‌دهی نهایی (با قابلیت SendBeacon برای موبایل)
-        // ***********************************************
         function checkAndReport(statusOverride, force = false) {
             if(!activeVid) return;
             
@@ -441,7 +447,6 @@
             
             const jsonData = JSON.stringify(data);
 
-            // استراتژی جدید: استفاده از sendBeacon اگر force (خروج) باشد
             if (force && navigator.sendBeacon) {
                 const blob = new Blob([jsonData], {type: 'text/plain'});
                 const success = navigator.sendBeacon(REPORT_WEBAPP_URL, blob);
