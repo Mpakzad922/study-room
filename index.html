@@ -105,10 +105,10 @@
         // تنظیمات پنل (لینک‌های متصل شده)
         // ***********************************************
         
-        // 1. لینک CSV لیست درس‌ها (برای خواندن اطلاعات)
+        // 1. لینک CSV لیست درس‌ها
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?output=csv";
         
-        // 2. لینک Web App جدید شما (برای ثبت گزارش‌ها)
+        // 2. لینک Web App برای ثبت گزارش
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyTA9hNsiL9KPtq5u9Pav209AFvC6BVCiYfz3LEAqIbpNBaYju_zm_V_O8bjJjDP8FgDw/exec"; 
         
         // ***********************************************
@@ -138,7 +138,9 @@
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
         
         function getDeviceInfo() {
-            return navigator.userAgent + " | " + window.screen.width + "x" + window.screen.height;
+            // تشخیص موبایل یا دسکتاپ برای گزارش دقیق‌تر
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            return (isMobile ? "📱 Mobile" : "💻 PC") + " | " + navigator.userAgent;
         }
 
         async function fetchPlaylist() {
@@ -302,30 +304,25 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // ******* سیستم امنیتی و نظارتی (نسخه ضد ضربه) *******
+        // ******* سیستم امنیتی و نظارتی (بهینه شده برای موبایل) *******
         
-        // گزارش بستن تب یا مرورگر (تضمینی با keepalive)
-        window.addEventListener('pagehide', () => {
-             checkAndReport("⛔ خروج ناگهانی (بستن مرورگر)", true);
-        });
-
+        // 1. اولویت اول برای موبایل: وقتی صفحه مخفی شد (سوییچ اپ یا بستن تب)
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
 
             if (document.visibilityState === 'hidden') {
+                // بلافاصله گزارش خروج را می‌فرستیم چون در موبایل ممکن است پروسه بسته شود
+                checkAndReport("⛔ توقف/خروج (بستن برنامه)", true);
                 vid.pause();
-                let pText = document.getElementById('viewPercent').innerText;
-                const percent = parseInt(toEnglishNum(pText).replace('٪', ''));
-                
-                if(percent > 5 && percent < 98) {
-                    checkAndReport("خروج موقت (Minimize) ⏸️", true);
-                    backgroundTimer = setTimeout(() => {
-                        checkAndReport("⛔ خروج از کلاس (بیش از ۲ دقیقه)", true);
-                    }, BACKGROUND_TIMEOUT * 1000); 
-                }
             } else {
+                // برگشت به برنامه
                 if(backgroundTimer) clearTimeout(backgroundTimer);
             }
+        });
+
+        // 2. اولویت دوم: رویداد استاندارد بستن صفحه
+        window.addEventListener('pagehide', () => {
+             checkAndReport("⛔ بستن صفحه", true);
         });
 
         setInterval(() => {
@@ -420,7 +417,9 @@
             }
         }
         
-        // تابع گزارش‌دهی نهایی (با قابلیت ارسال در لحظه مرگ صفحه)
+        // ***********************************************
+        // تابع گزارش‌دهی نهایی (با قابلیت SendBeacon برای موبایل)
+        // ***********************************************
         function checkAndReport(statusOverride, force = false) {
             if(!activeVid) return;
             
@@ -440,15 +439,27 @@
                 deviceInfo: getDeviceInfo()
             };
             
+            const jsonData = JSON.stringify(data);
+
+            // استراتژی جدید: استفاده از sendBeacon اگر force (خروج) باشد
+            if (force && navigator.sendBeacon) {
+                const blob = new Blob([jsonData], {type: 'text/plain'});
+                const success = navigator.sendBeacon(REPORT_WEBAPP_URL, blob);
+                if (!success) sendViaFetch(jsonData);
+            } else {
+                sendViaFetch(jsonData);
+            }
+        }
+
+        function sendViaFetch(jsonData) {
             fetch(REPORT_WEBAPP_URL, {
                 method: 'POST',
-                mode: 'no-cors', // حیاتی برای جلوگیری از خطای CORS
-                body: JSON.stringify(data),
-                keepalive: true, // حیاتی برای ارسال هنگام بسته شدن صفحه
+                mode: 'no-cors',
+                body: jsonData,
+                keepalive: true,
                 headers: { 'Content-Type': 'text/plain' }
             }).catch(err => console.log("Report attempt failed"));
         }
     </script>
 </body>
 </html>
-
