@@ -518,6 +518,7 @@
         });
 
         // خروج اضطراری (هوشمند)
+// خروج اضطراری (هوشمند)
         window.addEventListener('beforeunload', (e) => {
             if (activeVid) {
                 const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
@@ -530,9 +531,11 @@
                     device: getDeviceInfo(),
                     timestamp: Date.now()
                 };
-                let q = JSON.parse(localStorage.getItem('chamran_queue_v2') || "[]");
+                
+                // [اصلاح شده] تغییر v2 به v3 برای هماهنگی با rank.js جدید
+                let q = JSON.parse(localStorage.getItem('chamran_queue_v3') || "[]");
                 q.push(data);
-                localStorage.setItem('chamran_queue_v2', JSON.stringify(q));
+                localStorage.setItem('chamran_queue_v3', JSON.stringify(q));
             }
         });
 
@@ -586,4 +589,5 @@
     </script>
 </body>
 </html>
+
 
