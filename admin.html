@@ -58,13 +58,15 @@
         .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* استایل‌های جدید برای تب مدیریت */
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #7f8c8d; }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-        .btn-submit { width: 100%; padding: 12px; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-green { background: #27ae60; }
-        .btn-blue { background: #3498db; }
+        /* --- استایل‌های جدید برای تب مدیریت (جدول) --- */
+        .new-user-box { background: #e8f6f3; padding: 15px; border-radius: 15px; border: 1px dashed #27ae60; margin-bottom: 20px; display: none; }
+        .manage-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .manage-table th { background: #34495e; color: white; padding: 10px; font-size: 0.85rem; }
+        .manage-table td { padding: 8px; border-bottom: 1px solid #eee; background: white; }
+        .manage-input { width: 90%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; text-align: center; font-size: 0.9rem; }
+        .manage-input:focus { border-color: #3498db; outline: none; background: #f0f8ff; }
+        .save-row-btn { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        .save-row-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -77,7 +79,7 @@
 
     <div id="loadingBox" class="loading-overlay">
         <div class="spinner"></div>
-        <p style="margin-top:15px; color:#555; font-weight:bold;">درحال دریافت اطلاعات...</p>
+        <p style="margin-top:15px; color:#555; font-weight:bold;">درحال انجام عملیات...</p>
     </div>
 
     <div id="mainApp">
@@ -104,23 +106,36 @@
         </div>
 
         <div id="tab-manage" class="section">
-            <h3 style="color:#27ae60; text-align:center;">👥 مدیریت کاربران</h3>
-            
-            <div class="card" style="border-right-color:#27ae60;">
-                <h4 style="margin-top:0; color:#27ae60;">➕ ثبت‌نام دانش‌آموز جدید</h4>
-                <div class="input-group"><label>نام کامل:</label><input id="new_n" placeholder="مثال: علی رضایی"></div>
-                <div class="input-group"><label>نام کاربری (انگلیسی):</label><input id="new_u" placeholder="ali.rezaei" style="direction:ltr"></div>
-                <div class="input-group"><label>رمز عبور (عدد):</label><input id="new_p" type="number" placeholder="1234" style="direction:ltr"></div>
-                <button class="btn-submit btn-green" onclick="createUser()">ثبت دانش‌آموز</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="color:#27ae60; margin:0;">🛠️ مدیریت کاربران</h3>
+                <button onclick="toggleNewUserBox()" style="background:#3498db; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">➕ کاربر جدید</button>
             </div>
 
-            <div class="card" style="border-right-color:#3498db;">
-                <h4 style="margin-top:0; color:#3498db;">✏️ ویرایش رمز/نام کاربر</h4>
-                <p style="font-size:0.8rem; color:#7f8c8d;">نام کاربری فعلی را وارد کنید تا تغییرات اعمال شود:</p>
-                <div class="input-group"><label>نام کاربری فعلی (هدف):</label><input id="edit_target_u" style="direction:ltr"></div>
-                <div class="input-group"><label>نام جدید (اختیاری):</label><input id="edit_n"></div>
-                <div class="input-group"><label>رمز جدید:</label><input id="edit_p" style="direction:ltr"></div>
-                <button class="btn-submit btn-blue" onclick="updateUser()">ذخیره تغییرات</button>
+            <div id="newUserBox" class="new-user-box">
+                <h4 style="margin-top:0;">ثبت‌نام دانش‌آموز جدید</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <input id="new_n" placeholder="نام کامل" class="manage-input">
+                    <input id="new_u" placeholder="نام کاربری (انگلیسی)" class="manage-input" style="direction:ltr">
+                    <input id="new_p" placeholder="رمز عبور" class="manage-input" style="direction:ltr">
+                    <button onclick="createUser()" style="background:#27ae60; color:white; border:none; border-radius:5px; cursor:pointer;">ثبت نهایی</button>
+                </div>
+            </div>
+
+            <p style="font-size:0.8rem; color:#7f8c8d;">💡 راهنما: می‌توانید اطلاعات و <b>امتیاز</b> را همینجا تغییر دهید و دکمه سبز «ثبت» را بزنید.</p>
+            
+            <div style="overflow-x:auto;">
+                <table class="manage-table">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">نام کامل</th>
+                            <th style="width:20%">نام کاربری</th>
+                            <th style="width:15%">رمز</th>
+                            <th style="width:15%">امتیاز (XP)</th>
+                            <th style="width:15%">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manageTableBody"></tbody>
+                </table>
             </div>
         </div>
 
@@ -194,6 +209,7 @@
         renderLessonsStats();
         renderExamsStats();
         renderRanking();
+        renderManageTable(); // تابع جدید برای جدول مدیریت
     }
 
     function switchTab(tabId) {
@@ -203,20 +219,100 @@
         event.currentTarget.classList.add('active');
     }
 
-    // --- لیست کاربران ---
+    // --- (1) بخش مدیریت حرفه‌ای کاربران (جدید) ---
+    function renderManageTable() {
+        const tbody = document.getElementById('manageTableBody');
+        tbody.innerHTML = '';
+        ALL_USERS.forEach(u => {
+            const tr = document.createElement('tr');
+            // شناسه یکتا برای اینپوت‌ها
+            const uid = u.u.replace(/[^a-zA-Z0-9]/g, '_'); 
+            
+            tr.innerHTML = `
+                <td><input id="nm_${uid}" value="${u.n}" class="manage-input"></td>
+                <td><input id="usr_${uid}" value="${u.u}" class="manage-input" style="direction:ltr"></td>
+                <td><input id="pwd_${uid}" value="${u.p}" class="manage-input" style="direction:ltr"></td>
+                <td><input id="xp_${uid}" type="number" value="${u.parsedData.xp || 0}" class="manage-input" style="direction:ltr"></td>
+                <td><button class="save-row-btn" onclick="saveUserRow('${u.u}', '${uid}')">💾 ثبت</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function saveUserRow(originalUsername, uid) {
+        const newName = document.getElementById('nm_' + uid).value;
+        const newUser = document.getElementById('usr_' + uid).value;
+        const newPass = document.getElementById('pwd_' + uid).value;
+        const newXP = document.getElementById('xp_' + uid).value;
+
+        if(!newName || !newUser || !newPass) return alert("نام، نام‌کاربری و رمز نمی‌توانند خالی باشند.");
+        if(!confirm(`آیا تغییرات برای "${newName}" ذخیره شود؟`)) return;
+
+        document.getElementById('loadingBox').style.display = 'flex';
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    action: 'update_user', 
+                    admin_token: ADMIN_TOKEN_KEY, 
+                    target_user: originalUsername, 
+                    new_n: newName,
+                    new_u: newUser, 
+                    new_p: newPass,
+                    new_xp: newXP // ارسال امتیاز جدید به سرور
+                })
+            });
+            const d = await res.json();
+            if(d.status === 'success') { 
+                alert("✅ تغییرات با موفقیت ذخیره شد."); 
+                fetchData(); // رفرش برای نمایش تغییرات
+            } else { 
+                alert("❌ خطا: " + d.message); 
+            }
+        } catch(e) { alert("خطای شبکه"); }
+        document.getElementById('loadingBox').style.display = 'none';
+    }
+
+    function toggleNewUserBox() {
+        const box = document.getElementById('newUserBox');
+        box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+    }
+
+    async function createUser() {
+        const n = document.getElementById('new_n').value;
+        const u = document.getElementById('new_u').value;
+        const p = document.getElementById('new_p').value;
+        if(!n || !u || !p) return alert("همه فیلدها را پر کنید");
+
+        document.getElementById('loadingBox').style.display = 'flex';
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: 'create_user', admin_token: ADMIN_TOKEN_KEY, new_u: u, new_p: p, new_n: n })
+            });
+            const d = await res.json();
+            if(d.status === 'success') { 
+                alert("✅ کاربر جدید ساخته شد"); 
+                document.getElementById('newUserBox').style.display = 'none';
+                document.getElementById('new_n').value=''; document.getElementById('new_u').value=''; document.getElementById('new_p').value='';
+                fetchData(); 
+            }
+            else alert("❌ " + d.message);
+        } catch(e) { alert("خطا"); }
+        document.getElementById('loadingBox').style.display = 'none';
+    }
+
+    // --- (2) لیست کاربران (تب اصلی) ---
     function renderUsersList(users) {
         const container = document.getElementById('usersList');
         container.innerHTML = '';
         if(users.length === 0) { container.innerHTML = '<p style="text-align:center;color:#777">کاربری یافت نشد.</p>'; return; }
-
         users.forEach(u => {
             const div = document.createElement('div');
             div.className = 'card user-card';
             div.onclick = () => showUserDetail(u);
             const role = u.parsedData.rank || 'نوآموز';
-            div.innerHTML = `
-                <div><div style="font-weight:bold; color:#2c3e50;">${u.n}</div><div style="font-size:0.8rem; color:#7f8c8d;">${u.u}</div></div>
-                <div style="text-align:left;"><span class="badge bg-blue">${u.parsedData.xp||0} XP</span><div style="font-size:0.7rem; color:#95a5a6;">${role}</div></div>`;
+            div.innerHTML = `<div><div style="font-weight:bold; color:#2c3e50;">${u.n}</div><div style="font-size:0.8rem; color:#7f8c8d;">${u.u}</div></div><div style="text-align:left;"><span class="badge bg-blue">${u.parsedData.xp||0} XP</span><div style="font-size:0.7rem; color:#95a5a6;">${role}</div></div>`;
             container.appendChild(div);
         });
     }
@@ -225,20 +321,17 @@
         renderUsersList(ALL_USERS.filter(u => u.n.includes(q) || u.u.toLowerCase().includes(q)));
     }
 
-    // --- پروفایل دانش‌آموز ---
+    // --- (3) پروفایل و عملیات ---
     function showUserDetail(user) {
         document.getElementById('modalTitle').innerText = user.n;
         const d = user.parsedData;
         const body = document.getElementById('modalBody');
         
-        // جدول آزمون‌ها
         let examsHtml = '<table><tr><th>نام آزمون</th><th>نمره</th><th>عملیات</th></tr>';
         Object.keys(META_EXAMS).forEach(eid => {
-            const info = META_EXAMS[eid];
-            const title = info.title || info; // پشتیبانی از فرمت جدید و قدیم
+            const info = META_EXAMS[eid]; const title = info.title || info;
             let statusHtml = '<span style="color:red; font-size:0.8rem;">❌ غایب</span>';
             let opHtml = '-';
-
             if(d.exams && d.exams[eid] !== undefined) {
                 const score = d.exams[eid];
                 const color = score >= 17 ? 'green' : (score < 10 ? 'red' : 'black');
@@ -249,7 +342,6 @@
         });
         examsHtml += '</table>';
 
-        // جدول درس‌ها
         let lessonsHtml = '<table><tr><th>نام درس</th><th>وضعیت</th><th>عملیات</th></tr>';
         Object.keys(META_LESSONS).forEach(lid => {
             const title = META_LESSONS[lid];
@@ -270,176 +362,73 @@
                     <button onclick="performAdminOp('ban_user', '${user.u}')" style="background:#34495e; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;">🚫 مسدود</button>
                 </div>
             </div>
-            <h4 style="color:#8e44ad; border-bottom:2px solid #8e44ad;">📝 وضعیت آزمون‌ها</h4>
-            ${examsHtml}
-            <h4 style="color:#27ae60; border-bottom:2px solid #27ae60; margin-top:30px;">🎬 وضعیت درس‌ها</h4>
-            ${lessonsHtml}
+            <h4 style="color:#8e44ad;">📝 وضعیت آزمون‌ها</h4>${examsHtml}
+            <h4 style="color:#27ae60; margin-top:30px;">🎬 وضعیت درس‌ها</h4>${lessonsHtml}
         `;
         document.getElementById('detailModal').style.display = 'flex';
     }
     function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
 
-    // --- عملیات ادمین ---
     async function performAdminOp(type, username, itemId) {
         let body = { action: 'admin_op', admin_token: ADMIN_TOKEN_KEY, target_user: username, op_type: type };
         
-        if(type === 'give_xp') {
-            const amt = prompt("چقدر امتیاز اضافه شود؟");
-            if(!amt) return; body.amount = amt;
+        if(type === 'give_xp') { 
+            const amt = prompt("چقدر امتیاز اضافه شود؟"); 
+            if(!amt) return; body.amount = amt; 
         } 
-        else if(type === 'take_xp') {
-            const amt = prompt("چقدر امتیاز کم شود؟");
-            if(!amt) return;
-            body.amount = -1 * Math.abs(parseInt(amt)); // منفی کردن عدد برای سرور
-            body.op_type = 'give_xp'; // سرور با give_xp و عدد منفی کار میکند
+        else if(type === 'take_xp') { 
+            const amt = prompt("چقدر امتیاز کسر شود؟"); 
+            if(!amt) return; 
+            // برای کسر امتیاز، عدد را منفی می‌کنیم
+            body.amount = -1 * Math.abs(parseInt(amt)); 
+            body.op_type = 'give_xp'; 
         }
-        else if(type === 'reset_exam' || type === 'reset_video') {
-            if(!confirm("آیا مطمئن هستید؟")) return;
-            if(type === 'reset_exam') body.exam_id = itemId;
-            if(type === 'reset_video') body.video_id = itemId;
-        } 
-        else if(type === 'ban_user') {
-            if(!confirm("کاربر مسدود شود؟")) return;
+        else if(type.includes('reset') || type === 'ban_user') { 
+            if(!confirm("آیا مطمئن هستید؟")) return; 
+            if(type.includes('reset')) body[type === 'reset_exam' ? 'exam_id' : 'video_id'] = itemId; 
         }
 
         try {
             const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-            const data = await res.json();
-            if(data.status === 'success') { alert("✅ انجام شد."); fetchData(); closeModal(); }
-            else { alert("❌ خطا: " + data.message); }
-        } catch(e) { alert("❌ خطای شبکه"); }
-    }
-
-    // --- مدیریت کاربران (جدید) ---
-    async function createUser() {
-        const n = document.getElementById('new_n').value;
-        const u = document.getElementById('new_u').value;
-        const p = document.getElementById('new_p').value;
-        if(!n || !u || !p) return alert("لطفا تمام فیلدها را پر کنید");
-
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST', headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: 'create_user', admin_token: ADMIN_TOKEN_KEY, new_u: u, new_p: p, new_n: n })
-            });
             const d = await res.json();
-            if(d.status === 'success') { alert("✅ کاربر با موفقیت ساخته شد"); fetchData(); document.getElementById('new_n').value=''; document.getElementById('new_u').value=''; }
-            else alert("❌ " + d.message);
+            if(d.status === 'success') { alert("✅ انجام شد."); fetchData(); closeModal(); } else { alert("❌ " + d.message); }
         } catch(e) { alert("خطا"); }
     }
 
-    async function updateUser() {
-        const target = document.getElementById('edit_target_u').value;
-        const n = document.getElementById('edit_n').value;
-        const p = document.getElementById('edit_p').value;
-        if(!target || !n || !p) return alert("نام کاربری هدف + نام جدید + رمز جدید الزامی است");
-
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST', headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: 'update_user', admin_token: ADMIN_TOKEN_KEY, target_user: target, new_p: p, new_n: n })
-            });
-            const d = await res.json();
-            if(d.status === 'success') { alert("✅ تغییرات ذخیره شد"); fetchData(); }
-            else alert("❌ " + d.message);
-        } catch(e) { alert("خطا"); }
-    }
-
-    // --- حذف محتوا ---
-    async function deleteLesson(lid, title) {
-        if(!confirm(`⚠️ حذف درس "${title}"؟\n⛔ سوابق همه پاک می‌شود!`)) return;
-        callDeleteApi('delete_lesson_global', { lesson_id: lid });
-    }
-    async function deleteExam(eid, title) {
-        if(!confirm(`⚠️ حذف آزمون "${title}"؟\n⛔ نمرات همه پاک می‌شود!`)) return;
-        callDeleteApi('delete_exam_global', { exam_id: eid });
-    }
+    async function deleteLesson(lid, title) { if(!confirm(`حذف درس "${title}"؟\n⛔ سوابق همه پاک می‌شود!`)) return; callDeleteApi('delete_lesson_global', { lesson_id: lid }); }
+    async function deleteExam(eid, title) { if(!confirm(`حذف آزمون "${title}"؟\n⛔ نمرات همه پاک می‌شود!`)) return; callDeleteApi('delete_exam_global', { exam_id: eid }); }
     async function callDeleteApi(actionName, payload) {
         document.getElementById('loadingBox').style.display = 'flex';
         try {
             payload.action = actionName; payload.admin_token = ADMIN_TOKEN_KEY;
             const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-            const data = await res.json();
-            if(data.status === 'success') { alert("✅ حذف شد."); fetchData(); } else { alert("❌ خطا: " + data.message); }
-        } catch(e) { alert("❌ خطای شبکه"); }
+            if((await res.json()).status === 'success') { alert("✅ حذف شد."); fetchData(); } else alert("خطا");
+        } catch(e) { alert("خطا"); }
         document.getElementById('loadingBox').style.display = 'none';
     }
 
-    // --- رندرینگ بخش‌ها ---
+    // --- آمار و رمزها ---
     function renderExamsStats() {
-        const container = document.getElementById('examsStats');
-        container.innerHTML = '';
+        const container = document.getElementById('examsStats'); container.innerHTML = '';
         Object.keys(META_EXAMS).forEach(eid => {
-            const info = META_EXAMS[eid];
-            const title = info.title || info;
-            const pass = info.pass || '-';
-            let count = 0; let sum = 0; let participants = []; let absents = [];
-
-            ALL_USERS.forEach(u => {
-                const d = u.parsedData;
-                if(d.exams && d.exams[eid] !== undefined) { count++; sum += parseFloat(d.exams[eid]); participants.push(`${u.n} (${d.exams[eid]})`); }
-                else { absents.push(u.n); }
-            });
+            const info = META_EXAMS[eid]; const title = info.title || info; const pass = info.pass || '-';
+            let count = 0; let sum = 0; ALL_USERS.forEach(u => { const d=u.parsedData; if(d.exams && d.exams[eid]!==undefined){ count++; sum+=parseFloat(d.exams[eid]); } });
             const avg = count > 0 ? (sum / count).toFixed(1) : 0;
-
-            const div = document.createElement('div');
-            div.className = 'card lesson-card';
-            div.style.borderRightColor = '#8e44ad';
-            div.onclick = function(e) { if(!e.target.classList.contains('del-btn-exam')) { const lc=this.querySelector('.student-list-container'); lc.style.display=(lc.style.display==='none'||!lc.style.display)?'block':'none'; } };
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <button class="del-btn-exam" onclick="deleteExam('${eid}', '${title}')" style="background:#fee; color:red; border:1px solid red; border-radius:5px; cursor:pointer;">🗑️</button>
-                        <div><strong>${title}</strong><br><span style="font-size:0.8rem; background:#eee; padding:2px 5px; border-radius:4px;">رمز: ${pass}</span></div>
-                    </div>
-                    <span class="badge" style="background:#8e44ad">${count} نفر</span>
-                </div>
-                <div style="margin-top:5px; font-size:0.9rem;">میانگین: <b>${avg}</b></div>
-                <div class="student-list-container">
-                    <div style="color:#27ae60;">✅ شرکت‌کنندگان: ${participants.join(' ، ')}</div>
-                    <div style="color:#c0392b; margin-top:5px;">❌ غایبین: ${absents.join(' ، ')}</div>
-                </div>`;
-            container.appendChild(div);
+            container.innerHTML += `<div class="card lesson-card" style="border-right-color:#8e44ad"><div style="display:flex;justify-content:space-between;align-items:center;"><div><button class="del-btn-exam" onclick="deleteExam('${eid}','${title}')" style="background:#fee;color:red;border:1px solid red;border-radius:5px;cursor:pointer;">🗑️</button> <strong>${title}</strong> <span style="font-size:0.8rem;background:#eee;padding:2px 5px;border-radius:4px;">رمز: ${pass}</span></div><span class="badge" style="background:#8e44ad">${count} نفر</span></div><div style="margin-top:5px;font-size:0.9rem;">میانگین: <b>${avg}</b></div></div>`;
         });
     }
-
     function renderLessonsStats() {
-        const container = document.getElementById('lessonsStats');
-        container.innerHTML = '';
+        const container = document.getElementById('lessonsStats'); container.innerHTML = '';
         Object.keys(META_LESSONS).forEach(lid => {
-            const title = META_LESSONS[lid];
-            let count = 0; let seen = []; let notSeen = [];
-            ALL_USERS.forEach(u => {
-                if(u.parsedData.completed && u.parsedData.completed.includes(lid.toString())) { count++; seen.push(u.n); } else { notSeen.push(u.n); }
-            });
-            const percent = Math.round((count / ALL_USERS.length) * 100) || 0;
-            const div = document.createElement('div');
-            div.className = 'card lesson-card';
-            div.style.borderRightColor = '#e67e22';
-            div.onclick = function(e) { if(!e.target.classList.contains('del-btn-lesson')) { const lc=this.querySelector('.student-list-container'); lc.style.display=(lc.style.display==='none'||!lc.style.display)?'block':'none'; } };
-            div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <button class="del-btn-lesson" onclick="deleteLesson('${lid}', '${title}')" style="background:#fee; color:red; border:1px solid red; border-radius:5px; cursor:pointer;">🗑️</button>
-                        <strong>${title}</strong>
-                    </div>
-                    <span class="badge" style="background:#e67e22">${count} / ${ALL_USERS.length}</span>
-                </div>
-                <div style="background:#eee; height:8px; border-radius:4px; margin-top:10px;"><div style="background:#e67e22; width:${percent}%; height:100%;"></div></div>
-                <div class="student-list-container">
-                    <div style="color:#27ae60;">✅ دیده‌اند: ${seen.join(' ، ')}</div>
-                    <div style="color:#c0392b; margin-top:5px;">❌ ندیده‌اند: ${notSeen.join(' ، ')}</div>
-                </div>`;
-            container.appendChild(div);
+            const title = META_LESSONS[lid]; let count = 0; ALL_USERS.forEach(u => { if(u.parsedData.completed && u.parsedData.completed.includes(lid.toString())) count++; });
+            const percent = Math.round((count/ALL_USERS.length)*100)||0;
+            container.innerHTML += `<div class="card lesson-card" style="border-right-color:#e67e22"><div style="display:flex;justify-content:space-between;align-items:center;"><div><button class="del-btn-lesson" onclick="deleteLesson('${lid}','${title}')" style="background:#fee;color:red;border:1px solid red;border-radius:5px;cursor:pointer;">🗑️</button> <strong>${title}</strong></div><span class="badge" style="background:#e67e22">${count}/${ALL_USERS.length}</span></div><div style="background:#eee;height:8px;border-radius:4px;margin-top:10px;"><div style="background:#e67e22;width:${percent}%;height:100%;"></div></div></div>`;
         });
     }
-
     function renderRanking() {
-        const sorted = [...ALL_USERS].sort((a,b) => (b.parsedData.xp || 0) - (a.parsedData.xp || 0)).slice(0, 10);
-        const container = document.getElementById('rankingList');
-        container.innerHTML = '';
-        sorted.forEach((u, idx) => {
-            container.innerHTML += `<div class="card" style="display:flex; justify-content:space-between;"><div>#${idx+1} <b>${u.n}</b></div><span class="badge bg-gold">${u.parsedData.xp||0} XP</span></div>`;
+        const container = document.getElementById('rankingList'); container.innerHTML = '';
+        [...ALL_USERS].sort((a,b)=>(b.parsedData.xp||0)-(a.parsedData.xp||0)).slice(0,10).forEach((u,i)=>{
+            container.innerHTML += `<div class="card" style="display:flex;justify-content:space-between;"><div>#${i+1} <b>${u.n}</b></div><span class="badge bg-gold">${u.parsedData.xp||0} XP</span></div>`;
         });
     }
 </script>
