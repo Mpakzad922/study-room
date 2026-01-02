@@ -267,10 +267,11 @@
         async function performSilentSync(u, p) {
             try {
                 if(!navigator.onLine) return;
-                const res = await fetch(REPORT_WEBAPP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'login', username: u, password: p })
-                });
+const res = await fetch(REPORT_WEBAPP_URL, {
+    method: 'POST',
+    headers: { "Content-Type": "application/json" }, // <--- این خط جدید است
+    body: JSON.stringify({ action: 'login', username: u, password: p })
+});
                 const data = await res.json();
                 if(data.status === 'success') {
                     console.log("📥 Sync Update:", data.jsonData);
@@ -295,9 +296,10 @@
 
             try {
                 const res = await fetch(REPORT_WEBAPP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'login', username: u, password: p })
-                });
+    method: 'POST',
+    headers: { "Content-Type": "application/json" }, // <--- اینجا هم اضافه کنید
+    body: JSON.stringify({ action: 'login', username: u, password: p })
+});
                 const data = await res.json();
                 
                 if(data.status === 'success') {
@@ -713,4 +715,5 @@
     </script>
 </body>
 </html>
+
 
