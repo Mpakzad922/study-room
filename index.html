@@ -96,7 +96,6 @@
     <div id="screen-login" class="card">
         <div style="font-size: 4rem; margin-bottom: 10px;">🎓</div>
         <h2>کلاس مجازی چمران</h2>
-        <div style="font-size: 0.8rem; color: #bdc3c7; margin-top: -10px; margin-bottom: 15px; direction: ltr;">v3.2</div>
         <p style="color: #7f8c8d; font-size: 0.9rem;">نام کاربری و رمز عبور خود را وارد کنید</p>
         
         <input type="text" id="inpUser" placeholder="نام کاربری (انگلیسی)" style="direction: ltr;">
@@ -427,20 +426,21 @@
             const cloudTime = RankSystem.getLastPosition(item.id);
             const localKey = `${DB_KEY}${currentUser.username}_time_${item.id}`;
             const localTime = parseFloat(localStorage.getItem(localKey) || 0);
-            
-            // [هوشمندترین حالت ممکن]
-            // ۱. اگر پرچم جریمه بالاست، فقط لوکال (جریمه شده) را قبول کن
-            const isPenaltyActive = localStorage.getItem('forced_penalty_' + item.id);
-            
             let startPos = 0;
+
+            // [اصلاح کلیدی: اولویت با سرور برای سینک شدن جریمه]
+            const isPenaltyActive = localStorage.getItem('forced_penalty_' + item.id);
+
             if (cloudTime === 0) {
                 localStorage.removeItem(localKey);
                 startPos = 0;
             } else if (isPenaltyActive) {
-                startPos = localTime; 
+                startPos = localTime;
+                RankSystem.savePosition(item.id, localTime, true);
             } else {
-                // ۲. در حالت عادی (بدون جریمه)، هر کدام بیشتر بود (برای نرمی و روانی)
-                startPos = Math.max(cloudTime, localTime);
+                // [تغییر مهم] اگر سرور دیتا دارد، آن را به لوکال ترجیح بده (مگر اینکه سرور 0 باشد)
+                // این باعث می‌شود جریمه ثبت شده در سرور، روی کامپیوتر دیگر هم اعمال شود
+                startPos = cloudTime > 0 ? cloudTime : localTime;
             }
 
             maxTime = startPos;
@@ -464,7 +464,6 @@
                 vid.currentTime = 0;
             }
             
-            // پرچم جریمه بعد از ۵ ثانیه پاک شود (تا ابد نماند)
             if(isPenaltyActive) {
                 setTimeout(() => localStorage.removeItem('forced_penalty_' + item.id), 5000);
             }
@@ -525,7 +524,6 @@
             
             const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
             localStorage.setItem(localKey, 0); 
-            // کاشتن پرچم جریمه (مهم)
             localStorage.setItem('forced_penalty_' + activeVid.id, '1');
             
             RankSystem.savePosition(activeVid.id, 0, true);
@@ -645,7 +643,6 @@
                     
                     const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
                     localStorage.setItem(localKey, penaltyTime);
-                    // کاشتن پرچم جریمه (مهم)
                     localStorage.setItem('forced_penalty_' + activeVid.id, '1');
                     
                     RankSystem.savePosition(activeVid.id, penaltyTime, true); 
