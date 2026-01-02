@@ -88,9 +88,13 @@
         const DB_KEY = "chamran_db_v20_"; 
         // ***********************************************
 
-        if(typeof REPORT_WEBAPP_URL === 'undefined') {
+        //if(typeof REPORT_WEBAPP_URL === 'undefined') {
              // [تذکر: لطفا پس از دیپلوی، لینک وب‌اپ جدید را اینجا بگذارید]
-             var REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxb3sXu7fJJwupzGtirtGNyNHMN6-05Tk6cXdxe31y1y6Mb1QRCXgGzXPvkT-hDb4pV1g/exec";
+             //var REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxb3sXu7fJJwupzGtirtGNyNHMN6-05Tk6cXdxe31y1y6Mb1QRCXgGzXPvkT-hDb4pV1g/exec";
+       // }
+        if(typeof REPORT_WEBAPP_URL === 'undefined') {
+         // آدرس جدید سرور لیارا
+               var REPORT_WEBAPP_URL = "https://chamran-api.liara.run";
         }
 
         function toPersianNum(n) {
@@ -430,3 +434,4 @@
     </script>
 </body>
 </html>
+
