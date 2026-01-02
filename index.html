@@ -96,7 +96,7 @@
     <div id="screen-login" class="card">
         <div style="font-size: 4rem; margin-bottom: 10px;">🎓</div>
         <h2>کلاس مجازی چمران</h2>
-        <div style="font-size: 0.8rem; color: #bdc3c7; margin-top: -10px; margin-bottom: 15px; direction: ltr;">v3.1</div>
+        <div style="font-size: 0.8rem; color: #bdc3c7; margin-top: -10px; margin-bottom: 15px; direction: ltr;">v3.2</div>
         <p style="color: #7f8c8d; font-size: 0.9rem;">نام کاربری و رمز عبور خود را وارد کنید</p>
         
         <input type="text" id="inpUser" placeholder="نام کاربری (انگلیسی)" style="direction: ltr;">
@@ -304,7 +304,6 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
-        // [لود لیست درس‌ها: کاملاً آنلاین و بدون کش]
         async function fetchPlaylist() {
             playlist = [];
             const listContainer = document.getElementById('video-list-container');
@@ -398,7 +397,6 @@
             });
         }
 
-        // [منطق پخش ویدیو: اولویت مطلق با سرور برای اعمال جریمه در تمام دستگاه‌ها]
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
@@ -426,19 +424,23 @@
                 });
             }
 
-            // گرفتن زمان از سرور
             const cloudTime = RankSystem.getLastPosition(item.id);
             const localKey = `${DB_KEY}${currentUser.username}_time_${item.id}`;
+            const localTime = parseFloat(localStorage.getItem(localKey) || 0);
+            
+            // [هوشمندترین حالت ممکن]
+            // ۱. اگر پرچم جریمه بالاست، فقط لوکال (جریمه شده) را قبول کن
+            const isPenaltyActive = localStorage.getItem('forced_penalty_' + item.id);
+            
             let startPos = 0;
-
-            // [تغییر اساسی: اگر سرور دیتا دارد، همان را استفاده کن و لوکال را بازنویسی کن]
-            // این کار باعث می‌شود جریمه در همه دستگاه‌ها اعمال شود
-            if (cloudTime > 0) {
-                startPos = cloudTime; 
-                localStorage.setItem(localKey, cloudTime); // گوشی/لپتاپ را مجبور به اطاعت کن
+            if (cloudTime === 0) {
+                localStorage.removeItem(localKey);
+                startPos = 0;
+            } else if (isPenaltyActive) {
+                startPos = localTime; 
             } else {
-                // فقط اگر سرور خالی بود (مثلاً اولین بار یا ریست شده)، از لوکال استفاده کن
-                startPos = parseFloat(localStorage.getItem(localKey) || 0);
+                // ۲. در حالت عادی (بدون جریمه)، هر کدام بیشتر بود (برای نرمی و روانی)
+                startPos = Math.max(cloudTime, localTime);
             }
 
             maxTime = startPos;
@@ -453,8 +455,7 @@
             }
             
             if(maxTime > 5 && !isDone) {
-                // اگر جریمه شده باشد، خود به خود به عقب برمی‌گردد چون startPos از سرور آمده
-                if(confirm("ادامه پخش از جای قبلی؟")) {
+                if(isPenaltyActive || confirm("ادامه پخش از جای قبلی؟")) {
                     vid.currentTime = maxTime;
                 } else {
                     vid.currentTime = 0;
@@ -463,6 +464,11 @@
                 vid.currentTime = 0;
             }
             
+            // پرچم جریمه بعد از ۵ ثانیه پاک شود (تا ابد نماند)
+            if(isPenaltyActive) {
+                setTimeout(() => localStorage.removeItem('forced_penalty_' + item.id), 5000);
+            }
+
             SyncManager.addToQueue('report', {
                 lesson: item.title, status: 'شروع درس', details: 'ورود به پلیر', device: getDeviceInfo()
             });
@@ -519,7 +525,7 @@
             
             const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
             localStorage.setItem(localKey, 0); 
-            // پرچم جریمه برای اطمینان بیشتر در همان دستگاه
+            // کاشتن پرچم جریمه (مهم)
             localStorage.setItem('forced_penalty_' + activeVid.id, '1');
             
             RankSystem.savePosition(activeVid.id, 0, true);
@@ -639,6 +645,7 @@
                     
                     const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
                     localStorage.setItem(localKey, penaltyTime);
+                    // کاشتن پرچم جریمه (مهم)
                     localStorage.setItem('forced_penalty_' + activeVid.id, '1');
                     
                     RankSystem.savePosition(activeVid.id, penaltyTime, true); 
@@ -661,4 +668,3 @@
     </script>
 </body>
 </html>
-
