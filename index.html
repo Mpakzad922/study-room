@@ -165,13 +165,10 @@
 
     <script>
         // ***********************************************
-        // تنظیمات اصلی - این بخش را با دقت پر کنید
+        // تنظیمات اصلی
         // ***********************************************
         
-        // 1. لینک CSV شیت جدید Lessons را اینجا بگذارید (از منوی File > Share > Publish to Web)
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=620035076&single=true&output=csv"; 
-
-        // 2. آدرس وب‌اپ جدید شما (قبلاً جایگزین کردم اما چک کنید)
         const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxb3sXu7fJJwupzGtirtGNyNHMN6-05Tk6cXdxe31y1y6Mb1QRCXgGzXPvkT-hDb4pV1g/exec"; 
         
         // ***********************************************
@@ -192,6 +189,8 @@
         let lastActivityTime = Date.now();
         let idleReportSent = false;
         let backgroundTimer = null;
+        let cheatAttempts = 0; // شمارنده تلاش‌های مشکوک
+        let cheatResetTimer = null; // تایمر برای پاک کردن سابقه خطا
 
         const vid = document.getElementById('myVideo');
 
@@ -308,7 +307,6 @@
             }
             // سپس از گوگل شیت بخوان و اضافه کن
             try {
-                // چک می‌کنیم اگر لینک هنوز پیش‌فرض است، درخواست ندهیم
                 if(SHEET_CSV_URL.includes('http')) {
                     const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
                     if(res.ok) {
@@ -323,7 +321,6 @@
         function parseCSV(csvText) {
             const rows = csvText.split('\n');
             for(let i=1; i<rows.length; i++) {
-                // پارس کردن دقیق‌تر CSV برای جلوگیری از مشکل کاما در متن
                 const row = rows[i].split(',');
                 if(row.length >= 3) {
                     const id = row[0].trim();
@@ -334,7 +331,7 @@
                         const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
                         attachment = remaining.trim().replace(/^,|,$/g, ''); 
                     }
-                    const exists = playlist.find(p => p.id == id); // مقایسه شل برای تطبیق string/number
+                    const exists = playlist.find(p => p.id == id);
                     if(id && title && file && !exists) {
                         playlist.push({ id, title, file, attachment });
                     }
@@ -369,6 +366,7 @@
             });
         }
 
+        // [این تابع اصلاح شده برای هماهنگی با بازنشانی سرور]
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
@@ -397,17 +395,17 @@
                 });
             }
 
-            // [اصلاح شده برای حل مشکل بازنشانی]
+            // [منطق جدید: اگر سرور ریست شده (زمان ۰ است)، کش گوشی را هم پاک کن]
             const cloudTime = RankSystem.getLastPosition(item.id);
             const localKey = `${DB_KEY}${currentUser.username}_time_${item.id}`;
             let startPos = 0;
 
-            // اگر سرور می‌گوید زمان ۰ است (بازنشانی شده)، کش لوکال را نادیده بگیر و پاک کن
             if (cloudTime === 0) {
+                // سرور ریست شده است -> گوشی را هم ریست کن
                 localStorage.removeItem(localKey);
                 startPos = 0;
             } else {
-                // اگر سرور زمان دارد، با لوکال مقایسه کن (هرکدام بیشتر بود)
+                // سرور ریست نشده -> هر کدام جلوتر بود را انتخاب کن
                 const localTime = parseFloat(localStorage.getItem(localKey) || 0);
                 startPos = Math.max(cloudTime, localTime);
             }
@@ -481,28 +479,18 @@
             lastActivityTime = Date.now(); 
         }
 
-        // [مهم] گزارش‌دهی هوشمند بر اساس سوابق قبلی
         function checkAndReport(statusMsg, forceSend) {
             if (!activeVid) return;
-            
-            // چک کن آیا قبلاً تمام کرده؟
             const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
             const currentMin = Math.floor(vid.currentTime/60);
-            
             let finalStatus = statusMsg;
             let finalDetails = `دقیقه ${currentMin}`;
-            
-            // اگر قبلا دیده، پیام را عوض کن که معلم بفهمد
             if(isDonePreviously) {
                 finalStatus = statusMsg + " (قبلاً تکمیل شده ✅)";
                 finalDetails = `بازبینی مجدد | موقعیت فعلی: دقیقه ${currentMin}`;
             }
-
             SyncManager.addToQueue('report', {
-                lesson: activeVid.title,
-                status: finalStatus,
-                details: finalDetails,
-                device: getDeviceInfo()
+                lesson: activeVid.title, status: finalStatus, details: finalDetails, device: getDeviceInfo()
             });
         }
 
@@ -529,21 +517,15 @@
             }
         });
 
-        // خروج اضطراری (هوشمند)
         window.addEventListener('beforeunload', (e) => {
             if (activeVid) {
                 const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
                 const statusText = isDonePreviously ? "⛔ خروج ناگهانی (قبلاً تکمیل شده)" : "⛔ خروج ناگهانی (بستن برنامه)";
-                
                 const data = {
-                    lesson: activeVid.title,
-                    status: statusText,
+                    lesson: activeVid.title, status: statusText,
                     details: `در دقیقه ${Math.floor(vid.currentTime/60)} بسته شد`,
-                    device: getDeviceInfo(),
-                    timestamp: Date.now()
+                    device: getDeviceInfo(), timestamp: Date.now()
                 };
-                
-                // [اصلاح شده] تغییر v2 به v3 برای هماهنگی با rank.js جدید
                 let q = JSON.parse(localStorage.getItem('chamran_queue_v3') || "[]");
                 q.push(data);
                 localStorage.setItem('chamran_queue_v3', JSON.stringify(q));
@@ -551,9 +533,7 @@
         });
 
         window.addEventListener('popstate', function(event) {
-            if (document.getElementById('screen-player').classList.contains('active')) {
-                closePlayer(); 
-            }
+            if (document.getElementById('screen-player').classList.contains('active')) { closePlayer(); }
         });
 
         setInterval(() => {
@@ -568,7 +548,6 @@
         vid.addEventListener('timeupdate', () => {
             if(!vid.seeking && vid.currentTime > maxTime) {
                 maxTime = vid.currentTime;
-                // ذخیره زمان در دیتای ابری
                 RankSystem.savePosition(activeVid.id, maxTime);
                 localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
                 lastActivityTime = Date.now();
@@ -580,7 +559,6 @@
                 const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
                 document.getElementById('progressBar').style.width = percent + "%";
                 document.getElementById('viewPercent').innerText = toPersianNum(percent) + "٪";
-                
                 if(percent >= 98 && !isDone) {
                     isDone = true;
                     document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
@@ -590,16 +568,39 @@
             }
         });
 
+        // [کد نهایی ضد تقلب ۳ اخطاره]
         vid.addEventListener('seeking', () => {
-            if(!isDone && vid.currentTime > maxTime + 3) {
-                vid.currentTime = maxTime;
-                document.getElementById('cheatAlert').style.display = 'block';
-                setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
+            if (isDone) return; 
+
+            // آیا کاربر دارد جلو می‌زند؟ (حتی اگر توی فرجه ۳ ثانیه باشد، ما می‌شماریم)
+            if (vid.currentTime > maxTime) {
+                cheatAttempts++;
+                if (cheatResetTimer) clearTimeout(cheatResetTimer);
+                
+                // اگر ۵ ثانیه رفتار عادی داشت، اخطارها را صفر کن
+                cheatResetTimer = setTimeout(() => { cheatAttempts = 0; }, 5000);
+
+                // قدم دوم: بررسی قانون "۳ اخطاره"
+                if (cheatAttempts >= 3) {
+                    vid.pause(); 
+                    let penaltyTime = Math.max(0, maxTime - 60);
+                    vid.currentTime = penaltyTime;
+                    maxTime = penaltyTime; 
+                    localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, penaltyTime);
+                    cheatAttempts = 0; 
+                    alert("⚠️ هشدار امنیتی!\nبه دلیل تلاش مکرر برای رد کردن فیلم، ۶۰ ثانیه جریمه شدید و به عقب برگشتید.");
+                    return; 
+                }
+
+                // قدم سوم: جلوگیری عادی (اگر بیشتر از ۳ ثانیه جلو زد)
+                if (vid.currentTime > maxTime + 3) {
+                    vid.currentTime = maxTime;
+                    document.getElementById('cheatAlert').innerText = "⛔ جلو زدن مجاز نیست (فرجه: ۳ ثانیه)";
+                    document.getElementById('cheatAlert').style.display = 'block';
+                    setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
+                }
             }
         });
     </script>
 </body>
 </html>
-
-
-
