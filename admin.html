@@ -224,15 +224,15 @@
         </div>
     </div>
 
-    <script src="data.js"></script>
-
 <script>
     // *************************************************************
     // ⚠️ تنظیمات سرور لیارا
     // *************************************************************
     
-    // آدرس جدید سرور لیارا
+    // آدرس سرور لیارا (باید دقیقاً همان آدرس index.js باشد)
     const API_URL = "https://chamran-api.liara.run";
+    
+    // رمز عبور ادمین (دقیقاً همان رمزی که در index.js نوشتیم)
     const ADMIN_TOKEN_KEY = "chamran_admin_2025_secret_key";
     
     let ALL_USERS = [];
@@ -253,7 +253,7 @@
         try {
             const res = await fetch(API_URL, {
                 method: 'POST',
-                headers: { "Content-Type": "application/json" }, // <--- اضافه شد
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: 'get_all_users', admin_token: ADMIN_TOKEN_KEY })
             });
             const data = await res.json();
@@ -394,7 +394,7 @@
 
     function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
 
-    // --- عملیات سرور (اصلاح شده برای لیارا) ---
+    // --- عملیات سرور ---
     async function performAdminOp(type, username, itemId) {
         let body = { action: 'admin_op', admin_token: ADMIN_TOKEN_KEY, target_user: username, op_type: type };
         
@@ -412,7 +412,7 @@
         try {
             const res = await fetch(API_URL, { 
                 method: 'POST', 
-                headers: { "Content-Type": "application/json" }, // <--- اضافه شد
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body) 
             });
             const data = await res.json();
@@ -424,7 +424,7 @@
         } catch(e) { alert("❌ خطای شبکه"); }
     }
 
-    // --- تابع جدید: حذف درس ---
+    // --- حذف درس ---
     async function deleteLesson(lid, title) {
         if(!confirm(`⚠️ آیا مطمئن هستید که می‌خواهید درس "${title}" را حذف کنید؟\n\n⛔ این کار سابقه مشاهده این درس را از پروفایل تمام دانش‌آموزان پاک می‌کند و قابل بازگشت نیست!`)) return;
         
@@ -432,7 +432,7 @@
         try {
             const res = await fetch(API_URL, {
                 method: 'POST',
-                headers: { "Content-Type": "application/json" }, // <--- اضافه شد
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     action: 'delete_lesson_global', 
                     admin_token: ADMIN_TOKEN_KEY, 
@@ -442,7 +442,7 @@
             const data = await res.json();
             if(data.status === 'success') {
                 alert("✅ درس با موفقیت حذف شد.");
-                fetchData(); // رفرش لیست
+                fetchData(); 
             } else {
                 alert("❌ خطا: " + data.message);
             }
@@ -450,7 +450,7 @@
         document.getElementById('loadingBox').style.display = 'none';
     }
 
-    // --- تابع جدید: حذف آزمون ---
+    // --- حذف آزمون ---
     async function deleteExam(eid, title) {
         if(!confirm(`⚠️ آیا مطمئن هستید که می‌خواهید آزمون "${title}" را حذف کنید؟\n\n⛔ این کار تمام نمرات ثبت‌شده برای این آزمون را از پروفایل همه دانش‌آموزان پاک می‌کند!`)) return;
         
@@ -458,7 +458,7 @@
         try {
             const res = await fetch(API_URL, {
                 method: 'POST',
-                headers: { "Content-Type": "application/json" }, // <--- اضافه شد
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     action: 'delete_exam_global', 
                     admin_token: ADMIN_TOKEN_KEY, 
@@ -468,7 +468,7 @@
             const data = await res.json();
             if(data.status === 'success') {
                 alert("✅ آزمون با موفقیت حذف شد.");
-                fetchData(); // رفرش لیست
+                fetchData();
             } else {
                 alert("❌ خطا: " + data.message);
             }
@@ -506,7 +506,6 @@
             div.style.borderRightColor = '#8e44ad';
             
             div.onclick = function(e) {
-                // اگر روی دکمه حذف کلیک شد، لیست باز نشود
                 if(e.target.classList.contains('del-btn-exam')) return;
                 
                 const lc = this.querySelector('.student-list-container');
@@ -533,7 +532,7 @@
         });
     }
 
-    // --- آمار درس‌ها (با قابلیت حذف 🗑️) ---
+    // --- آمار درس‌ها ---
     function renderLessonsStats() {
         const container = document.getElementById('lessonsStats');
         container.innerHTML = '';
@@ -556,7 +555,6 @@
             div.className = 'card lesson-card';
             div.style.borderRightColor = '#e67e22';
             
-            // جلوگیری از باز شدن لیست موقع زدن دکمه حذف
             div.onclick = function(e) {
                 if(e.target.classList.contains('del-btn-lesson')) return;
                 const lc = this.querySelector('.student-list-container');
