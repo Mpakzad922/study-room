@@ -165,7 +165,7 @@
 
     <script>
         // ***********************************************
-        // تنظیمات اصلی
+        // تنظیمات اصلی - این بخش را با دقت پر کنید
         // ***********************************************
         
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=620035076&single=true&output=csv"; 
@@ -189,8 +189,8 @@
         let lastActivityTime = Date.now();
         let idleReportSent = false;
         let backgroundTimer = null;
-        let cheatAttempts = 0; // شمارنده تلاش‌های مشکوک
-        let cheatResetTimer = null; // تایمر برای پاک کردن سابقه خطا
+        let cheatAttempts = 0;
+        let cheatResetTimer = null;
 
         const vid = document.getElementById('myVideo');
 
@@ -301,11 +301,9 @@
 
         async function fetchPlaylist() {
             playlist = [];
-            // ابتدا از فایل data.js بخوان
             if (typeof LOCAL_PLAYLIST !== 'undefined' && Array.isArray(LOCAL_PLAYLIST)) {
                 playlist = [...LOCAL_PLAYLIST]; 
             }
-            // سپس از گوگل شیت بخوان و اضافه کن
             try {
                 if(SHEET_CSV_URL.includes('http')) {
                     const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
@@ -366,12 +364,12 @@
             });
         }
 
-        // [این تابع اصلاح شده برای هماهنگی با بازنشانی سرور]
+        // [این تابع برای هماهنگی با بازنشانی سرور بهینه‌سازی شد]
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
             document.getElementById('videoTitle').innerText = item.title;
-            // بررسی تکمیل از دیتای ابری
+            
             isDone = RankSystem.data.completed.includes(item.id.toString());
             
             vid.src = item.file;
@@ -395,17 +393,17 @@
                 });
             }
 
-            // [منطق جدید: اگر سرور ریست شده (زمان ۰ است)، کش گوشی را هم پاک کن]
+            // [مهم] همگام‌سازی زمان با اولویت سرور
             const cloudTime = RankSystem.getLastPosition(item.id);
             const localKey = `${DB_KEY}${currentUser.username}_time_${item.id}`;
             let startPos = 0;
 
             if (cloudTime === 0) {
-                // سرور ریست شده است -> گوشی را هم ریست کن
+                // ریست شدن توسط ادمین
                 localStorage.removeItem(localKey);
                 startPos = 0;
             } else {
-                // سرور ریست نشده -> هر کدام جلوتر بود را انتخاب کن
+                // ادامه از آخرین نقطه (هرکدام جلوتر بود)
                 const localTime = parseFloat(localStorage.getItem(localKey) || 0);
                 startPos = Math.max(cloudTime, localTime);
             }
@@ -421,9 +419,15 @@
                  document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
             }
             
-            // اگر زمان شروع بیشتر از ۵ ثانیه باشد، بپرس (مگر اینکه بازنشانی شده باشد که ۰ است)
+            // فقط اگر زمان شروع بیشتر از 5 ثانیه بود و ریست نشده بود بپرس
             if(maxTime > 5 && !isDone) {
-                if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = maxTime;
+                if(confirm("ادامه پخش از جای قبلی؟")) {
+                    vid.currentTime = maxTime;
+                } else {
+                    vid.currentTime = 0; // اگر کاربر نخواست، از اول پخش کن
+                }
+            } else {
+                vid.currentTime = 0;
             }
             
             SyncManager.addToQueue('report', {
@@ -548,6 +552,7 @@
         vid.addEventListener('timeupdate', () => {
             if(!vid.seeking && vid.currentTime > maxTime) {
                 maxTime = vid.currentTime;
+                // فقط ذخیره معمولی (بدون فورس)
                 RankSystem.savePosition(activeVid.id, maxTime);
                 localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
                 lastActivityTime = Date.now();
@@ -568,31 +573,32 @@
             }
         });
 
-        // [کد نهایی ضد تقلب ۳ اخطاره]
+        // [کد نهایی ضد تقلب ۳ اخطاره با اعمال جریمه سمت سرور]
         vid.addEventListener('seeking', () => {
             if (isDone) return; 
 
-            // آیا کاربر دارد جلو می‌زند؟ (حتی اگر توی فرجه ۳ ثانیه باشد، ما می‌شماریم)
             if (vid.currentTime > maxTime) {
                 cheatAttempts++;
                 if (cheatResetTimer) clearTimeout(cheatResetTimer);
                 
-                // اگر ۵ ثانیه رفتار عادی داشت، اخطارها را صفر کن
                 cheatResetTimer = setTimeout(() => { cheatAttempts = 0; }, 5000);
 
-                // قدم دوم: بررسی قانون "۳ اخطاره"
                 if (cheatAttempts >= 3) {
                     vid.pause(); 
                     let penaltyTime = Math.max(0, maxTime - 60);
+                    
                     vid.currentTime = penaltyTime;
                     maxTime = penaltyTime; 
+                    
+                    // [ارسال جریمه با فلگ اجباری]
+                    RankSystem.savePosition(activeVid.id, penaltyTime, true);
+                    
                     localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, penaltyTime);
                     cheatAttempts = 0; 
                     alert("⚠️ هشدار امنیتی!\nبه دلیل تلاش مکرر برای رد کردن فیلم، ۶۰ ثانیه جریمه شدید و به عقب برگشتید.");
                     return; 
                 }
 
-                // قدم سوم: جلوگیری عادی (اگر بیشتر از ۳ ثانیه جلو زد)
                 if (vid.currentTime > maxTime + 3) {
                     vid.currentTime = maxTime;
                     document.getElementById('cheatAlert').innerText = "⛔ جلو زدن مجاز نیست (فرجه: ۳ ثانیه)";
