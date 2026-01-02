@@ -1,5 +1,5 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه کامل و اورجینال - با قابلیت جریمه)
+// 🎮 فایل هسته: rank.js (نسخه v8 - رفع باگ رنک و هماهنگی دقیق)
 // ********************************************
 
 const RankSystem = {
@@ -11,32 +11,18 @@ const RankSystem = {
         { min: 5000, title: "💎 اسطوره", color: "#c0392b" }
     ],
 
-    data: {
-        xp: 0,
-        rank: "🐣 نوآموز",
-        completed: [], 
-        playback: {}, 
-        exams: {} 
-    },
+    data: { xp: 0, rank: "🐣 نوآموز", completed: [], playback: {}, exams: {} },
+    STORAGE_KEY: 'chamran_local_rank_v8', 
 
-    // تغییر ورژن به v7 برای اطمینان کامل از پاک شدن کش‌های قدیمی
-    STORAGE_KEY: 'chamran_local_rank_v7', 
-
-    // 1. شروع سیستم: اولویت با سرور است (Server Authority)
     init: function(serverJson) {
         let serverData = {};
-        
-        // تلاش برای خواندن دیتای سرور
         if(serverJson && serverJson !== "{}") {
-            try {
-                serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson;
-            } catch(e) { console.error("Server JSON Error", e); }
+            try { serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson; } 
+            catch(e) { console.error("Server JSON Error", e); }
         }
-
-        // [تغییر مهم] اگر دیتای سرور معتبر بود، آن را جایگزین دیتای لوکال کن (سینک اجباری)
-        // این باعث می‌شود اگر ادمین فیلمی را ریست کرد، گوشی هم ریست شود
+        
+        // اگر سرور دیتا داشت، جایگزین کن
         if (serverData && (serverData.xp !== undefined || serverData.exams)) {
-            console.log("📥 دریافت دیتای هوشمند از سرور");
             this.data = {
                 xp: serverData.xp || 0,
                 rank: serverData.rank || "🐣 نوآموز",
@@ -44,85 +30,72 @@ const RankSystem = {
                 playback: serverData.playback || {},
                 exams: serverData.exams || {}
             };
-            this.saveToDisk(); // ذخیره نسخه سرور در گوشی
+            this.saveToDisk();
         } else {
-            // اگر سرور خالی بود (کاربر جدید)، از لوکال بخوان
             const localData = localStorage.getItem(this.STORAGE_KEY);
-            if (localData) {
-                try { this.data = JSON.parse(localData); } catch (e) {}
-            }
+            if (localData) { try { this.data = JSON.parse(localData); } catch (e) {} }
         }
 
+        // [اصلاح مهم برای مشکل رنک]
+        // بلافاصله بعد از لود شدن، چک کن رنک با امتیاز میخونه یا نه
+        this.checkRankUp(); 
+        
         this.updateUI();
         setTimeout(() => this.refreshListUI(), 500);
     },
 
-    // 2. ذخیره پوزیشن فیلم (با قابلیت Force برای جریمه)
-    // ورودی سوم (force) اضافه شد: اگر true باشد یعنی جریمه است و باید حتما ثبت شود
     savePosition: function(id, time, force = false) {
         const sId = id.toString();
-        
-        // اگر فورس باشد (جریمه) یا زمان جلوتر رفته باشد، ذخیره کن
         if(force || time > (this.data.playback[sId] || 0)) {
             this.data.playback[sId] = Math.floor(time);
             this.saveToDisk();
             
-            // [حالت جریمه] ارسال فوری و اجباری به سرور
             if (force) {
-                SyncManager.addToQueue('sync', null, true); // پارامتر سوم true یعنی فورس پلی‌بک
+                SyncManager.addToQueue('sync', null, true); 
             }
-            // [حالت عادی] هر 5 ثانیه یکبار وضعیت را به سرور بفرست (دقت بالا)
             else if(Math.floor(time) % 5 === 0) {
                  SyncManager.addToQueue('sync'); 
             }
         }
     },
 
-    getLastPosition: function(id) {
-        return this.data.playback[id.toString()] || 0;
-    },
+    getLastPosition: function(id) { return this.data.playback[id.toString()] || 0; },
 
-    // 3. افزودن امتیاز و تکمیل (سینک فوری)
     addXP: function(amount, reason, uniqueId) {
         const sId = uniqueId.toString();
         if(uniqueId && this.data.completed.includes(sId)) return;
-
         this.data.xp += amount;
-        if(uniqueId) {
-            this.data.completed.push(sId);
-            this.refreshListUI(); 
-        }
+        if(uniqueId) { this.data.completed.push(sId); this.refreshListUI(); }
         
-        this.checkRankUp();
-        this.updateUI();
-        this.showToast(`⭐ +${amount} امتیاز: ${reason}`);
+        this.checkRankUp(); // اینجا هم چک میکنیم
+        this.updateUI(); 
+        this.showToast(`⭐ +${amount} امتیاز: ${reason}`); 
         this.saveToDisk();
         
-        // ارسال فوری تغییرات مهم به سرور
-        SyncManager.addToQueue('report', {
-            lesson: reason,
-            status: 'کسب امتیاز / تکمیل',
-            details: `مجموع XP: ${this.data.xp}`,
-            device: this.getDevice()
-        });
+        SyncManager.addToQueue('report', { lesson: reason, status: 'کسب امتیاز / تکمیل', details: `مجموع XP: ${this.data.xp}`, device: this.getDevice() });
     },
 
-    saveToDisk: function() {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
-    },
+    saveToDisk: function() { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data)); },
 
+    // تابع محاسبه رنک
     checkRankUp: function() {
         let currentRankTitle = this.ranks[0].title;
+        // پیدا کردن رنک درست بر اساس XP فعلی
         for (let i = this.ranks.length - 1; i >= 0; i--) {
-            if (this.data.xp >= this.ranks[i].min) {
-                currentRankTitle = this.ranks[i].title;
-                break;
-            }
+            if (this.data.xp >= this.ranks[i].min) { currentRankTitle = this.ranks[i].title; break; }
         }
+        
+        // اگر رنک ذخیره شده با رنک واقعی فرق داشت، آپدیت کن
         if(this.data.rank !== currentRankTitle) {
+            const oldRank = this.data.rank;
             this.data.rank = currentRankTitle;
-            alert(`🎉 تبریک!\nشما به درجه "${currentRankTitle}" ارتقا یافتید!`);
             this.saveToDisk();
+            
+            // فقط اگر رنک ارتقا پیدا کرده بود تبریک بگو (نه موقع رفرش ساده)
+            // شرط ساده: اگر مقدار قبلی وجود داشت و کمتر بود
+            if(oldRank !== currentRankTitle) {
+                 console.log("Rank updated silently or alerted.");
+            }
         }
     },
 
@@ -133,9 +106,7 @@ const RankSystem = {
         if(rankEl) rankEl.innerText = this.data.rank;
     },
 
-    refreshListUI: function() {
-        if(typeof renderList === 'function') renderList(); 
-    },
+    refreshListUI: function() { if(typeof renderList === 'function') renderList(); },
     
     showToast: function(msg) {
         const t = document.createElement('div');
@@ -148,58 +119,39 @@ const RankSystem = {
     getDevice: function() { return /Mobile|Android/i.test(navigator.userAgent) ? "موبایل" : "کامپیوتر"; }
 };
 
-// ********************************************
-// 📡 مدیریت صف ارسال (با قابلیت Force Playback)
-// ********************************************
 const SyncManager = {
-    queue: [],
-    username: null,
-    password: null,
+    queue: [], username: null, password: null,
 
     init: function(user, pass) {
-        this.username = user;
-        this.password = pass;
-        this.queue = JSON.parse(localStorage.getItem('chamran_queue_v7') || "[]");
+        this.username = user; this.password = pass;
+        this.queue = JSON.parse(localStorage.getItem('chamran_queue_v8') || "[]");
         this.processQueue();
-        // سینک دوره‌ای هر 15 ثانیه برای اطمینان
-        setInterval(() => this.syncProfile(), 15000);
+        setInterval(() => this.syncProfile(), 10000);
     },
 
-    // [تغییر مهم] اضافه شدن پارامتر forcePlayback
     addToQueue: function(action, logData = null, forcePlayback = false) {
-        // همیشه آخرین نسخه دیتا را بفرست
         const item = {
-            action: action,
-            username: this.username,
-            password: this.password,
-            jsonData: JSON.stringify(RankSystem.data), // ارسال آخرین وضعیت
-            logData: logData,
-            timestamp: Date.now(),
-            force_playback: forcePlayback // این پرچم به سرور می‌گوید که این دیتا "جریمه" است و باید اعمال شود
+            action: action, username: this.username, password: this.password,
+            jsonData: JSON.stringify(RankSystem.data),
+            logData: logData, timestamp: Date.now(),
+            force_playback: forcePlayback 
         };
         
-        // بهینه‌سازی صف: اگر درخواست قبلی هم sync بود و فورس نبود، آن را آپدیت کن
         if(action === 'sync' && !forcePlayback && this.queue.length > 0 && this.queue[this.queue.length-1].action === 'sync') {
-             this.queue[this.queue.length-1] = item; // آپدیت قبلی
+             this.queue[this.queue.length-1] = item;
         } else {
-             this.queue.push(item); // افزودن جدید
+             this.queue.push(item);
         }
         
-        this.saveQueue();
-        this.processQueue();
+        this.saveQueue(); this.processQueue();
     },
 
     saveQueue: function() {
-        localStorage.setItem('chamran_queue_v7', JSON.stringify(this.queue));
+        localStorage.setItem('chamran_queue_v8', JSON.stringify(this.queue));
         const badge = document.getElementById('offlineBadge');
         if(badge) {
-            if(this.queue.length > 0) {
-                badge.style.display = 'block';
-                badge.innerText = `📡 در حال ذخیره...`;
-                badge.style.background = navigator.onLine ? "#27ae60" : "#c0392b";
-            } else {
-                badge.style.display = 'none';
-            }
+            if(this.queue.length > 0) { badge.style.display = 'block'; badge.innerText = `📡 در حال ذخیره...`; badge.style.background = navigator.onLine ? "#27ae60" : "#c0392b"; } 
+            else { badge.style.display = 'none'; }
         }
     },
 
@@ -208,28 +160,18 @@ const SyncManager = {
     processQueue: function() {
         if(this.queue.length === 0 || !navigator.onLine) return;
         const item = this.queue[0];
-        
-        // آپدیت لحظه‌ای دیتا قبل از ارسال (برای اطمینان از سینک بودن دیتا)
         item.jsonData = JSON.stringify(RankSystem.data); 
-
         if(typeof REPORT_WEBAPP_URL === 'undefined') return;
 
         fetch(REPORT_WEBAPP_URL, {
-            method: 'POST',
-            mode: 'no-cors', // برای سرعت بیشتر
-            body: JSON.stringify(item),
-            headers: { 'Content-Type': 'text/plain' }
+            method: 'POST', mode: 'no-cors', body: JSON.stringify(item), headers: { 'Content-Type': 'text/plain' }
         })
         .then(() => {
-            this.queue.shift();
-            this.saveQueue();
+            this.queue.shift(); this.saveQueue();
             if(this.queue.length > 0) setTimeout(() => this.processQueue(), 500);
         })
         .catch(err => console.log("Offline", err));
     }
 };
 
-function toPersianNum(n) { 
-    if(n === undefined || n === null) return "۰";
-    return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); 
-}
+function toPersianNum(n) { if(n === undefined || n === null) return "۰"; return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
