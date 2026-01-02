@@ -195,9 +195,8 @@
             ids.forEach(id => {
                 const exam = examsMap[id];
                 const takenCloud = RankSystem.data.exams && RankSystem.data.exams[id];
-                const takenLocal = localStorage.getItem('taken_' + id);
-                
-                const isLocked = (takenCloud !== undefined) || takenLocal;
+                // فقط اگر در دیتای سرور (RankSystem.data.exams) نمره داشت، قفل شود
+                const isLocked = (takenCloud !== undefined);
                 const scoreDisplay = takenCloud !== undefined ? takenCloud : 'ثبت شده';
                 
                 const btn = document.createElement('div');
@@ -406,3 +405,4 @@
     </script>
 </body>
 </html>
+
