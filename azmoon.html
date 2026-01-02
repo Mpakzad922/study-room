@@ -133,23 +133,23 @@
         }
 
         async function performSilentSync(u, p) {
-            try {
-                if(!navigator.onLine) return;
-                const res = await fetch(REPORT_WEBAPP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'login', username: u, password: p })
-                });
-                const data = await res.json();
-                if(data.status === 'success') {
-                    console.log("📥 Sync Exam Data:", data.jsonData);
-                    RankSystem.init(data.jsonData); 
-                    const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
-                    localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
-                    renderExamList(); 
-                }
-            } catch(e) { console.log("Sync failed in exam page"); }
+    try {
+        if(!navigator.onLine) return;
+        const res = await fetch(REPORT_WEBAPP_URL, {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" }, // <--- این خط حیاتی است!
+            body: JSON.stringify({ action: 'login', username: u, password: p })
+        });
+        const data = await res.json();
+        if(data.status === 'success') {
+            console.log("📥 Sync Exam Data:", data.jsonData);
+            RankSystem.init(data.jsonData); 
+            const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
+            localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
+            renderExamList(); 
         }
-
+    } catch(e) { console.log("Sync failed in exam page"); }
+}
         initAuth();
 
         async function loadExams() {
@@ -434,4 +434,5 @@
     </script>
 </body>
 </html>
+
 
