@@ -81,21 +81,10 @@
 
     <script>
         // ***********************************************
-        // تنظیمات
+        // تنظیمات (اتصال به سرور لیارا)
         // ***********************************************
-        // [تذکر: لطفا پس از دیپلوی، لینک CSV جدید آزمون را اینجا بگذارید]
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
-        const DB_KEY = "chamran_db_v20_"; 
-        // ***********************************************
-
-        //if(typeof REPORT_WEBAPP_URL === 'undefined') {
-             // [تذکر: لطفا پس از دیپلوی، لینک وب‌اپ جدید را اینجا بگذارید]
-             //var REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxb3sXu7fJJwupzGtirtGNyNHMN6-05Tk6cXdxe31y1y6Mb1QRCXgGzXPvkT-hDb4pV1g/exec";
-       // }
-        if(typeof REPORT_WEBAPP_URL === 'undefined') {
-         // آدرس جدید سرور لیارا
-               var REPORT_WEBAPP_URL = "https://chamran-api.liara.run";
-        }
+        const API_URL = "https://chamran-api.liara.run";
+        const DB_KEY = "chamran_db_vfinal_"; 
 
         function toPersianNum(n) {
             if (n === undefined || n === null) return "";
@@ -123,7 +112,6 @@
                 if(typeof SyncManager !== 'undefined') {
                     SyncManager.init(currentUser.username, currentUser.password);
                     RankSystem.init(currentUser.jsonData);
-                    
                     performSilentSync(currentUser.username, currentUser.password);
                 }
             } catch(e) {
@@ -133,33 +121,43 @@
         }
 
         async function performSilentSync(u, p) {
-    try {
-        if(!navigator.onLine) return;
-        const res = await fetch(REPORT_WEBAPP_URL, {
-            method: 'POST',
-            headers: { "Content-Type": "application/json" }, // <--- این خط حیاتی است!
-            body: JSON.stringify({ action: 'login', username: u, password: p })
-        });
-        const data = await res.json();
-        if(data.status === 'success') {
-            console.log("📥 Sync Exam Data:", data.jsonData);
-            RankSystem.init(data.jsonData); 
-            const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
-            localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
-            renderExamList(); 
+            try {
+                if(!navigator.onLine) return;
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: 'login', username: u, password: p })
+                });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    console.log("📥 Sync Exam Data:", data.jsonData);
+                    RankSystem.init(data.jsonData); 
+                    const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
+                    localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
+                    renderExamList(); 
+                }
+            } catch(e) { console.log("Sync failed in exam page"); }
         }
-    } catch(e) { console.log("Sync failed in exam page"); }
-}
+        
         initAuth();
 
         async function loadExams() {
             try {
-                const url = SHEET_CSV_URL + '&t=' + Date.now();
-                const res = await fetch(url);
+                // درخواست لیست آزمون‌ها از سرور لیارا
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: 'get_exams' })
+                });
+
                 if(!res.ok) throw new Error(`خطای شبکه: ${res.status}`);
-                const text = await res.text();
-                if(!text || text.length < 10) throw new Error("لیست آزمون‌ها خالی است!");
-                parseExamCSV(text);
+                const result = await res.json();
+                
+                if(result.status === 'success') {
+                    processExamsData(result.data);
+                } else {
+                    throw new Error("خطا در دریافت لیست آزمون‌ها");
+                }
             } catch(e) {
                 console.error(e);
                 document.getElementById('loading').style.display = 'none';
@@ -169,45 +167,17 @@
             }
         }
         
-        function parseExamCSV(text) {
-            const rows = text.split('\n');
+        function processExamsData(serverExams) {
             examsMap = {};
-            const parseLine = (line) => {
-                const result = []; let current = ''; let inQuote = false;
-                for (let i = 0; i < line.length; i++) {
-                    const char = line[i];
-                    if (char === '"') { inQuote = !inQuote; continue; }
-                    if (char === ',' && !inQuote) { result.push(current); current = ''; continue; }
-                    current += char;
-                }
-                result.push(current); return result;
-            };
-
-            for(let i=0; i<rows.length; i++) {
-                const rowStr = rows[i].trim();
-                if(!rowStr) continue;
-                const col = parseLine(rowStr);
-                if(col[0] && !col[0].includes('EX-')) continue; 
-                if(col.length < 11) continue; 
-
-                const exId = col[0].trim();
-                if(!examsMap[exId]) {
-                    examsMap[exId] = { 
-                        id: exId, 
-                        title: col[1].trim(), 
-                        duration: col[2].trim(), 
-                        start: col[3].trim(), 
-                        password: col[4].trim(),
-                        questions: [] 
-                    };
-                }
-                examsMap[exId].questions.push({
-                    img: col[5].trim(),
-                    q: col[6].trim(),
-                    options: [col[7].trim(), col[8].trim(), col[9].trim(), col[10].trim()],
-                    correct: parseInt(col[11].trim())
-                });
-            }
+            serverExams.forEach(ex => {
+                examsMap[ex.id] = {
+                    id: ex.id,
+                    title: ex.title,
+                    duration: ex.time, // در دیتابیس time ذخیره شده
+                    password: ex.pass, // در دیتابیس pass ذخیره شده
+                    questions: ex.questions // آرایه سوالات
+                };
+            });
             renderExamList();
         }
 
@@ -315,6 +285,9 @@
 
             const cont = document.getElementById('optionsContainer');
             cont.innerHTML = "";
+            
+            // در سرور جدید آپشن‌ها در آرایه options هستند
+            // [o1, o2, o3, o4]
             q.options.forEach((opt, idx) => {
                 const div = document.createElement('div');
                 div.className = 'option';
@@ -347,7 +320,12 @@
             let correct = 0; let wrong = 0; let empty = 0;
             currentQuestions.forEach((q, idx) => {
                 const ans = userAnswers[idx];
-                if(!ans) empty++; else if(ans == q.correct) correct++; else wrong++;
+                // در سرور جدید فیلد صحیح c نام دارد ولی ممکن است correct هم باشد
+                // با توجه به index.js ما c را نداریم، احتمالا در ذخیره سازی اسمش correct باشد یا c
+                // بررسی میکنیم: اگر q.c وجود داشت از آن استفاده کن، وگرنه q.correct
+                const correctOption = q.c || q.correct;
+                
+                if(!ans) empty++; else if(ans == correctOption) correct++; else wrong++;
             });
             
             const score = (correct / currentQuestions.length) * 20; 
@@ -374,7 +352,6 @@
                 RankSystem.saveToDisk();
             }
 
-            // [اصلاحیه] تعریف متغیر لاگ برای ارسال صحیح
             const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | نمره: ${toPersianNum(finalScore)}`;
             
             SyncManager.addToQueue('report', {
@@ -399,9 +376,6 @@
             return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC";
         }
         
-        // ***********************************************
-        // امنیت اصلاح شده: استفاده از visibilitychange بجای blur
-        // ***********************************************
         document.addEventListener("visibilitychange", () => {
             if(isExamActive && document.visibilityState === 'hidden') {
                 SyncManager.addToQueue('report', {
@@ -413,7 +387,6 @@
             }
         });
 
-        // جلوگیری از خروج ناگهانی
         window.addEventListener('beforeunload', (e) => {
             if (isExamActive) {
                 const data = {
@@ -423,10 +396,9 @@
                     device: getDeviceInfo(),
                     timestamp: Date.now()
                 };
-                // [اصلاحیه] تغییر v2 به v8 برای هماهنگی با rank.js
-                let q = JSON.parse(localStorage.getItem('chamran_queue_v8') || "[]");
+                let q = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
                 q.push(data);
-                localStorage.setItem('chamran_queue_v8', JSON.stringify(q));
+                localStorage.setItem('chamran_queue_vfinal', JSON.stringify(q));
             }
         });
 
@@ -434,5 +406,3 @@
     </script>
 </body>
 </html>
-
-
