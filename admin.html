@@ -29,7 +29,8 @@
 
         .card { background: var(--white); border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); border-right: 5px solid transparent; transition: all 0.2s; }
         .user-card { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .lesson-card { cursor: pointer; }
+        .lesson-card { cursor: pointer; position: relative; }
+        .lesson-card:active { transform: scale(0.99); background-color: #fafafa; }
         
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; color: white; font-weight: bold; }
         .bg-blue { background: #3498db; }
@@ -52,13 +53,20 @@
         .search-box:focus { border-color: var(--accent); }
 
         .detail-header { text-align: center; background: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .student-list-container { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd; font-size: 0.9rem; }
+        
+        /* استایل لیست بازشوی دانش‌آموزان */
+        .student-list-container { 
+            display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ddd; font-size: 0.9rem; 
+        }
+        .st-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f9f9f9; }
+        .st-row:last-child { border: none; }
+        .st-score { font-weight: bold; }
         
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; display: none; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- استایل‌های جدید برای تب مدیریت (جدول) --- */
+        /* استایل‌های جدول مدیریت حرفه‌ای */
         .new-user-box { background: #e8f6f3; padding: 15px; border-radius: 15px; border: 1px dashed #27ae60; margin-bottom: 20px; display: none; }
         .manage-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .manage-table th { background: #34495e; color: white; padding: 10px; font-size: 0.85rem; }
@@ -96,12 +104,13 @@
 
         <div id="tab-lessons" class="section">
             <h3 style="color:var(--primary); border-bottom:2px solid var(--accent); display:inline-block; padding-bottom:5px;">📊 آمار بازدید فیلم‌ها</h3>
-            <p style="color:red; font-size:0.8rem;">⚠️ نکته: برای حذف درس، حتما از دکمه سطل آشغال استفاده کنید.</p>
+            <p style="color:red; font-size:0.8rem;">⚠️ نکته: برای دیدن اسامی، روی کارت درس کلیک کنید.</p>
             <div id="lessonsStats"></div>
         </div>
 
         <div id="tab-exams" class="section">
             <h3 style="color:var(--primary); border-bottom:2px solid #8e44ad; display:inline-block; padding-bottom:5px;">📝 دفتر نمرات و رمزها</h3>
+            <p style="color:red; font-size:0.8rem;">⚠️ نکته: برای دیدن لیست نمرات، روی کارت آزمون کلیک کنید.</p>
             <div id="examsStats"></div>
         </div>
 
@@ -209,7 +218,7 @@
         renderLessonsStats();
         renderExamsStats();
         renderRanking();
-        renderManageTable(); // تابع جدید برای جدول مدیریت
+        renderManageTable();
     }
 
     function switchTab(tabId) {
@@ -219,13 +228,12 @@
         event.currentTarget.classList.add('active');
     }
 
-    // --- (1) بخش مدیریت حرفه‌ای کاربران (جدید) ---
+    // --- (1) بخش مدیریت حرفه‌ای ---
     function renderManageTable() {
         const tbody = document.getElementById('manageTableBody');
         tbody.innerHTML = '';
         ALL_USERS.forEach(u => {
             const tr = document.createElement('tr');
-            // شناسه یکتا برای اینپوت‌ها
             const uid = u.u.replace(/[^a-zA-Z0-9]/g, '_'); 
             
             tr.innerHTML = `
@@ -259,16 +267,11 @@
                     new_n: newName,
                     new_u: newUser, 
                     new_p: newPass,
-                    new_xp: newXP // ارسال امتیاز جدید به سرور
+                    new_xp: newXP
                 })
             });
             const d = await res.json();
-            if(d.status === 'success') { 
-                alert("✅ تغییرات با موفقیت ذخیره شد."); 
-                fetchData(); // رفرش برای نمایش تغییرات
-            } else { 
-                alert("❌ خطا: " + d.message); 
-            }
+            if(d.status === 'success') { alert("✅ تغییرات با موفقیت ذخیره شد."); fetchData(); } else { alert("❌ خطا: " + d.message); }
         } catch(e) { alert("خطای شبکه"); }
         document.getElementById('loadingBox').style.display = 'none';
     }
@@ -302,7 +305,7 @@
         document.getElementById('loadingBox').style.display = 'none';
     }
 
-    // --- (2) لیست کاربران (تب اصلی) ---
+    // --- (2) لیست کاربران ---
     function renderUsersList(users) {
         const container = document.getElementById('usersList');
         container.innerHTML = '';
@@ -321,7 +324,7 @@
         renderUsersList(ALL_USERS.filter(u => u.n.includes(q) || u.u.toLowerCase().includes(q)));
     }
 
-    // --- (3) پروفایل و عملیات ---
+    // --- (3) پروفایل (مودال) ---
     function showUserDetail(user) {
         document.getElementById('modalTitle').innerText = user.n;
         const d = user.parsedData;
@@ -371,15 +374,10 @@
 
     async function performAdminOp(type, username, itemId) {
         let body = { action: 'admin_op', admin_token: ADMIN_TOKEN_KEY, target_user: username, op_type: type };
-        
-        if(type === 'give_xp') { 
-            const amt = prompt("چقدر امتیاز اضافه شود؟"); 
-            if(!amt) return; body.amount = amt; 
-        } 
+        if(type === 'give_xp') { const amt = prompt("چقدر امتیاز اضافه شود؟"); if(!amt) return; body.amount = amt; } 
         else if(type === 'take_xp') { 
             const amt = prompt("چقدر امتیاز کسر شود؟"); 
             if(!amt) return; 
-            // برای کسر امتیاز، عدد را منفی می‌کنیم
             body.amount = -1 * Math.abs(parseInt(amt)); 
             body.op_type = 'give_xp'; 
         }
@@ -395,6 +393,100 @@
         } catch(e) { alert("خطا"); }
     }
 
+    // --- (4) آمار و لیست بازشو ---
+    function renderExamsStats() {
+        const container = document.getElementById('examsStats'); container.innerHTML = '';
+        Object.keys(META_EXAMS).forEach(eid => {
+            const info = META_EXAMS[eid]; const title = info.title || info; const pass = info.pass || '-';
+            let count = 0; let sum = 0; let participants = []; let absents = [];
+
+            ALL_USERS.forEach(u => {
+                const d = u.parsedData;
+                if(d.exams && d.exams[eid] !== undefined) { 
+                    count++; 
+                    sum += parseFloat(d.exams[eid]); 
+                    const score = d.exams[eid];
+                    // رنگ نمره: سبز بالای 17، سیاه معمولی، قرمز زیر 10
+                    const color = score >= 17 ? 'green' : (score < 10 ? 'red' : 'black');
+                    participants.push(`<div class="st-row"><span>${u.n}</span><span class="st-score" style="color:${color}">${score}</span></div>`); 
+                }
+                else { absents.push(`<div class="st-row"><span>${u.n}</span><span style="color:#aaa">غایب</span></div>`); }
+            });
+            const avg = count > 0 ? (sum / count).toFixed(1) : 0;
+
+            const div = document.createElement('div');
+            div.className = 'card lesson-card';
+            div.style.borderRightColor = '#8e44ad';
+            // کلیک روی کارت برای باز کردن لیست (مگر اینکه روی دکمه حذف بزنیم)
+            div.onclick = function(e) { 
+                if(!e.target.classList.contains('del-btn-exam')) { 
+                    const lc=this.querySelector('.student-list-container'); 
+                    lc.style.display=(lc.style.display==='none'||!lc.style.display)?'block':'none'; 
+                } 
+            };
+            
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="del-btn-exam" onclick="deleteExam('${eid}', '${title}')" style="background:#fee; color:red; border:1px solid red; border-radius:5px; cursor:pointer;">🗑️</button>
+                        <div><strong>${title}</strong><br><span style="font-size:0.8rem; background:#eee; padding:2px 5px; border-radius:4px;">رمز: ${pass}</span></div>
+                    </div>
+                    <span class="badge" style="background:#8e44ad">${count} نفر</span>
+                </div>
+                <div style="margin-top:5px; font-size:0.9rem;">میانگین نمرات: <b>${avg}</b></div>
+                <div class="student-list-container">
+                    <div style="color:#27ae60; font-weight:bold; margin-bottom:5px;">✅ شرکت‌کنندگان:</div>
+                    ${participants.length ? participants.join('') : '<small>هیچکس</small>'}
+                    <div style="color:#c0392b; font-weight:bold; margin-top:15px; margin-bottom:5px;">❌ غایبین:</div>
+                    ${absents.length ? absents.join('') : '<small>همه شرکت کردند</small>'}
+                </div>`;
+            container.appendChild(div);
+        });
+    }
+
+    function renderLessonsStats() {
+        const container = document.getElementById('lessonsStats'); container.innerHTML = '';
+        Object.keys(META_LESSONS).forEach(lid => {
+            const title = META_LESSONS[lid]; let count = 0; let seen = []; let notSeen = [];
+            ALL_USERS.forEach(u => {
+                if(u.parsedData.completed && u.parsedData.completed.includes(lid.toString())) { 
+                    count++; 
+                    seen.push(`<div class="st-row"><span>${u.n}</span><span style="color:green">✔</span></div>`); 
+                } else { 
+                    notSeen.push(`<div class="st-row"><span>${u.n}</span><span style="color:red">✖</span></div>`); 
+                }
+            });
+            const percent = Math.round((count/ALL_USERS.length)*100)||0;
+            const div = document.createElement('div');
+            div.className = 'card lesson-card';
+            div.style.borderRightColor = '#e67e22';
+            div.onclick = function(e) { 
+                if(!e.target.classList.contains('del-btn-lesson')) { 
+                    const lc=this.querySelector('.student-list-container'); 
+                    lc.style.display=(lc.style.display==='none'||!lc.style.display)?'block':'none'; 
+                } 
+            };
+            
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="del-btn-lesson" onclick="deleteLesson('${lid}', '${title}')" style="background:#fee; color:red; border:1px solid red; border-radius:5px; cursor:pointer;">🗑️</button>
+                        <strong>${title}</strong>
+                    </div>
+                    <span class="badge" style="background:#e67e22">${count}/${ALL_USERS.length}</span>
+                </div>
+                <div style="background:#eee; height:8px; border-radius:4px; margin-top:10px;"><div style="background:#e67e22; width:${percent}%; height:100%;"></div></div>
+                <div class="student-list-container">
+                    <div style="color:#27ae60; font-weight:bold;">✅ مشاهده کامل:</div>
+                    ${seen.length ? seen.join('') : '<small>هیچکس</small>'}
+                    <div style="color:#c0392b; font-weight:bold; margin-top:15px;">❌ مشاهده نشده:</div>
+                    ${notSeen.length ? notSeen.join('') : '<small>همه دیده‌اند</small>'}
+                </div>`;
+            container.appendChild(div);
+        });
+    }
+
+    // --- حذف ---
     async function deleteLesson(lid, title) { if(!confirm(`حذف درس "${title}"؟\n⛔ سوابق همه پاک می‌شود!`)) return; callDeleteApi('delete_lesson_global', { lesson_id: lid }); }
     async function deleteExam(eid, title) { if(!confirm(`حذف آزمون "${title}"؟\n⛔ نمرات همه پاک می‌شود!`)) return; callDeleteApi('delete_exam_global', { exam_id: eid }); }
     async function callDeleteApi(actionName, payload) {
@@ -407,24 +499,6 @@
         document.getElementById('loadingBox').style.display = 'none';
     }
 
-    // --- آمار و رمزها ---
-    function renderExamsStats() {
-        const container = document.getElementById('examsStats'); container.innerHTML = '';
-        Object.keys(META_EXAMS).forEach(eid => {
-            const info = META_EXAMS[eid]; const title = info.title || info; const pass = info.pass || '-';
-            let count = 0; let sum = 0; ALL_USERS.forEach(u => { const d=u.parsedData; if(d.exams && d.exams[eid]!==undefined){ count++; sum+=parseFloat(d.exams[eid]); } });
-            const avg = count > 0 ? (sum / count).toFixed(1) : 0;
-            container.innerHTML += `<div class="card lesson-card" style="border-right-color:#8e44ad"><div style="display:flex;justify-content:space-between;align-items:center;"><div><button class="del-btn-exam" onclick="deleteExam('${eid}','${title}')" style="background:#fee;color:red;border:1px solid red;border-radius:5px;cursor:pointer;">🗑️</button> <strong>${title}</strong> <span style="font-size:0.8rem;background:#eee;padding:2px 5px;border-radius:4px;">رمز: ${pass}</span></div><span class="badge" style="background:#8e44ad">${count} نفر</span></div><div style="margin-top:5px;font-size:0.9rem;">میانگین: <b>${avg}</b></div></div>`;
-        });
-    }
-    function renderLessonsStats() {
-        const container = document.getElementById('lessonsStats'); container.innerHTML = '';
-        Object.keys(META_LESSONS).forEach(lid => {
-            const title = META_LESSONS[lid]; let count = 0; ALL_USERS.forEach(u => { if(u.parsedData.completed && u.parsedData.completed.includes(lid.toString())) count++; });
-            const percent = Math.round((count/ALL_USERS.length)*100)||0;
-            container.innerHTML += `<div class="card lesson-card" style="border-right-color:#e67e22"><div style="display:flex;justify-content:space-between;align-items:center;"><div><button class="del-btn-lesson" onclick="deleteLesson('${lid}','${title}')" style="background:#fee;color:red;border:1px solid red;border-radius:5px;cursor:pointer;">🗑️</button> <strong>${title}</strong></div><span class="badge" style="background:#e67e22">${count}/${ALL_USERS.length}</span></div><div style="background:#eee;height:8px;border-radius:4px;margin-top:10px;"><div style="background:#e67e22;width:${percent}%;height:100%;"></div></div></div>`;
-        });
-    }
     function renderRanking() {
         const container = document.getElementById('rankingList'); container.innerHTML = '';
         [...ALL_USERS].sort((a,b)=>(b.parsedData.xp||0)-(a.parsedData.xp||0)).slice(0,10).forEach((u,i)=>{
