@@ -236,21 +236,57 @@
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
 
-        function checkAuth() {
+        // این تابع چک می‌کند که آیا کاربر لاگین کرده؟
+        // اگر بله، صبر می‌کند تا "تازه‌ترین" اطلاعات از سرور بیاید
+        // و بعد صفحه را نشان می‌دهد.
+        async function checkAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
+            
             if(savedUser) {
                 try {
                     const creds = JSON.parse(savedUser);
-                    currentUser = creds;
-                    // شروع ماژول‌های کمکی
-                    if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
-                    if(typeof RankSystem !== 'undefined') RankSystem.init(creds.jsonData);
                     
-                    document.getElementById('displayName').innerText = creds.displayName;
-                    showScreen('screen-library');
-                    fetchPlaylist(); 
-                    performSilentSync(creds.username, creds.password);
+                    // نمایش لودینگ به جای باز کردن سریع صفحه
+                    document.getElementById('intro-overlay').style.display = 'flex';
+                    document.querySelector('.sig-name').innerHTML = "درحال دریافت اطلاعات از سرور...";
+                    document.querySelector('.sig-name').style.fontSize = "1.5rem";
+
+                    // درخواست اجباری به سرور
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: 'login', username: creds.username, password: creds.password })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if(data.status === 'success') {
+                        // اطلاعات تازه رسید! حالا صفحه را باز کن
+                        currentUser = { 
+                            username: creds.username, 
+                            password: creds.password, 
+                            displayName: data.displayName, 
+                            jsonData: data.jsonData 
+                        };
+                        
+                        // شروع سیستم با دیتای سرور
+                        if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
+                        if(typeof RankSystem !== 'undefined') RankSystem.init(data.jsonData);
+                        
+                        document.getElementById('displayName').innerText = data.displayName;
+                        
+                        // بستن لودینگ و نمایش پنل
+                        document.getElementById('intro-overlay').style.display = 'none';
+                        showScreen('screen-library');
+                        fetchPlaylist();
+                    } else {
+                        // اگر رمز در سرور عوض شده بود، بیرون بیانداز
+                        localStorage.removeItem(DB_KEY + 'creds');
+                        showScreen('screen-login');
+                    }
                 } catch(e) {
+                    // اگر اینترنت نبود، چون گفتید "همه چیز از سرور"، پس نباید وارد شود
+                    alert("⚠️ خطای اتصال به سرور! برای دریافت آخرین وضعیت باید آنلاین باشید.");
                     showScreen('screen-login');
                 }
             } else {
@@ -684,4 +720,3 @@
     </script>
 </body>
 </html>
-
