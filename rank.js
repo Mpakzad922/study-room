@@ -1,5 +1,5 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه نهایی v5 - هماهنگ با سیستم Deep Merge)
+// 🎮 فایل هسته: rank.js (نسخه کامل و اورجینال - با قابلیت جریمه)
 // ********************************************
 
 const RankSystem = {
@@ -19,34 +19,34 @@ const RankSystem = {
         exams: {} 
     },
 
-    // تغییر ورژن به v5 برای اینکه کش‌های قدیمی و باگ‌دار پاک شوند
-    STORAGE_KEY: 'chamran_local_rank_v5', 
+    // تغییر ورژن به v7 برای اطمینان کامل از پاک شدن کش‌های قدیمی
+    STORAGE_KEY: 'chamran_local_rank_v7', 
 
-    // 1. شروع سیستم: دیکتاتوری سرور! (Server Authority)
-    // چون سرور الان منطق Merge دارد، دیتای سرور همیشه کامل‌تر و درست‌تر از گوشی است.
+    // 1. شروع سیستم: اولویت با سرور است (Server Authority)
     init: function(serverJson) {
         let serverData = {};
         
-        // تلاش برای پارس کردن دیتای سرور
+        // تلاش برای خواندن دیتای سرور
         if(serverJson && serverJson !== "{}") {
             try {
                 serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson;
             } catch(e) { console.error("Server JSON Error", e); }
         }
 
-        // اگر سرور دیتای معتبری داشت، حتماً همان را استفاده کن و روی گوشی ذخیره کن
-        if (serverData && (serverData.xp !== undefined || serverData.exams || serverData.completed)) {
+        // [تغییر مهم] اگر دیتای سرور معتبر بود، آن را جایگزین دیتای لوکال کن (سینک اجباری)
+        // این باعث می‌شود اگر ادمین فیلمی را ریست کرد، گوشی هم ریست شود
+        if (serverData && (serverData.xp !== undefined || serverData.exams)) {
             console.log("📥 دریافت دیتای هوشمند از سرور");
             this.data = {
                 xp: serverData.xp || 0,
                 rank: serverData.rank || "🐣 نوآموز",
                 completed: serverData.completed || [],
-                playback: serverData.playback || {}, 
+                playback: serverData.playback || {},
                 exams: serverData.exams || {}
             };
-            this.saveToDisk(); // دیتای تمیز سرور را در لوکال ذخیره کن
+            this.saveToDisk(); // ذخیره نسخه سرور در گوشی
         } else {
-            // فقط اگر کاربر جدید بود (سرور خالی)، از حافظه لوکال استفاده کن
+            // اگر سرور خالی بود (کاربر جدید)، از لوکال بخوان
             const localData = localStorage.getItem(this.STORAGE_KEY);
             if (localData) {
                 try { this.data = JSON.parse(localData); } catch (e) {}
@@ -54,22 +54,25 @@ const RankSystem = {
         }
 
         this.updateUI();
-        // رفرش کردن لیست برای اعمال تیک‌های سبز
         setTimeout(() => this.refreshListUI(), 500);
     },
 
-    // 2. ذخیره پوزیشن فیلم (ارسال پینگ هر 5 ثانیه)
-    savePosition: function(id, time) {
+    // 2. ذخیره پوزیشن فیلم (با قابلیت Force برای جریمه)
+    // ورودی سوم (force) اضافه شد: اگر true باشد یعنی جریمه است و باید حتما ثبت شود
+    savePosition: function(id, time, force = false) {
         const sId = id.toString();
         
-        // ذخیره در رم (فقط اگر زمان جلوتر رفته باشد)
-        if(time > (this.data.playback[sId] || 0)) {
+        // اگر فورس باشد (جریمه) یا زمان جلوتر رفته باشد، ذخیره کن
+        if(force || time > (this.data.playback[sId] || 0)) {
             this.data.playback[sId] = Math.floor(time);
             this.saveToDisk();
             
-            // [حیاتی] هر 5 ثانیه وضعیت را به سرور بفرست
-            // چون سرور منطق Max دارد، ارسال زیاد مشکلی ایجاد نمی‌کند و دقت را بالا می‌برد
-            if(Math.floor(time) % 5 === 0) {
+            // [حالت جریمه] ارسال فوری و اجباری به سرور
+            if (force) {
+                SyncManager.addToQueue('sync', null, true); // پارامتر سوم true یعنی فورس پلی‌بک
+            }
+            // [حالت عادی] هر 5 ثانیه یکبار وضعیت را به سرور بفرست (دقت بالا)
+            else if(Math.floor(time) % 5 === 0) {
                  SyncManager.addToQueue('sync'); 
             }
         }
@@ -79,10 +82,9 @@ const RankSystem = {
         return this.data.playback[id.toString()] || 0;
     },
 
-    // 3. سیستم امتیازدهی
+    // 3. افزودن امتیاز و تکمیل (سینک فوری)
     addXP: function(amount, reason, uniqueId) {
         const sId = uniqueId.toString();
-        // جلوگیری از امتیاز تکراری
         if(uniqueId && this.data.completed.includes(sId)) return;
 
         this.data.xp += amount;
@@ -96,7 +98,7 @@ const RankSystem = {
         this.showToast(`⭐ +${amount} امتیاز: ${reason}`);
         this.saveToDisk();
         
-        // تغییرات مهم مثل امتیاز و تیک سبز را "فوری" گزارش بده
+        // ارسال فوری تغییرات مهم به سرور
         SyncManager.addToQueue('report', {
             lesson: reason,
             status: 'کسب امتیاز / تکمیل',
@@ -147,7 +149,7 @@ const RankSystem = {
 };
 
 // ********************************************
-// 📡 مدیریت صف ارسال (Sync Manager)
+// 📡 مدیریت صف ارسال (با قابلیت Force Playback)
 // ********************************************
 const SyncManager = {
     queue: [],
@@ -157,36 +159,38 @@ const SyncManager = {
     init: function(user, pass) {
         this.username = user;
         this.password = pass;
-        this.queue = JSON.parse(localStorage.getItem('chamran_queue_v5') || "[]");
+        this.queue = JSON.parse(localStorage.getItem('chamran_queue_v7') || "[]");
         this.processQueue();
-        
-        // یک تایمر پشتیبان هم میگذاریم که هر 15 ثانیه صف را چک کند
-        setInterval(() => this.processQueue(), 15000);
+        // سینک دوره‌ای هر 15 ثانیه برای اطمینان
+        setInterval(() => this.syncProfile(), 15000);
     },
 
-    addToQueue: function(action, logData = null) {
+    // [تغییر مهم] اضافه شدن پارامتر forcePlayback
+    addToQueue: function(action, logData = null, forcePlayback = false) {
+        // همیشه آخرین نسخه دیتا را بفرست
         const item = {
             action: action,
             username: this.username,
             password: this.password,
-            jsonData: JSON.stringify(RankSystem.data), // همیشه جدیدترین نسخه دیتا را بردار
+            jsonData: JSON.stringify(RankSystem.data), // ارسال آخرین وضعیت
             logData: logData,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            force_playback: forcePlayback // این پرچم به سرور می‌گوید که این دیتا "جریمه" است و باید اعمال شود
         };
         
-        // بهینه‌سازی: اگر درخواست قبلی هم sync بود، آن را آپدیت کن تا صف شلوغ نشود
-        if(action === 'sync' && this.queue.length > 0 && this.queue[this.queue.length-1].action === 'sync') {
-             this.queue[this.queue.length-1] = item;
+        // بهینه‌سازی صف: اگر درخواست قبلی هم sync بود و فورس نبود، آن را آپدیت کن
+        if(action === 'sync' && !forcePlayback && this.queue.length > 0 && this.queue[this.queue.length-1].action === 'sync') {
+             this.queue[this.queue.length-1] = item; // آپدیت قبلی
         } else {
-             this.queue.push(item);
+             this.queue.push(item); // افزودن جدید
         }
         
         this.saveQueue();
-        this.processQueue(); // تلاش برای ارسال فوری
+        this.processQueue();
     },
 
     saveQueue: function() {
-        localStorage.setItem('chamran_queue_v5', JSON.stringify(this.queue));
+        localStorage.setItem('chamran_queue_v7', JSON.stringify(this.queue));
         const badge = document.getElementById('offlineBadge');
         if(badge) {
             if(this.queue.length > 0) {
@@ -199,36 +203,29 @@ const SyncManager = {
         }
     },
 
+    syncProfile: function() { this.addToQueue('sync'); },
+
     processQueue: function() {
         if(this.queue.length === 0 || !navigator.onLine) return;
-        
-        // آیتم اول صف را بردار (اما هنوز حذف نکن)
         const item = this.queue[0];
         
-        // قبل از ارسال، مطمئن شو آخرین نسخه دیتا را داری
-        // (مخصوصاً برای وقتی که اینترنت قطع بوده و کاربر بازی کرده)
+        // آپدیت لحظه‌ای دیتا قبل از ارسال (برای اطمینان از سینک بودن دیتا)
         item.jsonData = JSON.stringify(RankSystem.data); 
 
         if(typeof REPORT_WEBAPP_URL === 'undefined') return;
 
         fetch(REPORT_WEBAPP_URL, {
             method: 'POST',
-            mode: 'no-cors', // حالت no-cors برای سرعت بیشتر و جلوگیری از خطای CORS
+            mode: 'no-cors', // برای سرعت بیشتر
             body: JSON.stringify(item),
             headers: { 'Content-Type': 'text/plain' }
         })
         .then(() => {
-            // اگر موفق بود، حالا از صف حذف کن
             this.queue.shift();
             this.saveQueue();
-            
-            // اگر هنوز چیزی در صف هست، بعدی را بفرست
             if(this.queue.length > 0) setTimeout(() => this.processQueue(), 500);
         })
-        .catch(err => {
-            console.log("Sync Error (Offline?)", err);
-            // اگر خطا داد، حذف نکن تا بعداً دوباره تلاش کند
-        });
+        .catch(err => console.log("Offline", err));
     }
 };
 
