@@ -3,109 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل ساخت محتوا (پیشرفته و امن)</title>
+    <title>پنل ساخت محتوا (پیشرفته)</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
-        body { font-family: 'Vazirmatn', sans-serif; background: #ecf0f1; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 800px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 30px; border-top: 5px solid var(--border-color, #ccc); }
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f4f6f9; --white: #fff; --blue: #2980b9; --danger: #e74c3c; }
+        body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #34495e; display: flex; flex-direction: column; align-items: center; }
         
-        /* باکس احراز هویت */
-        .auth-box { 
-            background: #2c3e50; padding: 20px; border-radius: 15px; width: 100%; max-width: 800px; 
-            margin-bottom: 25px; color: white; display: flex; flex-direction: column; align-items: center; gap: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-        }
-        .auth-box input { margin: 0; width: 50%; text-align: center; border: 3px solid #e67e22; background: white; color: black; font-weight: bold; font-size: 1.1rem; }
-        
-        h2 { text-align: center; color: #2c3e50; margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 15px; }
-        label { font-weight: bold; color: #34495e; display: block; margin-top: 15px; margin-bottom: 5px; }
-        
-        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #bdc3c7; border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 1rem; transition: 0.3s; }
-        input:focus, textarea:focus { border-color: #3498db; outline: none; }
-        
-        /* ردیف‌های افقی */
-        .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-        
-        button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: translateY(-2px); }
-        
-        .btn-green { background: #27ae60; color: white; width: 100%; margin-top: 20px; }
-        .btn-blue { background: #2980b9; color: white; width: 100%; margin-top: 20px; }
-        .btn-small { padding: 8px 15px; font-size: 0.9rem; }
-        .btn-add { background: #f39c12; color: white; margin-bottom: 10px; }
-        .btn-del { background: #e74c3c; color: white; width: auto; padding: 10px 15px; }
+        /* استایل صفحه ورود */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        #loginOverlay input { padding: 12px; border-radius: 10px; border: none; text-align: center; font-size: 1.2rem; margin-bottom: 20px; width: 280px; }
+        #loginOverlay button { padding: 12px 40px; background: var(--accent); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.3s; }
+        #loginOverlay button:hover { transform: scale(1.05); }
 
-        /* استایل باکس سوال */
-        .q-box { background: #f8f9fa; border: 2px solid #e1e8ed; border-radius: 15px; padding: 20px; margin-bottom: 20px; position: relative; }
-        .q-num { background: #34495e; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; position: absolute; left: 15px; top: 15px; }
-        .del-q { position: absolute; left: 15px; top: 50px; color: #e74c3c; cursor: pointer; font-size: 0.9rem; border: 1px solid #e74c3c; padding: 4px 10px; border-radius: 5px; background: #fff; }
+        /* کانتینر اصلی */
+        .container { width: 100%; max-width: 850px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: none; } /* در ابتدا مخفی */
         
+        /* تب‌ها */
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 12px; background: #ecf0f1; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: #7f8c8d; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 1rem; }
+        .tab-btn.active { background: var(--primary); color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(44, 62, 80, 0.2); }
+
+        /* بخش‌ها */
+        .section { display: none; animation: fadeIn 0.4s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* فرم‌ها */
+        label { display: block; margin: 15px 0 5px; font-weight: bold; color: var(--primary); }
+        input, textarea, select { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 1rem; transition: 0.3s; }
+        input:focus, textarea:focus { border-color: var(--blue); outline: none; }
+        
+        .row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        button { padding: 12px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+
+        .btn-green { background: var(--accent); color: white; width: 100%; margin-top: 20px; }
+        .btn-blue { background: var(--blue); color: white; width: 100%; margin-top: 20px; }
+        .btn-add { background: #f39c12; color: white; margin-bottom: 10px; width: 100%; }
+        .btn-del { background: var(--danger); color: white; padding: 8px 12px; font-size: 0.9rem; }
+        
+        /* استایل اختصاصی سوالات آزمون */
+        .q-box { background: #f8f9fa; border: 2px solid #e1e8ed; border-radius: 15px; padding: 20px; margin-bottom: 20px; position: relative; }
+        .q-num { background: var(--primary); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; position: absolute; left: 15px; top: 15px; }
+        .del-q { position: absolute; left: 15px; top: 50px; color: var(--danger); cursor: pointer; font-size: 0.9rem; border: 1px solid var(--danger); padding: 4px 10px; border-radius: 5px; background: #fff; }
         .opt-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; background: white; padding: 8px; border-radius: 8px; border: 1px solid #eee; }
         .opt-label { width: 80px; font-size: 0.9rem; color: #7f8c8d; }
+
+        /* استایل لیست تاریخچه */
+        .history-card { background: white; border: 1px solid #eee; border-right: 5px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 3px 10px rgba(0,0,0,0.03); }
+        .history-info { flex: 1; }
+        .history-actions { display: flex; gap: 8px; }
+        .tag-date { font-size: 0.8rem; color: #7f8c8d; background: #eee; padding: 2px 8px; border-radius: 4px; margin-right: 5px; }
+        .action-btn { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
     </style>
 </head>
 <body>
 
-    <div class="auth-box">
-        <span style="font-size: 1.2rem;">🔒 احراز هویت مدیر</span>
-        <input type="password" id="admin_token" placeholder="رمز عبور امنیتی (Admin Token)">
-        <small style="color: #bdc3c7;">رمز عبور همان است که در فایل index.js سرور قرار دادید.</small>
+    <div id="loginOverlay">
+        <h2 style="margin-bottom: 20px;">🔐 ورود به پنل سازنده</h2>
+        <input type="password" id="adminTokenInput" placeholder="رمز عبور مدیریت را وارد کنید...">
+        <button onclick="checkLogin()">ورود به سیستم</button>
     </div>
 
-    <div class="container" style="--border-color: #27ae60;">
-        <h2>🎬 افزودن درس جدید</h2>
-        
-        <label>عنوان درس:</label>
-        <input id="l_title" placeholder="مثلاً: ریاضی فصل ۴">
-        
-        <label>لینک فیلم اصلی (MP4):</label>
-        <input id="l_link" dir="ltr" placeholder="https://site.com/video.mp4">
-        
-        <label>فایل‌های ضمیمه (PDF، تمرین و...):</label>
-        <div id="attach_container"></div>
-        <button type="button" class="btn-add btn-small" onclick="addAttachRow()">➕ افزودن فایل ضمیمه</button>
-        
-        <button class="btn-green" onclick="saveLesson()">💾 ارسال درس به سرور</button>
-    </div>
-
-    <div class="container" style="--border-color: #2980b9;">
-        <h2>📝 ساخت آزمون جدید (پیشرفته)</h2>
-        
-        <div class="row">
-            <div style="flex:2"><label>نام آزمون:</label><input id="e_title" placeholder="آزمون علوم"></div>
-            <div style="flex:1"><label>زمان (دقیقه):</label><input type="number" id="e_time" value="15"></div>
-            <div style="flex:1"><label>رمز (اختیاری):</label><input id="e_pass"></div>
+    <div class="container" id="mainContainer">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('create')">➕ ساخت محتوا</button>
+            <button class="tab-btn" onclick="switchTab('manage')">📂 مدیریت و تاریخچه</button>
         </div>
-        
-        <div id="questions_area"></div>
-        
-        <button onclick="addQuestion()" class="btn-add" style="width:100%">➕ افزودن سوال جدید</button>
-        <button class="btn-blue" onclick="saveExam()">💾 ارسال آزمون به سرور</button>
+
+        <div id="tab-create" class="section active">
+            <select id="contentType" onchange="toggleForm()" style="margin-bottom:20px; background:#f0f8ff; font-weight:bold; color:var(--primary);">
+                <option value="lesson">🎬 درس جدید (ویدیو)</option>
+                <option value="exam">📝 آزمون جدید</option>
+            </select>
+
+            <div id="lessonForm">
+                <label>عنوان درس:</label>
+                <input id="l_title" placeholder="مثلاً: ریاضی فصل ۴">
+                
+                <label>لینک فیلم اصلی (MP4):</label>
+                <input id="l_link" dir="ltr" placeholder="https://site.com/video.mp4">
+                
+                <label>فایل‌های ضمیمه (PDF، تمرین و...):</label>
+                <div id="attach_container"></div>
+                <button type="button" class="btn-add btn-small" onclick="addAttachRow()" style="background:#f39c12; width:auto; margin-top:5px;">➕ افزودن ضمیمه</button>
+                
+                <button class="btn-green" onclick="saveLesson()">💾 ذخیره درس</button>
+            </div>
+
+            <div id="examForm" style="display:none;">
+                <div class="row">
+                    <div style="flex:2"><label>نام آزمون:</label><input id="e_title" placeholder="آزمون علوم"></div>
+                    <div style="flex:1"><label>زمان (دقیقه):</label><input type="number" id="e_time" value="15"></div>
+                    <div style="flex:1"><label>رمز (اختیاری):</label><input id="e_pass"></div>
+                </div>
+                
+                <div id="questions_area"></div>
+                
+                <button onclick="addQuestion()" class="btn-add">➕ افزودن سوال جدید</button>
+                <button class="btn-blue" onclick="saveExam()">💾 ذخیره آزمون</button>
+            </div>
+        </div>
+
+        <div id="tab-manage" class="section">
+            <input type="text" id="searchBox" placeholder="🔍 جستجو در بین درس‌ها و آزمون‌ها..." onkeyup="renderHistory()" style="margin-bottom:20px;">
+            <div id="contentList"></div>
+        </div>
     </div>
 
     <script>
-        // ***********************************************
-        // تنظیمات
-        // ***********************************************
-        const API_URL = "https://chamran-api.liara.run"; // آدرس سرور
+        const API_URL = "https://chamran-api.liara.run";
+        let ADMIN_TOKEN = "";
+        let ALL_DATA = { lessons: [], exams: [] };
 
-        // تابع دریافت و بررسی توکن
-        function getAuth() {
-            const token = document.getElementById('admin_token').value.trim();
-            if(!token) { 
-                alert("⛔ خطا: لطفا ابتدا رمز عبور مدیریت را در کادر بالای صفحه وارد کنید."); 
-                document.getElementById('admin_token').focus();
-                return null; 
+        // --- 1. ورود ---
+        function checkLogin() {
+            const t = document.getElementById('adminTokenInput').value.trim();
+            if(t) {
+                ADMIN_TOKEN = t;
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+                fetchHistory(); // دریافت اطلاعات برای تب مدیریت
+            } else {
+                alert("رمز عبور را وارد کنید");
             }
-            return token;
         }
 
-        // --- مدیریت ضمیمه‌های درس ---
+        // --- 2. مدیریت تب‌ها ---
+        function switchTab(t) {
+            document.querySelectorAll('.section').forEach(e => e.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
+        function toggleForm() {
+            const type = document.getElementById('contentType').value;
+            document.getElementById('lessonForm').style.display = type === 'lesson' ? 'block' : 'none';
+            document.getElementById('examForm').style.display = type === 'exam' ? 'block' : 'none';
+        }
+
+        // --- 3. توابع فرم درس (ضمیمه‌ها) ---
         function addAttachRow() {
             const div = document.createElement('div');
             div.className = 'row';
             div.innerHTML = `
-                <input class="att-name" placeholder="نام فایل (مثلا: جزوه)" style="flex:1">
+                <input class="att-name" placeholder="نام فایل" style="flex:1">
                 <input class="att-link" placeholder="لینک دانلود" dir="ltr" style="flex:2">
                 <button class="btn-del" onclick="this.parentElement.remove()">🗑️</button>
             `;
@@ -113,13 +156,9 @@
         }
 
         async function saveLesson() {
-            const token = getAuth();
-            if(!token) return;
-
             const title = document.getElementById('l_title').value;
             const link = document.getElementById('l_link').value;
             
-            // جمع‌آوری ضمیمه‌ها
             const attachRows = document.querySelectorAll('#attach_container .row');
             let attachList = [];
             attachRows.forEach(row => {
@@ -131,130 +170,173 @@
 
             if(!title || !link) return alert("❌ عنوان و لینک فیلم اصلی الزامی است!");
 
-            const btn = event.target;
-            btn.innerText = "⏳ در حال ارسال...";
-            btn.disabled = true;
+            const res = await sendReq({ 
+                action: 'save_lesson', 
+                admin_token: ADMIN_TOKEN, 
+                title: title, 
+                link: link, 
+                attach: attachStr 
+            });
             
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: 'save_lesson',
-                        admin_token: token, // 🔒 ارسال رمز به سرور
-                        title: title,
-                        link: link,
-                        attach: attachStr
-                    })
-                });
-                const data = await res.json();
-                if(data.status === 'success') {
-                    alert("✅ درس با موفقیت ذخیره شد!");
-                    location.reload(); 
-                } else { alert("❌ خطا از سرور: " + data.message); }
-            } catch(e) { alert("❌ خطای ارتباط با سرور"); }
-            
-            btn.innerText = "💾 ارسال درس به سرور";
-            btn.disabled = false;
+            if(res.status === 'success') { 
+                alert("✅ درس با موفقیت ذخیره شد!"); 
+                document.getElementById('l_title').value = '';
+                document.getElementById('l_link').value = '';
+                document.getElementById('attach_container').innerHTML = '';
+                fetchHistory(); // بروزرسانی لیست
+            } else { alert("❌ خطا: " + res.message); }
         }
 
-        // --- مدیریت سوالات آزمون ---
+        // --- 4. توابع فرم آزمون (سوالات) ---
         let qCount = 0;
-        
         function addQuestion() {
             qCount++;
             const div = document.createElement('div');
             div.className = 'q-box';
             div.innerHTML = `
                 <span class="q-num">سوال ${qCount}</span>
-                <span class="del-q" onclick="removeQuestion(this)">حذف</span>
-                
+                <span class="del-q" onclick="if(confirm('حذف شود؟')) this.parentElement.remove()">حذف</span>
                 <label>متن سوال:</label>
-                <input class="q-txt" placeholder="صورت سوال را بنویسید...">
-                <input class="q-img" placeholder="لینک تصویر سوال (اختیاری - اگر متن ندارید)" dir="ltr" style="margin-top:5px; font-size:0.9rem; border:1px dashed #bbb; background:#fafafa;">
-
-                <label style="margin-top:15px;">گزینه‌ها (متن یا لینک تصویر):</label>
-                ${[1, 2, 3, 4].map(i => `
-                    <div class="opt-row">
-                        <span class="opt-label">گزینه ${i}:</span>
-                        <input class="op${i}" placeholder="متن گزینه یا لینک تصویر">
-                    </div>
-                `).join('')}
-
+                <input class="q-txt" placeholder="صورت سوال...">
+                <input class="q-img" placeholder="لینک تصویر سوال (اختیاری)" dir="ltr" style="margin-top:5px; background:#fafafa;">
+                <label style="margin-top:15px;">گزینه‌ها:</label>
+                ${[1, 2, 3, 4].map(i => `<div class="opt-row"><span class="opt-label">گزینه ${i}:</span><input class="op${i}" placeholder="متن گزینه"></div>`).join('')}
                 <label>پاسخ صحیح:</label>
-                <select class="correct-ans" style="background:#e8f8f5;">
-                    <option value="1">گزینه ۱</option>
-                    <option value="2">گزینه ۲</option>
-                    <option value="3">گزینه ۳</option>
-                    <option value="4">گزینه ۴</option>
-                </select>
+                <select class="correct-ans" style="background:#e8f8f5;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
             `;
             document.getElementById('questions_area').appendChild(div);
         }
 
-        function removeQuestion(btn) {
-            if(confirm('آیا این سوال حذف شود؟')) {
-                btn.parentElement.remove();
-            }
-        }
-
         async function saveExam() {
-            const token = getAuth();
-            if(!token) return;
-
             const title = document.getElementById('e_title').value;
             const time = document.getElementById('e_time').value;
             const pass = document.getElementById('e_pass').value;
             
             const qElements = document.querySelectorAll('.q-box');
-            if(!title || qElements.length === 0) return alert("❌ عنوان آزمون و حداقل یک سوال الزامی است!");
+            if(!title || qElements.length === 0) return alert("❌ عنوان و حداقل یک سوال الزامی است!");
 
             const questions = [];
             qElements.forEach(el => {
                 questions.push({
                     q: el.querySelector('.q-txt').value,
-                    img: el.querySelector('.q-img').value, // دریافت لینک عکس سوال
+                    img: el.querySelector('.q-img').value,
                     options: [
-                        el.querySelector('.op1').value,
-                        el.querySelector('.op2').value,
-                        el.querySelector('.op3').value,
-                        el.querySelector('.op4').value
+                        el.querySelector('.op1').value, el.querySelector('.op2').value,
+                        el.querySelector('.op3').value, el.querySelector('.op4').value
                     ],
                     correct: el.querySelector('.correct-ans').value
                 });
             });
 
-            const btn = event.target;
-            btn.innerText = "⏳ در حال ارسال...";
-            btn.disabled = true;
+            const res = await sendReq({ 
+                action: 'save_exam', 
+                admin_token: ADMIN_TOKEN, 
+                title: title, 
+                time: time, 
+                pass: pass, 
+                questions: questions 
+            });
 
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: 'save_exam',
-                        admin_token: token, // 🔒 ارسال رمز به سرور
-                        title: title,
-                        time: time,
-                        pass: pass,
-                        questions: questions
-                    })
-                });
-                const data = await res.json();
-                if(data.status === 'success') {
-                    alert("✅ آزمون با موفقیت ساخته شد!");
-                    location.reload();
-                } else { alert("❌ خطا از سرور: " + data.message); }
-            } catch(e) { alert("❌ خطای ارتباط با سرور"); }
-            
-            btn.innerText = "💾 ارسال آزمون به سرور";
-            btn.disabled = false;
+            if(res.status === 'success') { 
+                alert("✅ آزمون ذخیره شد!"); 
+                document.getElementById('questions_area').innerHTML = ''; 
+                qCount = 0;
+                addQuestion();
+                fetchHistory();
+            } else { alert("❌ خطا: " + res.message); }
         }
-        
-        // شروع اولیه
+
+        // --- 5. مدیریت و تاریخچه ---
+        async function fetchHistory() {
+            try {
+                // دریافت درس‌ها
+                const r1 = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'get_lessons'}) });
+                const d1 = await r1.json();
+                
+                // دریافت آزمون‌ها
+                const r2 = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'get_exams'}) });
+                const d2 = await r2.json();
+
+                if(d1.status === 'success') ALL_DATA.lessons = d1.data;
+                if(d2.status === 'success') ALL_DATA.exams = d2.data;
+                
+                renderHistory();
+            } catch(e) { console.error("Error fetching history", e); }
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('contentList');
+            list.innerHTML = '';
+            const q = document.getElementById('searchBox').value.toLowerCase();
+
+            // نمایش درس‌ها
+            ALL_DATA.lessons.forEach(l => {
+                if(l.title.toLowerCase().includes(q)) {
+                    list.innerHTML += `
+                        <div class="history-card" style="border-right-color: var(--accent);">
+                            <div class="history-info">
+                                <strong>🎬 ${l.title}</strong><br>
+                                <span class="tag-date">📅 ${l.date || '---'}</span>
+                                <a href="${l.link}" target="_blank" style="font-size:0.8rem; color:var(--blue); text-decoration:none;">🔗 بررسی لینک</a>
+                            </div>
+                            <div class="history-actions">
+                                <button class="action-btn btn-blue" onclick="editLesson('${l.id}', '${l.title}', '${l.link}')">✏️</button>
+                                <button class="action-btn btn-del" onclick="deleteItem('lesson', '${l.id}')">🗑️</button>
+                            </div>
+                        </div>`;
+                }
+            });
+
+            // نمایش آزمون‌ها
+            ALL_DATA.exams.forEach(e => {
+                if(e.title.toLowerCase().includes(q)) {
+                    list.innerHTML += `
+                        <div class="history-card" style="border-right-color: #8e44ad;">
+                            <div class="history-info">
+                                <strong>📝 ${e.title}</strong><br>
+                                <span class="tag-date">📅 ${e.date || '---'}</span>
+                                <span style="font-size:0.8rem; color:#777;">رمز: <b>${e.pass||'ندارد'}</b></span>
+                            </div>
+                            <div class="history-actions">
+                                <button class="action-btn btn-del" onclick="deleteItem('exam', '${e.id}')">🗑️</button>
+                            </div>
+                        </div>`;
+                }
+            });
+        }
+
+        async function editLesson(id, oldTitle, oldLink) {
+            const newLink = prompt("لینک جدید ویدیو را وارد کنید:", oldLink);
+            if(newLink === null) return;
+            const newTitle = prompt("عنوان درس را وارد کنید:", oldTitle);
+            
+            const res = await sendReq({ 
+                action: 'edit_lesson', 
+                admin_token: ADMIN_TOKEN, 
+                id: id, 
+                new_link: newLink, 
+                new_title: newTitle || oldTitle 
+            });
+            if(res.status === 'success') { alert("✅ ویرایش شد"); fetchHistory(); } else alert("خطا");
+        }
+
+        async function deleteItem(type, id) {
+            if(!confirm("⚠️ آیا مطمئن هستید؟\nاین آیتم از پنل تمام دانش‌آموزان پاک خواهد شد.")) return;
+            const action = type === 'lesson' ? 'delete_lesson_global' : 'delete_exam_global';
+            const payload = { action: action, admin_token: ADMIN_TOKEN };
+            if(type === 'lesson') payload.lesson_id = id; else payload.exam_id = id;
+
+            const res = await sendReq(payload);
+            if(res.status === 'success') { alert("🗑️ پاک شد"); fetchHistory(); } else alert("خطا");
+        }
+
+        async function sendReq(body) {
+            const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            return await r.json();
+        }
+
+        // شروع اولیه: اضافه کردن یک سوال خالی
         addQuestion();
-        addAttachRow(); 
     </script>
 </body>
 </html>
