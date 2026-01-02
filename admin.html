@@ -16,7 +16,9 @@
         #mainApp { display: none; }
         header { background: var(--primary); color: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
         header h1 { margin: 0; font-size: 1.2rem; }
-        .refresh-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1.2rem; }
+        .head-btns { display: flex; gap: 10px; }
+        .refresh-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
+        .refresh-btn:hover { background: rgba(255,255,255,0.4); }
 
         .tabs { display: flex; justify-content: space-around; background: white; padding: 10px 0; position: fixed; bottom: 0; width: 100%; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 100; }
         .tab-btn { border: none; background: none; flex: 1; text-align: center; color: var(--text-light); cursor: pointer; display: flex; flex-direction: column; align-items: center; font-family: inherit; font-size: 0.75rem; }
@@ -93,7 +95,10 @@
     <div id="mainApp">
         <header>
             <h1>پنل مدیریت</h1>
-            <button class="refresh-btn" onclick="fetchData()">🔄</button>
+            <div class="head-btns">
+                <button class="refresh-btn" onclick="downloadBackup()" title="دانلود پشتیبان">💾</button>
+                <button class="refresh-btn" onclick="fetchData()" title="بروزرسانی">🔄</button>
+            </div>
         </header>
         <div style="text-align:center; font-size:0.75rem; color:#999; margin-top:5px;" id="lastUpdate">بروزرسانی: ...</div>
 
@@ -166,7 +171,7 @@
         <div class="modal-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
                 <h3 id="modalTitle" style="margin:0; color:var(--primary);">پروفایل</h3>
-                <button onclick="closeModal()" style="background:#eee; border:none; width:35px; height:35px; border-radius:50%; cursor:pointer; font-size:1.2rem;">×</button>
+                <button onclick="closeModal()" style="background:#eee; border:none; width:35px; height:35px; border-radius:50%; cursor:pointer;">×</button>
             </div>
             <div id="modalBody"></div>
         </div>
@@ -228,6 +233,18 @@
         event.currentTarget.classList.add('active');
     }
 
+    // --- تابع جدید: دانلود بکاپ ---
+    function downloadBackup() {
+        if(!ALL_USERS || ALL_USERS.length === 0) return alert("داده‌ای برای ذخیره وجود ندارد.");
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(ALL_USERS, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "chamran_backup_" + new Date().toLocaleDateString('fa-IR').replace(/\//g,'-') + ".json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
     // --- (1) بخش مدیریت حرفه‌ای ---
     function renderManageTable() {
         const tbody = document.getElementById('manageTableBody');
@@ -271,7 +288,12 @@
                 })
             });
             const d = await res.json();
-            if(d.status === 'success') { alert("✅ تغییرات با موفقیت ذخیره شد."); fetchData(); } else { alert("❌ خطا: " + d.message); }
+            if(d.status === 'success') { 
+                alert("✅ تغییرات با موفقیت ذخیره شد."); 
+                fetchData(); 
+            } else { 
+                alert("❌ خطا: " + d.message); 
+            }
         } catch(e) { alert("خطای شبکه"); }
         document.getElementById('loadingBox').style.display = 'none';
     }
@@ -406,7 +428,6 @@
                     count++; 
                     sum += parseFloat(d.exams[eid]); 
                     const score = d.exams[eid];
-                    // رنگ نمره: سبز بالای 17، سیاه معمولی، قرمز زیر 10
                     const color = score >= 17 ? 'green' : (score < 10 ? 'red' : 'black');
                     participants.push(`<div class="st-row"><span>${u.n}</span><span class="st-score" style="color:${color}">${score}</span></div>`); 
                 }
@@ -417,7 +438,6 @@
             const div = document.createElement('div');
             div.className = 'card lesson-card';
             div.style.borderRightColor = '#8e44ad';
-            // کلیک روی کارت برای باز کردن لیست (مگر اینکه روی دکمه حذف بزنیم)
             div.onclick = function(e) { 
                 if(!e.target.classList.contains('del-btn-exam')) { 
                     const lc=this.querySelector('.student-list-container'); 
