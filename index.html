@@ -68,6 +68,29 @@
         .footer-signature.show { opacity: 1; }
         .footer-signature .sig-name { font-size: 1.5rem; } 
         .footer-signature .sig-prefix { font-size: 0.7rem; }
+
+        /* [استایل جدید] انیمیشن ساعت شنی و پرده سیاه */
+        #syncOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); /* پرده تاریک */
+            z-index: 20000;
+            display: none;
+            flex-direction: column;
+            justify-content: center; align-items: center;
+            color: white;
+            backdrop-filter: blur(5px);
+        }
+        .hourglass-spinner {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: spinHourglass 2s infinite ease-in-out;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        @keyframes spinHourglass {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(180deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -77,6 +100,12 @@
             <div class="sig-prefix">Created By</div>
             <div class="sig-name" data-text="Mohammad Pakzad">Mohammad Pakzad</div>
         </div>
+    </div>
+
+    <div id="syncOverlay">
+        <div class="hourglass-spinner">⏳</div>
+        <h3 style="font-family: 'Vazirmatn'; margin:0;">در حال ذخیره در سرور...</h3>
+        <p style="font-size:0.8rem; color:#bdc3c7; margin-top:5px;">لطفاً صبر کنید</p>
     </div>
 
     <div id="cheatAlert" class="alert-box">⛔ جلو زدن فیلم مجاز نیست!</div>
@@ -428,7 +457,7 @@
             const localTime = parseFloat(localStorage.getItem(localKey) || 0);
             let startPos = 0;
 
-            // [اصلاح کلیدی: اولویت با سرور برای سینک شدن جریمه]
+            // سینک هوشمند
             const isPenaltyActive = localStorage.getItem('forced_penalty_' + item.id);
 
             if (cloudTime === 0) {
@@ -438,8 +467,6 @@
                 startPos = localTime;
                 RankSystem.savePosition(item.id, localTime, true);
             } else {
-                // [تغییر مهم] اگر سرور دیتا دارد، آن را به لوکال ترجیح بده (مگر اینکه سرور 0 باشد)
-                // این باعث می‌شود جریمه ثبت شده در سرور، روی کامپیوتر دیگر هم اعمال شود
                 startPos = cloudTime > 0 ? cloudTime : localTime;
             }
 
@@ -513,6 +540,15 @@
             } else { document.getElementById('mathAns').classList.add('wrong-ans'); }
         }
 
+        // [توابع جدید برای انیمیشن ساعت شنی]
+        function showSyncLoading() {
+            document.getElementById('syncOverlay').style.display = 'flex';
+        }
+        function hideSyncLoading() {
+            document.getElementById('syncOverlay').style.display = 'none';
+        }
+
+        // [تغییر در جریمه: اضافه شدن قفل صفحه]
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none';
             alert("⏰ زمان تمام شد! فیلم از اول شروع می‌شود.");
@@ -530,7 +566,12 @@
             document.getElementById('progressBar').style.width = "0%";
             lastActivityTime = Date.now(); 
             
-            setTimeout(() => isSystemSeeking = false, 1000);
+            // نمایش انیمیشن ساعت شنی برای ۳ ثانیه (فرصت دادن به موبایل برای سینک)
+            showSyncLoading();
+            setTimeout(() => {
+                hideSyncLoading();
+                isSystemSeeking = false;
+            }, 3000);
         }
 
         function checkAndReport(statusMsg, forceSend) {
@@ -650,7 +691,13 @@
                     cheatAttempts = 0; 
                     alert("⚠️ هشدار امنیتی!\nبه دلیل تلاش مکرر برای رد کردن فیلم، ۶۰ ثانیه جریمه شدید و به عقب برگشتید.");
                     
-                    setTimeout(() => { isSystemSeeking = false; }, 1000);
+                    // نمایش انیمیشن ساعت شنی و قفل صفحه
+                    showSyncLoading();
+                    setTimeout(() => { 
+                        hideSyncLoading();
+                        isSystemSeeking = false; 
+                    }, 3000);
+                    
                     return; 
                 }
 
