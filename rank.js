@@ -160,18 +160,29 @@ const SyncManager = {
     processQueue: function() {
         if(this.queue.length === 0 || !navigator.onLine) return;
         const item = this.queue[0];
+        // آپدیت کردن دیتا با آخرین وضعیت قبل از ارسال
         item.jsonData = JSON.stringify(RankSystem.data); 
+        
         if(typeof REPORT_WEBAPP_URL === 'undefined') return;
 
+        // --- اصلاح شده برای سرور لیارا ---
         fetch(REPORT_WEBAPP_URL, {
-            method: 'POST', mode: 'no-cors', body: JSON.stringify(item), headers: { 'Content-Type': 'text/plain' }
+            method: 'POST',
+            headers: { "Content-Type": "application/json" }, // <--- هدر درست
+            body: JSON.stringify(item)
         })
-        .then(() => {
-            this.queue.shift(); this.saveQueue();
-            if(this.queue.length > 0) setTimeout(() => this.processQueue(), 500);
+        .then(res => res.json()) // تبدیل پاسخ سرور به جیسون
+        .then(data => {
+            if(data.status === 'success') {
+                // اگر سرور گفت "دریافت شد"، از صف پاک کن
+                this.queue.shift(); 
+                this.saveQueue();
+                // اگر هنوز آیتمی در صف هست، بعدی را بفرست
+                if(this.queue.length > 0) setTimeout(() => this.processQueue(), 500);
+            }
         })
-        .catch(err => console.log("Offline", err));
+        .catch(err => console.log("Offline or Server Error", err));
     }
-};
+}; // <--- اینجا درست شد: براکت بسته و سمیکالن اضافه شد
 
 function toPersianNum(n) { if(n === undefined || n === null) return "۰"; return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
