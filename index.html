@@ -69,10 +69,9 @@
         .footer-signature .sig-name { font-size: 1.5rem; } 
         .footer-signature .sig-prefix { font-size: 0.7rem; }
 
-        /* [استایل جدید] انیمیشن ساعت شنی و پرده سیاه */
         #syncOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); /* پرده تاریک */
+            background: rgba(0,0,0,0.85);
             z-index: 20000;
             display: none;
             flex-direction: column;
@@ -154,7 +153,7 @@
         </div>
 
         <div style="margin-bottom: 20px;">
-            <button onclick="window.location.href='azmoon.html'" style="background: #8e44ad; color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-family: inherit; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);">
+            <button onclick="window.location.href='azmon.html'" style="background: #8e44ad; color: white; border: none; padding: 15px; border-radius: 15px; width: 100%; font-family: inherit; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);">
                 📝 ورود به آزمون آنلاین
             </button>
         </div>
@@ -192,24 +191,17 @@
         </div>
     </div>
 
-    <script src="data.js" onerror="console.log('data.js not found')"></script>
-    <script src="rank.js" onerror="alert('فایل rank.js یافت نشد! لطفا فایل را در کنار ایندکس قرار دهید.')"></script>
+    <script src="rank.js" onerror="alert('فایل rank.js یافت نشد!')"></script>
 
     <script>
         // ***********************************************
         // تنظیمات اصلی
         // ***********************************************
-        
-        const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=620035076&single=true&output=csv"; 
-        //const REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxb3sXu7fJJwupzGtirtGNyNHMN6-05Tk6cXdxe31y1y6Mb1QRCXgGzXPvkT-hDb4pV1g/exec"; 
-        // آدرس جدید سرور لیارا
-        const REPORT_WEBAPP_URL = "https://chamran-api.liara.run";
-        // ***********************************************
-        
+        const API_URL = "https://chamran-api.liara.run";
         const CHECK_INTERVAL = 300; 
         const ANSWER_TIMEOUT = 60;
         const IDLE_TIMEOUT = 120;
-        const DB_KEY = "chamran_db_v20_";
+        const DB_KEY = "chamran_db_vfinal_";
         
         let playlist = []; 
         let currentUser = null;
@@ -250,8 +242,10 @@
                 try {
                     const creds = JSON.parse(savedUser);
                     currentUser = creds;
-                    SyncManager.init(creds.username, creds.password);
-                    RankSystem.init(creds.jsonData);
+                    // شروع ماژول‌های کمکی
+                    if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
+                    if(typeof RankSystem !== 'undefined') RankSystem.init(creds.jsonData);
+                    
                     document.getElementById('displayName').innerText = creds.displayName;
                     showScreen('screen-library');
                     fetchPlaylist(); 
@@ -267,11 +261,11 @@
         async function performSilentSync(u, p) {
             try {
                 if(!navigator.onLine) return;
-const res = await fetch(REPORT_WEBAPP_URL, {
-    method: 'POST',
-    headers: { "Content-Type": "application/json" }, // <--- این خط جدید است
-    body: JSON.stringify({ action: 'login', username: u, password: p })
-});
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: 'login', username: u, password: p })
+                });
                 const data = await res.json();
                 if(data.status === 'success') {
                     console.log("📥 Sync Update:", data.jsonData);
@@ -295,19 +289,21 @@ const res = await fetch(REPORT_WEBAPP_URL, {
             msg.innerText = "";
 
             try {
-                const res = await fetch(REPORT_WEBAPP_URL, {
-    method: 'POST',
-    headers: { "Content-Type": "application/json" }, // <--- اینجا هم اضافه کنید
-    body: JSON.stringify({ action: 'login', username: u, password: p })
-});
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: 'login', username: u, password: p })
+                });
                 const data = await res.json();
                 
                 if(data.status === 'success') {
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
                     currentUser = userData;
-                    SyncManager.init(u, p);
-                    RankSystem.init(data.jsonData);
+                    
+                    if(typeof SyncManager !== 'undefined') SyncManager.init(u, p);
+                    if(typeof RankSystem !== 'undefined') RankSystem.init(data.jsonData);
+                    
                     document.getElementById('displayName').innerText = data.displayName;
                     showScreen('screen-library');
                     fetchPlaylist();
@@ -315,7 +311,8 @@ const res = await fetch(REPORT_WEBAPP_URL, {
                     msg.innerText = data.message || "خطا در ورود";
                 }
             } catch(e) {
-                msg.innerText = "خطا در اتصال به اینترنت. لطفا آنلاین شوید.";
+                console.error(e);
+                msg.innerText = "خطا در اتصال به سرور. لطفا اینترنت را چک کنید.";
             }
             btn.classList.remove('btn-loading');
             btn.innerText = "ورود امن 🔐";
@@ -335,6 +332,7 @@ const res = await fetch(REPORT_WEBAPP_URL, {
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
+        // دریافت لیست درس‌ها از سرور لیارا (جایگزین CSV)
         async function fetchPlaylist() {
             playlist = [];
             const listContainer = document.getElementById('video-list-container');
@@ -345,27 +343,30 @@ const res = await fetch(REPORT_WEBAPP_URL, {
                 </div>`;
 
             try {
-                if(SHEET_CSV_URL.includes('http')) {
-                    const uniqueUrl = SHEET_CSV_URL + '&timestamp=' + Date.now();
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 10000); 
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: 'get_lessons' }) 
+                });
 
-                    const res = await fetch(uniqueUrl, { 
-                        cache: "no-store", 
-                        signal: controller.signal 
+                const result = await res.json();
+
+                if(result.status === 'success') {
+                    playlist = [];
+                    result.data.forEach(item => {
+                        playlist.push({
+                            id: item.id,
+                            title: item.title,
+                            file: item.link,
+                            attachment: item.attach 
+                        });
                     });
-                    
-                    clearTimeout(timeoutId);
-
-                    if(res.ok) {
-                        const csvText = await res.text();
-                        parseCSV(csvText); 
-                        renderList(); 
-                    } else {
-                        throw new Error("Server Error");
-                    }
+                    renderList();
+                } else {
+                    throw new Error("Server Error");
                 }
             } catch (err) { 
+                console.error(err);
                 listContainer.innerHTML = `
                     <div style="text-align:center; padding:20px; color:#c0392b;">
                         <p>⚠️ خطا در دریافت درس‌ها</p>
@@ -374,27 +375,6 @@ const res = await fetch(REPORT_WEBAPP_URL, {
                         </button>
                     </div>
                 `;
-            }
-        }
-
-        function parseCSV(csvText) {
-            const rows = csvText.split('\n');
-            playlist = [];
-            for(let i=1; i<rows.length; i++) {
-                const row = rows[i].split(',');
-                if(row.length >= 3) {
-                    const id = row[0].trim();
-                    const title = row[1].trim(); 
-                    const file = row[2].trim();
-                    let attachment = "";
-                    if(row.length > 3) {
-                        const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
-                        attachment = remaining.trim().replace(/^,|,$/g, ''); 
-                    }
-                    if(id && title && file) {
-                        playlist.push({ id, title, file, attachment });
-                    }
-                }
             }
         }
 
@@ -460,7 +440,6 @@ const res = await fetch(REPORT_WEBAPP_URL, {
             const localTime = parseFloat(localStorage.getItem(localKey) || 0);
             let startPos = 0;
 
-            // سینک هوشمند
             const isPenaltyActive = localStorage.getItem('forced_penalty_' + item.id);
 
             if (cloudTime === 0) {
@@ -543,15 +522,9 @@ const res = await fetch(REPORT_WEBAPP_URL, {
             } else { document.getElementById('mathAns').classList.add('wrong-ans'); }
         }
 
-        // [توابع جدید برای انیمیشن ساعت شنی]
-        function showSyncLoading() {
-            document.getElementById('syncOverlay').style.display = 'flex';
-        }
-        function hideSyncLoading() {
-            document.getElementById('syncOverlay').style.display = 'none';
-        }
+        function showSyncLoading() { document.getElementById('syncOverlay').style.display = 'flex'; }
+        function hideSyncLoading() { document.getElementById('syncOverlay').style.display = 'none'; }
 
-        // [تغییر در جریمه: اضافه شدن قفل صفحه]
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none';
             alert("⏰ زمان تمام شد! فیلم از اول شروع می‌شود.");
@@ -569,7 +542,6 @@ const res = await fetch(REPORT_WEBAPP_URL, {
             document.getElementById('progressBar').style.width = "0%";
             lastActivityTime = Date.now(); 
             
-            // نمایش انیمیشن ساعت شنی برای ۳ ثانیه (فرصت دادن به موبایل برای سینک)
             showSyncLoading();
             setTimeout(() => {
                 hideSyncLoading();
@@ -593,8 +565,7 @@ const res = await fetch(REPORT_WEBAPP_URL, {
         }
 
         window.addEventListener('online', () => {
-            if(typeof processOfflineQueue === 'function') processOfflineQueue(); 
-            else if(typeof SyncManager !== 'undefined') SyncManager.processQueue();
+            if(typeof SyncManager !== 'undefined') SyncManager.processQueue();
         });
 
         window.addEventListener('blur', () => {
@@ -624,9 +595,9 @@ const res = await fetch(REPORT_WEBAPP_URL, {
                     details: `در دقیقه ${Math.floor(vid.currentTime/60)} بسته شد`,
                     device: getDeviceInfo(), timestamp: Date.now()
                 };
-                let q = JSON.parse(localStorage.getItem('chamran_queue_v3') || "[]");
+                let q = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
                 q.push(data);
-                localStorage.setItem('chamran_queue_v3', JSON.stringify(q));
+                localStorage.setItem('chamran_queue_vfinal', JSON.stringify(q));
             }
         });
 
@@ -694,13 +665,11 @@ const res = await fetch(REPORT_WEBAPP_URL, {
                     cheatAttempts = 0; 
                     alert("⚠️ هشدار امنیتی!\nبه دلیل تلاش مکرر برای رد کردن فیلم، ۶۰ ثانیه جریمه شدید و به عقب برگشتید.");
                     
-                    // نمایش انیمیشن ساعت شنی و قفل صفحه
                     showSyncLoading();
                     setTimeout(() => { 
                         hideSyncLoading();
                         isSystemSeeking = false; 
                     }, 3000);
-                    
                     return; 
                 }
 
@@ -715,5 +684,3 @@ const res = await fetch(REPORT_WEBAPP_URL, {
     </script>
 </body>
 </html>
-
-
