@@ -49,6 +49,10 @@
         .wrong-ans { border-color: red !important; background: #ffebee; }
         .timer-circle { width: 70px; height: 70px; background: var(--danger); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 10px auto; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); padding-top: 5px; }
         
+        /* استایل لودینگ جدید */
+        .spinner { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3498db; width: 30px; height: 30px; animation: spin 2s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         #loading { margin-top: 20px; display:none; color: #7f8c8d; }
         .offline-badge { position:fixed; bottom:10px; left:10px; background:orange; color:white; padding:8px 15px; border-radius:30px; font-size:0.8rem; display:none; z-index:2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
@@ -165,7 +169,7 @@
 
     <script>
         // ***********************************************
-        // تنظیمات اصلی - این بخش را با دقت پر کنید
+        // تنظیمات اصلی
         // ***********************************************
         
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=620035076&single=true&output=csv"; 
@@ -191,6 +195,9 @@
         let backgroundTimer = null;
         let cheatAttempts = 0;
         let cheatResetTimer = null;
+        
+        // [مهم: پرچم سیستمی برای جلوگیری از باگ گیر کردن فیلم بعد از جریمه]
+        let isSystemSeeking = false; 
 
         const vid = document.getElementById('myVideo');
 
@@ -220,7 +227,7 @@
                     RankSystem.init(creds.jsonData);
                     document.getElementById('displayName').innerText = creds.displayName;
                     showScreen('screen-library');
-                    fetchPlaylist();
+                    fetchPlaylist(); 
                     performSilentSync(creds.username, creds.password);
                 } catch(e) {
                     showScreen('screen-login');
@@ -299,25 +306,59 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
+        // [اصلاحیه نهایی: حالت ۱۰۰٪ آنلاین، بدون کش، با دکمه تلاش مجدد]
         async function fetchPlaylist() {
-            playlist = [];
-            if (typeof LOCAL_PLAYLIST !== 'undefined' && Array.isArray(LOCAL_PLAYLIST)) {
-                playlist = [...LOCAL_PLAYLIST]; 
-            }
+            playlist = []; // پاکسازی لیست
+            const listContainer = document.getElementById('video-list-container');
+            
+            // نمایش لودینگ
+            listContainer.innerHTML = `
+                <div style="text-align:center; padding:20px;">
+                    <div class="spinner" style="margin:0 auto;"></div>
+                    <p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها از سرور...</p>
+                </div>`;
+
             try {
                 if(SHEET_CSV_URL.includes('http')) {
-                    const res = await fetch(SHEET_CSV_URL + '&t=' + Date.now());
+                    // اضافه کردن Timestamp برای دور زدن کش گوگل
+                    const uniqueUrl = SHEET_CSV_URL + '&timestamp=' + Date.now();
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 ثانیه تایم‌اوت
+
+                    const res = await fetch(uniqueUrl, { 
+                        cache: "no-store", // دستور عدم استفاده از کش
+                        signal: controller.signal 
+                    });
+                    
+                    clearTimeout(timeoutId);
+
                     if(res.ok) {
                         const csvText = await res.text();
                         parseCSV(csvText); 
+                        renderList(); // نمایش لیست تازه
+                    } else {
+                        throw new Error("Server Error");
                     }
                 }
-            } catch (err) { console.log("Google CSV failed or offline"); }
-            renderList();
+            } catch (err) { 
+                console.error("Load Error:", err);
+                // نمایش دکمه تلاش مجدد در صورت خطا
+                listContainer.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#c0392b;">
+                        <p>⚠️ خطا در ارتباط با سرور</p>
+                        <p style="font-size:0.8rem; color:#7f8c8d;">اینترنت خود را بررسی کنید</p>
+                        <button onclick="fetchPlaylist()" style="background:#2c3e50; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; margin-top:10px;">
+                            🔄 تلاش مجدد
+                        </button>
+                    </div>
+                `;
+            }
         }
 
         function parseCSV(csvText) {
             const rows = csvText.split('\n');
+            playlist = [];
             for(let i=1; i<rows.length; i++) {
                 const row = rows[i].split(',');
                 if(row.length >= 3) {
@@ -329,8 +370,7 @@
                         const remaining = rows[i].substring(rows[i].indexOf(file) + file.length);
                         attachment = remaining.trim().replace(/^,|,$/g, ''); 
                     }
-                    const exists = playlist.find(p => p.id == id);
-                    if(id && title && file && !exists) {
+                    if(id && title && file) {
                         playlist.push({ id, title, file, attachment });
                     }
                 }
@@ -340,7 +380,11 @@
         function renderList() {
             const list = document.getElementById('video-list-container');
             list.innerHTML = "";
-            if(!playlist.length) list.innerHTML = "<p>در حال بارگذاری درس‌ها...</p>";
+            
+            if(!playlist || playlist.length === 0) {
+                list.innerHTML = "<p style='text-align:center; padding:15px;'>📭 درسی یافت نشد.</p>";
+                return;
+            }
             
             playlist.forEach(item => {
                 const isCompleted = RankSystem.data.completed.includes(item.id.toString());
@@ -364,7 +408,6 @@
             });
         }
 
-        // [این تابع برای هماهنگی با بازنشانی سرور بهینه‌سازی شد]
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
@@ -393,17 +436,14 @@
                 });
             }
 
-            // [مهم] همگام‌سازی زمان با اولویت سرور
             const cloudTime = RankSystem.getLastPosition(item.id);
             const localKey = `${DB_KEY}${currentUser.username}_time_${item.id}`;
             let startPos = 0;
 
             if (cloudTime === 0) {
-                // ریست شدن توسط ادمین
                 localStorage.removeItem(localKey);
                 startPos = 0;
             } else {
-                // ادامه از آخرین نقطه (هرکدام جلوتر بود)
                 const localTime = parseFloat(localStorage.getItem(localKey) || 0);
                 startPos = Math.max(cloudTime, localTime);
             }
@@ -419,12 +459,11 @@
                  document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
             }
             
-            // فقط اگر زمان شروع بیشتر از 5 ثانیه بود و ریست نشده بود بپرس
             if(maxTime > 5 && !isDone) {
                 if(confirm("ادامه پخش از جای قبلی؟")) {
                     vid.currentTime = maxTime;
                 } else {
-                    vid.currentTime = 0; // اگر کاربر نخواست، از اول پخش کن
+                    vid.currentTime = 0;
                 }
             } else {
                 vid.currentTime = 0;
@@ -475,12 +514,28 @@
             } else { document.getElementById('mathAns').classList.add('wrong-ans'); }
         }
 
+        // [اصلاح باگ بازگشت زمان پس از رفرش]
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none';
             alert("⏰ زمان تمام شد! فیلم از اول شروع می‌شود.");
-            vid.currentTime = 0; maxTime = 0; nextCheckTime = CHECK_INTERVAL;
+            
+            // پرچم سیستم بالا می‌رود (تا فیلم گیر نکند)
+            isSystemSeeking = true;
+            
+            vid.currentTime = 0; 
+            maxTime = 0; 
+            nextCheckTime = CHECK_INTERVAL;
+            
+            // [مهم] بازنویسی فوری حافظه لوکال و سرور (0)
+            const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
+            localStorage.setItem(localKey, 0); 
+            RankSystem.savePosition(activeVid.id, 0, true);
+            
             document.getElementById('progressBar').style.width = "0%";
             lastActivityTime = Date.now(); 
+            
+            // پایین آوردن پرچم بعد از 1 ثانیه
+            setTimeout(() => isSystemSeeking = false, 1000);
         }
 
         function checkAndReport(statusMsg, forceSend) {
@@ -550,9 +605,12 @@
         }, 5000);
 
         vid.addEventListener('timeupdate', () => {
+            // اگر سیستم در حال جریمه کردن است، تایم را آپدیت نکن
+            if (isSystemSeeking) return;
+
             if(!vid.seeking && vid.currentTime > maxTime) {
                 maxTime = vid.currentTime;
-                // فقط ذخیره معمولی (بدون فورس)
+                // فقط ذخیره معمولی
                 RankSystem.savePosition(activeVid.id, maxTime);
                 localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
                 lastActivityTime = Date.now();
@@ -573,9 +631,12 @@
             }
         });
 
-        // [کد نهایی ضد تقلب ۳ اخطاره با اعمال جریمه سمت سرور]
+        // [کد نهایی ضد تقلب ۳ اخطاره با اصلاحات دقیق]
         vid.addEventListener('seeking', () => {
             if (isDone) return; 
+            
+            // [مهم] اگر خود سیستم دارد جابجا می‌کند، کاری نداشته باش
+            if (isSystemSeeking) return;
 
             if (vid.currentTime > maxTime) {
                 cheatAttempts++;
@@ -585,17 +646,25 @@
 
                 if (cheatAttempts >= 3) {
                     vid.pause(); 
+                    
+                    // پرچم سیستم بالا می‌رود
+                    isSystemSeeking = true;
+
                     let penaltyTime = Math.max(0, maxTime - 60);
                     
                     vid.currentTime = penaltyTime;
                     maxTime = penaltyTime; 
                     
-                    // [ارسال جریمه با فلگ اجباری]
-                    RankSystem.savePosition(activeVid.id, penaltyTime, true);
+                    // [بازنویسی فوری لوکال و سرور]
+                    const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
+                    localStorage.setItem(localKey, penaltyTime); 
+                    RankSystem.savePosition(activeVid.id, penaltyTime, true); 
                     
-                    localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, penaltyTime);
                     cheatAttempts = 0; 
                     alert("⚠️ هشدار امنیتی!\nبه دلیل تلاش مکرر برای رد کردن فیلم، ۶۰ ثانیه جریمه شدید و به عقب برگشتید.");
+                    
+                    // آزاد کردن پرچم بعد از ۱ ثانیه
+                    setTimeout(() => { isSystemSeeking = false; }, 1000);
                     return; 
                 }
 
