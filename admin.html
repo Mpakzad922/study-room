@@ -234,7 +234,7 @@
     const ADMIN_TOKEN_KEY = "chamran_admin_2025_secret_key";
     
     let ALL_USERS = [];
-    let META_EXAMS = {};   
+    let META_EXAMS = {};    
     let META_LESSONS = {}; 
 
     function doLogin() {
@@ -442,6 +442,31 @@
         document.getElementById('loadingBox').style.display = 'none';
     }
 
+    // --- تابع جدید: حذف آزمون (هم از لیست هم از سابقه دانش‌آموزان) ---
+    async function deleteExam(eid, title) {
+        if(!confirm(`⚠️ آیا مطمئن هستید که می‌خواهید آزمون "${title}" را حذف کنید؟\n\n⛔ این کار تمام نمرات ثبت‌شده برای این آزمون را از پروفایل همه دانش‌آموزان پاک می‌کند!`)) return;
+        
+        document.getElementById('loadingBox').style.display = 'flex';
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: 'delete_exam_global', 
+                    admin_token: ADMIN_TOKEN_KEY, 
+                    exam_id: eid 
+                })
+            });
+            const data = await res.json();
+            if(data.status === 'success') {
+                alert("✅ آزمون با موفقیت حذف شد.");
+                fetchData(); // رفرش لیست
+            } else {
+                alert("❌ خطا: " + data.message);
+            }
+        } catch(e) { alert("❌ خطای شبکه"); }
+        document.getElementById('loadingBox').style.display = 'none';
+    }
+
     // --- آمار آزمون ---
     function renderExamsStats() {
         const container = document.getElementById('examsStats');
@@ -471,14 +496,20 @@
             div.className = 'card lesson-card';
             div.style.borderRightColor = '#8e44ad';
             
-            div.onclick = function() {
+            div.onclick = function(e) {
+                // اگر روی دکمه حذف کلیک شد، لیست باز نشود
+                if(e.target.classList.contains('del-btn-exam')) return;
+                
                 const lc = this.querySelector('.student-list-container');
                 lc.style.display = (lc.style.display === 'none' || lc.style.display === '') ? 'block' : 'none';
             };
 
             div.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${title}</strong>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="del-btn-exam" onclick="deleteExam('${eid}', '${title}')" style="background:#fee; color:red; border:1px solid red; border-radius:5px; cursor:pointer; padding:2px 6px; font-size:0.8rem;">🗑️</button>
+                        <strong>${title}</strong>
+                    </div>
                     <span class="badge" style="background:#8e44ad">${count} شرکت‌کننده</span>
                 </div>
                 <div style="margin-top:5px; font-size:0.9rem; color:#555;">میانگین: <b>${avg}</b></div>
