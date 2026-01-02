@@ -83,11 +83,13 @@
         // ***********************************************
         // تنظیمات
         // ***********************************************
+        // [تذکر: لطفا پس از دیپلوی، لینک CSV جدید آزمون را اینجا بگذارید]
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5s2fIjXBtYnihTmXQNnvwfv3kUdGuwMdRkG6mTR1t4eCUxoOsYdJnRaucOlQlLlL1xJACckhfKBHh/pub?gid=688650831&single=true&output=csv";
         const DB_KEY = "chamran_db_v20_"; 
         // ***********************************************
 
         if(typeof REPORT_WEBAPP_URL === 'undefined') {
+             // [تذکر: لطفا پس از دیپلوی، لینک وب‌اپ جدید را اینجا بگذارید]
              var REPORT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxb3sXu7fJJwupzGtirtGNyNHMN6-05Tk6cXdxe31y1y6Mb1QRCXgGzXPvkT-hDb4pV1g/exec";
         }
 
@@ -118,7 +120,6 @@
                     SyncManager.init(currentUser.username, currentUser.password);
                     RankSystem.init(currentUser.jsonData);
                     
-                    // [اصلاح شده] سینک فوری برای اینکه اگر قبلاً امتحان داده، بفهمیم
                     performSilentSync(currentUser.username, currentUser.password);
                 }
             } catch(e) {
@@ -127,7 +128,6 @@
             }
         }
 
-        // تابع جدید برای همگام‌سازی در صفحه آزمون
         async function performSilentSync(u, p) {
             try {
                 if(!navigator.onLine) return;
@@ -138,12 +138,9 @@
                 const data = await res.json();
                 if(data.status === 'success') {
                     console.log("📥 Sync Exam Data:", data.jsonData);
-                    // آپدیت رنکینگ و نمرات با دیتای سرور
                     RankSystem.init(data.jsonData); 
-                    // آپدیت حافظه لوکال
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
-                    // رفرش لیست آزمون‌ها (برای اینکه قفل‌ها ظاهر شوند)
                     renderExamList(); 
                 }
             } catch(e) { console.log("Sync failed in exam page"); }
@@ -223,7 +220,6 @@
 
             ids.forEach(id => {
                 const exam = examsMap[id];
-                // هماهنگی دقیق بین دیتای ابری و لوکال
                 const takenCloud = RankSystem.data.exams && RankSystem.data.exams[id];
                 const takenLocal = localStorage.getItem('taken_' + id);
                 
@@ -337,7 +333,7 @@
 
         function finishExam() {
             clearInterval(timerInterval);
-            isExamActive = false; // پایان وضعیت فعال آزمون
+            isExamActive = false; 
             
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
@@ -374,15 +370,15 @@
                 RankSystem.saveToDisk();
             }
 
-// در تابع finishExam در azmoon.html
-const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | نمره: ${toPersianNum(finalScore)}`;
+            // [اصلاحیه] تعریف متغیر لاگ برای ارسال صحیح
+            const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | نمره: ${toPersianNum(finalScore)}`;
             
-SyncManager.addToQueue('report', {
-    lesson: `آزمون: ${examsMap[currentExamId].title}`,
-    status: `پایان آزمون (نمره: ${toPersianNum(finalScore)})`,
-    details: detailLog, // <--- این متغیر حتما باید پر شده باشد
-    device: getDeviceInfo()
-});
+            SyncManager.addToQueue('report', {
+                lesson: `آزمون: ${examsMap[currentExamId].title}`,
+                status: `پایان آزمون (نمره: ${toPersianNum(finalScore)})`,
+                details: detailLog,
+                device: getDeviceInfo()
+            });
             
             if(!navigator.onLine) {
                 document.getElementById('saveMsg').style.display = 'none';
@@ -423,9 +419,10 @@ SyncManager.addToQueue('report', {
                     device: getDeviceInfo(),
                     timestamp: Date.now()
                 };
-                let q = JSON.parse(localStorage.getItem('chamran_queue_v2') || "[]");
+                // [اصلاحیه] تغییر v2 به v8 برای هماهنگی با rank.js
+                let q = JSON.parse(localStorage.getItem('chamran_queue_v8') || "[]");
                 q.push(data);
-                localStorage.setItem('chamran_queue_v2', JSON.stringify(q));
+                localStorage.setItem('chamran_queue_v8', JSON.stringify(q));
             }
         });
 
@@ -433,8 +430,3 @@ SyncManager.addToQueue('report', {
     </script>
 </body>
 </html>
-
-
-
-
-
