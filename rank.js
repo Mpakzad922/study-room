@@ -1,8 +1,7 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه نهایی لیارا)
+// 🎮 فایل هسته: rank.js (نسخه آنلاین - بدون کش)
 // ********************************************
 
-// آدرس سرور لیارا (اینجا تعریف می‌کنیم تا در همه صفحات یکسان باشد)
 const REPORT_WEBAPP_URL = "https://chamran-api.liara.run";
 
 const RankSystem = {
@@ -14,18 +13,22 @@ const RankSystem = {
         { min: 5000, title: "💎 اسطوره", color: "#c0392b" }
     ],
 
+    // داده‌های پیش‌فرض همیشه صفر هستند تا وقتی سرور پرشان کند
     data: { xp: 0, rank: "🐣 نوآموز", completed: [], playback: {}, exams: {} },
-    STORAGE_KEY: 'chamran_local_rank_vfinal', 
+    
+    // کلید ذخیره‌سازی فقط برای صف آفلاین استفاده می‌شود، نه پروفایل
+    STORAGE_KEY: 'chamran_local_rank_online_only', 
 
     init: function(serverJson) {
+        // 🛑 تغییر مهم: حذف کامل خواندن از LocalStorage برای پروفایل
+        // فقط و فقط اگر سرور دیتا داد، آن را قبول کن.
+
         let serverData = {};
         if(serverJson && serverJson !== "{}") {
             try { serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson; } 
             catch(e) { console.error("Server JSON Error", e); }
-        }
-        
-        // اگر سرور دیتا داشت، جایگزین کن
-        if (serverData && (serverData.xp !== undefined || serverData.exams)) {
+            
+            // جایگزینی مستقیم داده‌های سرور
             this.data = {
                 xp: serverData.xp || 0,
                 rank: serverData.rank || "🐣 نوآموز",
@@ -33,39 +36,32 @@ const RankSystem = {
                 playback: serverData.playback || {},
                 exams: serverData.exams || {}
             };
-            this.saveToDisk();
         } else {
-            const localData = localStorage.getItem(this.STORAGE_KEY);
-            if (localData) { try { this.data = JSON.parse(localData); } catch (e) {} }
+            // اگر سرور هنوز دیتا نداده، همه چیز صفر بماند (از کش نخوان)
+            this.data = { xp: 0, rank: "🐣 نوآموز", completed: [], playback: {}, exams: {} };
         }
 
         this.checkRankUp(); 
         this.updateUI();
-        // تلاش برای بروزرسانی لیست اگر تابعش وجود داشته باشد
-        setTimeout(() => {
-            if(typeof renderList === 'function') renderList();
-        }, 500);
+        setTimeout(() => { if(typeof renderList === 'function') renderList(); }, 500);
     },
 
     savePosition: function(id, time, force = false) {
         const sId = id.toString();
-        // فقط اگر زمان جلوتر رفته بود ذخیره کن (مگر اینکه فورس/جریمه باشد)
-        if(force || time > (this.data.playback[sId] || 0)) {
-            this.data.playback[sId] = Math.floor(time);
-            this.saveToDisk();
-            
-            if (force) {
-                // ارسال فوری (برای جریمه)
-                SyncManager.addToQueue('sync', null, true); 
-            }
-            else if(Math.floor(time) % 10 === 0) {
-                // ارسال هر 10 ثانیه یکبار برای کاهش ترافیک سرور
-                 SyncManager.addToQueue('sync'); 
-            }
+        // فقط در رم (RAM) ذخیره کن که اگر صفحه رفرش شد بپرد (چون خواستید همه چیز از سرور باشد)
+        // اما برای سینک شدن با سرور، در آبجکت data می‌ریزیم
+        this.data.playback[sId] = Math.floor(time);
+        
+        // بلافاصله به صف ارسال بفرست
+        if(Math.floor(time) % 10 === 0 || force) {
+             SyncManager.addToQueue('sync', null, force); 
         }
     },
 
-    getLastPosition: function(id) { return this.data.playback[id.toString()] || 0; },
+    getLastPosition: function(id) { 
+        // 🛑 فقط از دیتایی که الان از سرور آمده بخوان
+        return this.data.playback[id.toString()] || 0; 
+    },
 
     addXP: function(amount, reason, uniqueId) {
         const sId = uniqueId.toString();
@@ -77,10 +73,8 @@ const RankSystem = {
         this.checkRankUp();
         this.updateUI(); 
         this.showToast(`⭐ +${amount} امتیاز: ${reason}`); 
-        this.saveToDisk();
         
-        if(typeof renderList === 'function') renderList(); // بروزرسانی تیک سبز
-        
+        // بلافاصله به سرور بگو
         SyncManager.addToQueue('report', { 
             lesson: reason, 
             status: 'کسب امتیاز / تکمیل', 
@@ -89,17 +83,18 @@ const RankSystem = {
         });
     },
 
-    saveToDisk: function() { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data)); },
+    saveToDisk: function() { 
+        // 🛑 این تابع را غیرفعال می‌کنیم تا پروفایل در کش ذخیره نشود
+        // (خالی می‌گذاریم)
+    },
 
     checkRankUp: function() {
         let currentRankTitle = this.ranks[0].title;
         for (let i = this.ranks.length - 1; i >= 0; i--) {
             if (this.data.xp >= this.ranks[i].min) { currentRankTitle = this.ranks[i].title; break; }
         }
-        
         if(this.data.rank !== currentRankTitle) {
             this.data.rank = currentRankTitle;
-            this.saveToDisk();
         }
     },
 
@@ -121,6 +116,8 @@ const RankSystem = {
     getDevice: function() { return /Mobile|Android/i.test(navigator.userAgent) ? "موبایل" : "کامپیوتر"; }
 };
 
+// SyncManager همان قبلی بماند چون برای صف ارسال (Send) لازم است
+// فقط در دریافت (Receive) دیگر چیزی را در LocalStorage ذخیره نمی‌کنیم.
 const SyncManager = {
     queue: [], username: null, password: null,
 
@@ -128,8 +125,7 @@ const SyncManager = {
         this.username = user; this.password = pass;
         this.queue = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
         this.processQueue();
-        // هر 15 ثانیه تلاش برای سینک
-        setInterval(() => this.processQueue(), 15000);
+        setInterval(() => this.processQueue(), 10000);
     },
 
     addToQueue: function(action, logData = null, forcePlayback = false) {
@@ -142,36 +138,31 @@ const SyncManager = {
             timestamp: Date.now(),
             force_playback: forcePlayback 
         };
-        
-        // جلوگیری از تکرار زیاد درخواست‌های sync پشت سر هم
         if(action === 'sync' && !forcePlayback && this.queue.length > 0 && this.queue[this.queue.length-1].action === 'sync') {
              this.queue[this.queue.length-1] = item;
         } else {
              this.queue.push(item);
         }
-        
         this.saveQueue(); 
         this.processQueue();
     },
 
     saveQueue: function() {
+        // صف ارسال را نگه می‌داریم تا اگر نت قطع شد، نمرات نپرد
         localStorage.setItem('chamran_queue_vfinal', JSON.stringify(this.queue));
         const badge = document.getElementById('offlineBadge');
         if(badge) {
             if(this.queue.length > 0) { 
                 badge.style.display = 'block'; 
-                badge.innerText = `📡 در حال ذخیره (${toPersianNum(this.queue.length)})...`; 
+                badge.innerText = `📡 ارسال به سرور...`; 
                 badge.style.background = navigator.onLine ? "#e67e22" : "#c0392b"; 
-            } 
-            else { badge.style.display = 'none'; }
+            } else { badge.style.display = 'none'; }
         }
     },
 
     processQueue: function() {
         if(this.queue.length === 0 || !navigator.onLine) return;
-        
         const item = this.queue[0];
-        // همیشه آخرین وضعیت دیتا را بفرست
         item.jsonData = JSON.stringify(RankSystem.data); 
         
         fetch(REPORT_WEBAPP_URL, {
@@ -182,17 +173,15 @@ const SyncManager = {
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                this.queue.shift(); // حذف از صف
+                this.queue.shift(); 
                 this.saveQueue();
-                // اگر هنوز چیزی در صف هست، با سرعت بیشتر بفرست
                 if(this.queue.length > 0) setTimeout(() => this.processQueue(), 200);
             }
         })
-        .catch(err => console.log("Sync Error (Offline):", err));
+        .catch(err => console.log("Sync Error", err));
     }
 };
 
-// تابع کمکی تبدیل اعداد
 function toPersianNum(n) { 
     if(n === undefined || n === null) return "۰"; 
     return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); 
