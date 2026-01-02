@@ -194,8 +194,6 @@
         let backgroundTimer = null;
         let cheatAttempts = 0;
         let cheatResetTimer = null;
-        
-        // [پرچم جلوگیری از باگ استپ]
         let isSystemSeeking = false; 
 
         const vid = document.getElementById('myVideo');
@@ -245,6 +243,7 @@
                 });
                 const data = await res.json();
                 if(data.status === 'success') {
+                    console.log("📥 Sync Update:", data.jsonData);
                     RankSystem.init(data.jsonData);
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
@@ -304,7 +303,6 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
-        // [دریافت لیست درس‌ها: بدون کش + دکمه تلاش مجدد]
         async function fetchPlaylist() {
             playlist = [];
             const listContainer = document.getElementById('video-list-container');
@@ -398,7 +396,6 @@
             });
         }
 
-        // [منطق پخش ویدیو و اعمال جریمه در صورت وجود پرچم]
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
@@ -431,21 +428,19 @@
             const localTime = parseFloat(localStorage.getItem(localKey) || 0);
             let startPos = 0;
 
-            // [چک کردن پرچم جریمه]
+            // [اصلاح کلیدی: اولویت با سرور برای سینک شدن جریمه]
             const isPenaltyActive = localStorage.getItem('forced_penalty_' + item.id);
 
             if (cloudTime === 0) {
                 localStorage.removeItem(localKey);
                 startPos = 0;
             } else if (isPenaltyActive) {
-                // اگر پرچم جریمه بالاست، فقط به لوکال اعتماد کن و سرور را نادیده بگیر
-                console.log("⚠️ Penalty Flag Detected! Forcing Local Time:", localTime);
                 startPos = localTime;
-                // یک بار دیگر جریمه را به سرور بفرست تا مطمئن شویم ثبت می‌شود
                 RankSystem.savePosition(item.id, localTime, true);
-                // پرچم را پاک نکن تا وقتی که مطمئن شویم سینک شده (در واقع تا ابد بماند مشکلی نیست چون با دیدن فیلم جلو میرود)
             } else {
-                startPos = Math.max(cloudTime, localTime);
+                // [تغییر مهم] اگر سرور دیتا دارد، آن را به لوکال ترجیح بده (مگر اینکه سرور 0 باشد)
+                // این باعث می‌شود جریمه ثبت شده در سرور، روی کامپیوتر دیگر هم اعمال شود
+                startPos = cloudTime > 0 ? cloudTime : localTime;
             }
 
             maxTime = startPos;
@@ -460,7 +455,6 @@
             }
             
             if(maxTime > 5 && !isDone) {
-                // اگر جریمه فعال باشد، نپرس! مستقیم پخش کن (برای تنبیه بیشتر)
                 if(isPenaltyActive || confirm("ادامه پخش از جای قبلی؟")) {
                     vid.currentTime = maxTime;
                 } else {
@@ -470,7 +464,6 @@
                 vid.currentTime = 0;
             }
             
-            // اگر جریمه فعال بود، بعد از شروع پخش پرچم را بردار
             if(isPenaltyActive) {
                 setTimeout(() => localStorage.removeItem('forced_penalty_' + item.id), 5000);
             }
@@ -520,7 +513,6 @@
             } else { document.getElementById('mathAns').classList.add('wrong-ans'); }
         }
 
-        // [اعمال جریمه سنگین + کاشتن پرچم جریمه]
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none';
             alert("⏰ زمان تمام شد! فیلم از اول شروع می‌شود.");
@@ -532,7 +524,6 @@
             
             const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
             localStorage.setItem(localKey, 0); 
-            // کاشتن پرچم جریمه
             localStorage.setItem('forced_penalty_' + activeVid.id, '1');
             
             RankSystem.savePosition(activeVid.id, 0, true);
@@ -633,7 +624,6 @@
             }
         });
 
-        // [ضد تقلب با اعمال پرچم جریمه]
         vid.addEventListener('seeking', () => {
             if (isDone) return; 
             if (isSystemSeeking) return;
@@ -653,7 +643,6 @@
                     
                     const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
                     localStorage.setItem(localKey, penaltyTime);
-                    // کاشتن پرچم جریمه
                     localStorage.setItem('forced_penalty_' + activeVid.id, '1');
                     
                     RankSystem.savePosition(activeVid.id, penaltyTime, true); 
