@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>کارت ورود کلاس پنجم چمران</title>
+    <style>
+        body {
+            font-family: 'Tahoma', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 { color: #2c3e50; margin-bottom: 10px; text-align: center; }
+        .search-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #bdc3c7;
+            font-family: inherit;
+            margin-bottom: 20px;
+            font-size: 16px;
+            outline: none;
+            text-align: center;
+        }
+        .search-box:focus { border-color: #3498db; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .student-card {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #ecf0f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .student-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(52, 152, 219, 0.2);
+            border-color: #3498db;
+            color: #2980b9;
+        }
+
+        /* استایل پنجره پاپ‌آپ (Modal) */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .success-icon { font-size: 40px; margin-bottom: 10px; display: block; }
+        .copy-msg { color: #27ae60; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .pass-label { color: #7f8c8d; font-size: 13px; margin-top: 15px; }
+        .pass-value { 
+            font-size: 32px; 
+            font-weight: bold; 
+            color: #2c3e50; 
+            letter-spacing: 5px; 
+            margin: 5px 0 20px 0;
+            background: #f7f9fc;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px dashed #bdc3c7;
+        }
+
+        .btn-close {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: 5px;
+        }
+        .btn-go {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🎓 دریافت رمز عبور دانش‌آموزان</h2>
+    <input type="text" id="searchInput" class="search-box" placeholder="🔍 نام خود را جستجو کنید..." onkeyup="filterNames()">
+
+    <div class="grid-container" id="cardsContainer">
+        </div>
+
+    <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+        <div class="modal-box">
+            <span class="success-icon">✅</span>
+            <div class="copy-msg">نام کاربری کپی شد!</div>
+            <div style="font-size:12px; color:#95a5a6;" id="copiedUser">user</div>
+            
+            <div class="pass-label">رمز عبور شما:</div>
+            <div class="pass-value" id="modalPass">----</div>
+
+            <div style="display:flex; justify-content:center; gap:10px;">
+                <button class="btn-close" onclick="document.getElementById('modal').style.display='none'">بستن</button>
+                <a href="https://mpakzad922.github.io/study-room" class="btn-go">ورود به سایت 🚀</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const students = [
+            { u: "matin.abouei", p: "6104", n: "محمد متین ابوئی مهریزی" },
+            { u: "parsa", p: "9884", n: "محمدپارسا پارسانیا" },
+            { u: "amir.pourreza", p: "1162", n: "امیرمحمد پوررضایی" },
+            { u: "salar.hosseini", p: "6706", n: "سید امیرسالار حسینی" },
+            { u: "reza.hosseini", p: "7966", n: "سید محمد رضا حسینی" },
+            { u: "amir.heydari", p: "8123", n: "سید امیر رضا حیدری" },
+            { u: "mahan.khoda", p: "3552", n: "ماهان خدادادسریزدی" },
+            { u: "abolfazl.dehghan", p: "6952", n: "امیر ابوالفضل دهقان منگابادی" },
+            { u: "amirali.dehghan", p: "5492", n: "امیرعلی دهقانی زاده بغدادآباد" },
+            { u: "taha.zare", p: "4688", n: "محمد طه زارع" },
+            { u: "hossein.zare1", p: "1755", n: "محمدحسین زارع" },
+            { u: "hossein.zare2", p: "3849", n: "محمد حسین زارع" },
+            { u: "yasin.zare", p: "7144", n: "محمد یاسین زارع بیدکی" },
+            { u: "amir.zare.bidaki", p: "5192", n: "امیر حسین زارع بیدکی" },
+            { u: "taha.zare.kh", p: "1392", n: "محمد طه زارع خورمیزی" },
+            { u: "milad.zare", p: "8419", n: "میلاد زارع زاده مهریزی" },
+            { u: "amin.zare", p: "5513", n: "امین زارع زاده مهریزی" },
+            { u: "sajad.zare", p: "8210", n: "سجاد زارع زاده مهریزی" },
+            { u: "abolfazl.zare", p: "0778", n: "ابوالفضل زارع میرک آباد" },
+            { u: "mahdi.zarein", p: "8556", n: "محمد مهدی زارعین" },
+            { u: "amir.rahbar", p: "4225", n: "امیرحسین رهبرنیا" },
+            { u: "ali.sangari", p: "2405", n: "علیرضا سنگری نژاد" },
+            { u: "hasan.taba", p: "5835", n: "سیدحسن طباطبائی نیا" },
+            { u: "mojtaba.ebadi", p: "9778", n: "مجتبی عبادی فر" },
+            { u: "amir.kamalian", p: "3288", n: "امیرعلی کمالیان مهریزی" },
+            { u: "yasin.mohsen", p: "8456", n: "سیدیاسین محسن زاده مهریزی" },
+            { u: "reza.mousavi", p: "3689", n: "سید محمد رضا موسوی" },
+            { u: "mostafa.valayati", p: "8896", n: "مصطفی ولایتی" }
+        ];
+
+        const container = document.getElementById("cardsContainer");
+        const modal = document.getElementById("modal");
+
+        // ساخت کارت‌ها
+        function renderList(filterText = "") {
+            container.innerHTML = "";
+            students.forEach(s => {
+                if (s.n.includes(filterText)) {
+                    const div = document.createElement("div");
+                    div.className = "student-card";
+                    div.innerText = s.n;
+                    div.onclick = () => showCreds(s);
+                    container.appendChild(div);
+                }
+            });
+        }
+
+        // نمایش پاپ‌آپ و کپی کردن
+        function showCreds(student) {
+            // کپی در حافظه
+            navigator.clipboard.writeText(student.u).then(() => {
+                // نمایش اطلاعات در مودال
+                document.getElementById("copiedUser").innerText = student.u;
+                document.getElementById("modalPass").innerText = student.p;
+                modal.style.display = "flex";
+            }).catch(err => {
+                alert("مرورگر شما اجازه کپی خودکار نداد. نام کاربری: " + student.u);
+            });
+        }
+
+        // بستن مودال با کلیک بیرون کادر
+        function closeModal(e) {
+            if (e.target === modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        function filterNames() {
+            const txt = document.getElementById("searchInput").value;
+            renderList(txt);
+        }
+
+        // اجرای اولیه
+        renderList();
+    </script>
+</body>
+</html>
