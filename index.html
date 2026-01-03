@@ -8,8 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
 
     <style>
+        /* --- کدهای CSS اورجینال شما (حفظ شده) --- */
         :root { --primary: #2c3e50; --accent: #e67e22; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); }
-        body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; overflow-x: hidden; user-select: none; }
         
         .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
         .card.show-content { opacity: 1; }
@@ -31,32 +32,55 @@
         .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: 10px; }
         .btn-loading { opacity: 0.7; cursor: wait; }
 
-        video { width: 100%; border-radius: 15px; background: #000; margin-top: 15px; max-height: 80vh; outline: none; }
-        .alert-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 9999; display: none; font-size: 0.9rem; width: max-content; }
-        .progress-bar { width: 100%; background: #dfe6e9; height: 8px; border-radius: 4px; margin-top: 15px; overflow: hidden; direction: ltr; }
-        .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
-        .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; }
+        /* --- 🛠️ تغییرات مهم برای پلیر جدید و تمام صفحه (NEW) --- */
+        /* این استایل‌ها جایگزین استایل قبلی ویدیو می‌شوند */
+        #playerContainer {
+            position: relative; width: 100%; background: #000; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9;
+        }
+        /* وقتی تمام صفحه می‌شود */
+        #playerContainer:fullscreen { width: 100vw; height: 100vh; border-radius: 0; aspect-ratio: unset; }
+        #playerContainer:fullscreen video { height: 100%; width: 100%; object-fit: contain; }
+        
+        video { width: 100%; height: 100%; outline: none; background: #000; }
+
+        /* کنترل‌های سفارشی (برای جایگزینی دکمه‌های مرورگر) */
+        .custom-controls {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 10px 15px; box-sizing: border-box; display: flex; align-items: center; gap: 15px; transition: opacity 0.3s; opacity: 1; z-index: 20; direction: ltr;
+        }
+        .fade-out { opacity: 0 !important; pointer-events: none; }
+        .c-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.4rem; padding: 5px; text-shadow: 0 0 5px rgba(0,0,0,0.5); transition: 0.2s; }
+        .c-btn:hover { color: var(--accent); transform: scale(1.1); }
+        .progress-bar-container { flex: 1; background: rgba(255,255,255,0.3); height: 6px; border-radius: 10px; cursor: default; position: relative; overflow: hidden; }
+        .progress-fill { background: var(--accent); height: 100%; width: 0%; border-radius: 10px; transition: width 0.2s linear; box-shadow: 0 0 10px var(--accent); }
+
+        /* مودال امنیتی سوال ریاضی (داخل پلیر) */
+        #securityModal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 50; display: none; justify-content: center; align-items: center; flex-direction: column; color: white; backdrop-filter: blur(5px); }
+        .security-box { background: transparent; padding: 0; width: auto; max-width: none; text-align: center; border: none; }
+        .timer-circle { width: 80px; height: 80px; background: transparent; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: bold; margin: 0 auto 20px auto; border: 5px solid var(--danger); box-shadow: 0 0 20px var(--danger); animation: pulseTimer 1s infinite; }
+        @keyframes pulseTimer { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .math-question { font-size: 2.5rem; font-weight: bold; color: var(--accent); margin: 20px 0; direction: ltr; font-family: 'Vazirmatn', sans-serif; text-shadow: 0 0 10px black; }
+        
+        /* سایر اجزا */
+        .alert-box { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #c0392b; color: white; padding: 10px 20px; border-radius: 30px; z-index: 100; display: none; font-size: 0.9rem; width: max-content; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .back-btn { background: #f1f2f6; border: none; padding: 8px 15px; border-radius: 10px; color: #636e72; cursor: pointer; font-family: inherit; font-weight:bold; }
         
         #downloadContainer { margin-top: 20px; display: grid; gap: 10px; }
         .download-btn { background: #fff; color: #34495e; text-decoration: none; padding: 12px 15px; border-radius: 12px; font-size: 0.9rem; display: flex; align-items: center; justify-content: space-between; border: 2px solid #ecf0f1; transition: 0.3s; }
         .dl-icon { font-size: 1.2rem; margin-left: 10px; }
         .dl-text { font-weight: bold; }
         .dl-arrow { color: var(--accent); font-size: 0.8rem; }
-        
-        #securityModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: none; justify-content: center; align-items: center; flex-direction: column; }
-        .security-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 400px; text-align: center; border: 4px solid var(--primary); }
-        .math-question { font-size: 2rem; font-weight: bold; color: var(--primary); margin: 20px 0; direction: ltr; font-family: 'Vazirmatn', sans-serif; }
-        .wrong-ans { border-color: red !important; background: #ffebee; }
-        .timer-circle { width: 70px; height: 70px; background: var(--danger); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 10px auto; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2); padding-top: 5px; }
-        
+
         .spinner { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3498db; width: 30px; height: 30px; animation: spin 2s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         #loading { margin-top: 20px; display:none; color: #7f8c8d; }
+        
         .offline-badge { position:fixed; bottom:10px; left:10px; background:orange; color:white; padding:8px 15px; border-radius:30px; font-size:0.8rem; display:none; z-index:2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-        .fullscreen-btn { background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 8px; margin-top: 5px; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
 
+        /* انیمیشن آتش بازی */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none; }
+
+        /* صفحه لودینگ و امضا */
         #intro-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         #intro-overlay.move-down { top: 85%; transform: scale(0.6); opacity: 0; pointer-events: none; }
         .signature-container { text-align: center; direction: ltr; }
@@ -69,30 +93,14 @@
         .footer-signature .sig-name { font-size: 1.5rem; } 
         .footer-signature .sig-prefix { font-size: 0.7rem; }
 
-        #syncOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 20000;
-            display: none;
-            flex-direction: column;
-            justify-content: center; align-items: center;
-            color: white;
-            backdrop-filter: blur(5px);
-        }
-        .hourglass-spinner {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            animation: spinHourglass 2s infinite ease-in-out;
-            text-shadow: 0 0 20px rgba(255,255,255,0.5);
-        }
-        @keyframes spinHourglass {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(180deg); }
-            100% { transform: rotate(360deg); }
-        }
+        #syncOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 20000; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; backdrop-filter: blur(5px); }
+        .hourglass-spinner { font-size: 4rem; margin-bottom: 20px; animation: spinHourglass 2s infinite ease-in-out; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
+        @keyframes spinHourglass { 0% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+    <canvas id="confetti-canvas"></canvas>
 
     <div id="intro-overlay">
         <div class="signature-container">
@@ -107,19 +115,7 @@
         <p style="font-size:0.8rem; color:#bdc3c7; margin-top:5px;">لطفاً صبر کنید</p>
     </div>
 
-    <div id="cheatAlert" class="alert-box">⛔ جلو زدن فیلم مجاز نیست!</div>
     <div id="offlineBadge" class="offline-badge"></div>
-
-    <div id="securityModal">
-        <div class="security-box">
-            <div id="timerDisplay" class="timer-circle">۶۰</div>
-            <h3>🔒 حضور غیاب هوشمند</h3>
-            <p style="font-size: 0.9rem; color: #555;">برای ادامه، حاصل جمع زیر را وارد کنید:</p>
-            <div id="mathQ" class="math-question">...</div>
-            <input type="tel" id="mathAns" placeholder="پاسخ؟">
-            <button class="btn-main" onclick="checkSecurityAnswer()">ثبت پاسخ ✅</button>
-        </div>
-    </div>
 
     <div id="screen-login" class="card">
         <div style="font-size: 4rem; margin-bottom: 10px;">🎓</div>
@@ -170,24 +166,42 @@
         </div>
     </div>
 
-    <div id="screen-player" class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button class="back-btn" onclick="closePlayer()">بازگشت</button>
-            <strong id="videoTitle" style="font-size: 0.9rem;"></strong>
-        </div>
-        
-        <video id="myVideo" playsinline controls disablePictureInPicture controlsList="nodownload noplaybackrate"></video>
-        
-        <button class="fullscreen-btn" onclick="forceFullScreen()">
-            <span>⛶</span> تمام صفحه
-        </button>
-        
-        <div id="downloadContainer"></div>
+    <div id="screen-player" class="card" style="padding:0; background:transparent; box-shadow:none; max-width:800px;">
+        <div id="playerContainer">
+            
+            <div id="cheatAlert" class="alert-box">⛔ جلو زدن فیلم مجاز نیست!</div>
 
-        <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
-        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem;">
-            <span id="viewPercent" style="color: var(--accent); font-weight: bold;">۰٪</span>
-            <span id="viewStatus" style="color: #95a5a6;">در حال تماشا...</span>
+            <div id="securityModal">
+                <div id="timerDisplay" class="timer-circle">۶۰</div>
+                <h3>🔒 حضور غیاب هوشمند</h3>
+                <p style="font-size: 0.9rem; color: #fff;">برای ادامه، حاصل جمع زیر را وارد کنید:</p>
+                <div id="mathQ" class="math-question">...</div>
+                <input type="tel" id="mathAns" placeholder="پاسخ؟" style="width: 150px; color:black; background: rgba(255,255,255,0.9);">
+                <button class="btn-main" onclick="checkSecurityAnswer()" style="width: 150px; background:white; color:var(--primary);">ثبت پاسخ ✅</button>
+            </div>
+
+            <video id="myVideo" playsinline disablePictureInPicture></video>
+
+            <div class="custom-controls" id="controlsBar">
+                <button class="c-btn" id="playBtn" onclick="togglePlay()">▶️</button>
+                <div class="progress-bar-container">
+                    <div id="progressBar" class="progress-fill"></div>
+                </div>
+                <span id="timeDisplay" style="color:white; font-size:0.8rem; margin:0 10px;">00:00</span>
+                <button class="c-btn" onclick="toggleFullScreen()" title="تمام صفحه">⛶</button>
+            </div>
+        </div>
+
+        <div style="padding: 15px; background: white; border-radius: 0 0 20px 20px; position:relative; z-index:10; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="back-btn" onclick="closePlayer()">بازگشت</button>
+                <strong id="videoTitle" style="font-size: 0.9rem;">عنوان درس</strong>
+            </div>
+            <div id="downloadContainer"></div>
+            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem;">
+                <span id="viewPercent" style="color: var(--accent); font-weight: bold;">۰٪</span>
+                <span id="viewStatus" style="color: #95a5a6;">در حال تماشا...</span>
+            </div>
         </div>
     </div>
 
@@ -219,6 +233,7 @@
         let isSystemSeeking = false; 
 
         const vid = document.getElementById('myVideo');
+        const container = document.getElementById('playerContainer');
 
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -236,80 +251,43 @@
         function toEnglishNum(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
 
-        // این تابع چک می‌کند که آیا کاربر لاگین کرده؟
-        // اگر بله، صبر می‌کند تا "تازه‌ترین" اطلاعات از سرور بیاید
-        // و بعد صفحه را نشان می‌دهد.
+        // --- Auth Logic ---
         async function checkAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
-            
             if(savedUser) {
                 try {
                     const creds = JSON.parse(savedUser);
-                    
-                    // نمایش لودینگ به جای باز کردن سریع صفحه
+                    // لودینگ مخفی هنگام چک کردن
                     document.getElementById('intro-overlay').style.display = 'flex';
-                    document.querySelector('.sig-name').innerHTML = "درحال دریافت اطلاعات از سرور...";
-                    document.querySelector('.sig-name').style.fontSize = "1.5rem";
-
-                    // درخواست اجباری به سرور
+                    document.querySelector('.sig-name').innerHTML = "در حال اتصال...";
+                    
                     const res = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { "Content-Type": "application/json" },
+                        method: 'POST', headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: 'login', username: creds.username, password: creds.password })
                     });
-                    
                     const data = await res.json();
                     
                     if(data.status === 'success') {
-                        // اطلاعات تازه رسید! حالا صفحه را باز کن
-                        currentUser = { 
-                            username: creds.username, 
-                            password: creds.password, 
-                            displayName: data.displayName, 
-                            jsonData: data.jsonData 
-                        };
-                        
-                        // شروع سیستم با دیتای سرور
+                        currentUser = { username: creds.username, password: creds.password, displayName: data.displayName, jsonData: data.jsonData };
                         if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
                         if(typeof RankSystem !== 'undefined') RankSystem.init(data.jsonData);
-                        
                         document.getElementById('displayName').innerText = data.displayName;
-                        
-                        // بستن لودینگ و نمایش پنل
                         document.getElementById('intro-overlay').style.display = 'none';
                         showScreen('screen-library');
                         fetchPlaylist();
                     } else {
-                        // اگر رمز در سرور عوض شده بود، بیرون بیانداز
                         localStorage.removeItem(DB_KEY + 'creds');
+                        document.getElementById('intro-overlay').style.display = 'none';
                         showScreen('screen-login');
                     }
                 } catch(e) {
-                    // اگر اینترنت نبود، چون گفتید "همه چیز از سرور"، پس نباید وارد شود
-                    alert("⚠️ خطای اتصال به سرور! برای دریافت آخرین وضعیت باید آنلاین باشید.");
+                    // آفلاین یا خطا
+                    document.getElementById('intro-overlay').style.display = 'none';
                     showScreen('screen-login');
                 }
             } else {
                 showScreen('screen-login');
             }
-        }
-
-        async function performSilentSync(u, p) {
-            try {
-                if(!navigator.onLine) return;
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: 'login', username: u, password: p })
-                });
-                const data = await res.json();
-                if(data.status === 'success') {
-                    console.log("📥 Sync Update:", data.jsonData);
-                    RankSystem.init(data.jsonData);
-                    const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
-                    localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
-                }
-            } catch(e) {}
         }
 
         async function performLogin() {
@@ -326,8 +304,7 @@
 
             try {
                 const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
+                    method: 'POST', headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: 'login', username: u, password: p })
                 });
                 const data = await res.json();
@@ -348,7 +325,7 @@
                 }
             } catch(e) {
                 console.error(e);
-                msg.innerText = "خطا در اتصال به سرور. لطفا اینترنت را چک کنید.";
+                msg.innerText = "خطا در اتصال به سرور.";
             }
             btn.classList.remove('btn-loading');
             btn.innerText = "ورود امن 🔐";
@@ -368,49 +345,22 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
-        // دریافت لیست درس‌ها از سرور لیارا (جایگزین CSV)
+        // --- Library Logic ---
         async function fetchPlaylist() {
-            playlist = [];
             const listContainer = document.getElementById('video-list-container');
-            listContainer.innerHTML = `
-                <div style="text-align:center; padding:20px;">
-                    <div class="spinner" style="margin:0 auto;"></div>
-                    <p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها از سرور...</p>
-                </div>`;
-
+            listContainer.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spinner" style="margin:0 auto;"></div><p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها...</p></div>`;
             try {
                 const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
+                    method: 'POST', headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: 'get_lessons' }) 
                 });
-
                 const result = await res.json();
-
                 if(result.status === 'success') {
-                    playlist = [];
-                    result.data.forEach(item => {
-                        playlist.push({
-                            id: item.id,
-                            title: item.title,
-                            file: item.link,
-                            attachment: item.attach 
-                        });
-                    });
+                    playlist = result.data;
                     renderList();
-                } else {
-                    throw new Error("Server Error");
-                }
+                } else { throw new Error("Server Error"); }
             } catch (err) { 
-                console.error(err);
-                listContainer.innerHTML = `
-                    <div style="text-align:center; padding:20px; color:#c0392b;">
-                        <p>⚠️ خطا در دریافت درس‌ها</p>
-                        <button onclick="fetchPlaylist()" style="background:#2c3e50; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; margin-top:10px;">
-                            🔄 تلاش مجدد
-                        </button>
-                    </div>
-                `;
+                listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#c0392b;"><p>⚠️ خطا در دریافت درس‌ها</p><button onclick="fetchPlaylist()" style="background:#2c3e50; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; margin-top:10px;">🔄 تلاش مجدد</button></div>`;
             }
         }
 
@@ -421,36 +371,26 @@
                 list.innerHTML = "<p style='text-align:center;'>📭 درسی یافت نشد.</p>";
                 return;
             }
-            
             playlist.forEach(item => {
                 const isCompleted = RankSystem.data.completed.includes(item.id.toString());
                 const icon = isCompleted ? '✅' : '▶️';
                 const hasFile = (item.attachment && item.attachment.length > 3);
-                
                 const el = document.createElement('div');
                 el.className = `video-item ${isCompleted ? 'done' : ''}`;
                 el.onclick = () => playVideo(item);
-                el.innerHTML = `
-                    <div class="video-icon">${icon}</div>
-                    <div class="video-info">
-                        <h4>${item.title}</h4>
-                        <div style="font-size:0.8rem; color:#7f8c8d;">
-                             ${isCompleted ? 'تکمیل شد' : 'برای مشاهده کلیک کنید'}
-                             ${hasFile ? ' | 📎 فایل ضمیمه' : ''}
-                        </div>
-                    </div>
-                `;
+                el.innerHTML = `<div class="video-icon">${icon}</div><div class="video-info"><h4>${item.title}</h4><div style="font-size:0.8rem; color:#7f8c8d;">${isCompleted ? 'تکمیل شد' : 'برای مشاهده کلیک کنید'}${hasFile ? ' | 📎 فایل ضمیمه' : ''}</div></div>`;
                 list.appendChild(el);
             });
         }
 
+        // --- Player Logic (NEW & IMPROVED) ---
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
             document.getElementById('videoTitle').innerText = item.title;
             isDone = RankSystem.data.completed.includes(item.id.toString());
             
-            vid.src = item.file;
+            vid.src = item.link;
             lastActivityTime = Date.now();
             idleReportSent = false;
             
@@ -474,9 +414,8 @@
             const cloudTime = RankSystem.getLastPosition(item.id);
             const localKey = `${DB_KEY}${currentUser.username}_time_${item.id}`;
             const localTime = parseFloat(localStorage.getItem(localKey) || 0);
-            let startPos = 0;
-
             const isPenaltyActive = localStorage.getItem('forced_penalty_' + item.id);
+            let startPos = 0;
 
             if (cloudTime === 0) {
                 localStorage.removeItem(localKey);
@@ -488,7 +427,7 @@
                 startPos = cloudTime > 0 ? cloudTime : localTime;
             }
 
-            maxTime = startPos;
+            maxTime = isDone ? 999999 : startPos;
             nextCheckTime = maxTime + CHECK_INTERVAL; 
             
             showScreen('screen-player');
@@ -497,11 +436,13 @@
                  document.getElementById('progressBar').style.width = "100%";
                  document.getElementById('viewPercent').innerText = "۱۰۰٪";
                  document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
+            } else {
+                document.getElementById('viewStatus').innerText = "در حال تماشا...";
             }
             
-            if(maxTime > 5 && !isDone) {
+            if(startPos > 5 && !isDone) {
                 if(isPenaltyActive || confirm("ادامه پخش از جای قبلی؟")) {
-                    vid.currentTime = maxTime;
+                    vid.currentTime = startPos;
                 } else {
                     vid.currentTime = 0;
                 }
@@ -520,17 +461,95 @@
 
         function closePlayer() {
             vid.pause();
+            if(document.fullscreenElement) document.exitFullscreen();
             checkAndReport("خروج از درس 🔙", true);
             renderList();
             showScreen('screen-library');
         }
 
-        function forceFullScreen() {
-            if (vid.requestFullscreen) vid.requestFullscreen();
-            else if (vid.webkitEnterFullscreen) vid.webkitEnterFullscreen();
-            else alert("مرورگر شما اجازه تمام صفحه نمی‌دهد.");
+        // کنترل‌های سفارشی پلیر
+        function togglePlay() {
+            if(vid.paused) vid.play(); else vid.pause();
+            updatePlayBtn();
+        }
+        function updatePlayBtn() {
+            document.getElementById('playBtn').innerText = vid.paused ? '▶️' : '⏸️';
+        }
+        vid.addEventListener('play', updatePlayBtn);
+        vid.addEventListener('pause', updatePlayBtn);
+        vid.addEventListener('click', togglePlay);
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                if(container.requestFullscreen) container.requestFullscreen();
+                else if(container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            } else {
+                if(document.exitFullscreen) document.exitFullscreen();
+            }
         }
 
+        // --- منطق ضد تقلب و پیشرفت ---
+        vid.addEventListener('timeupdate', () => {
+            if (isSystemSeeking) return;
+
+            // نمایش زمان و نوار پیشرفت
+            const percent = (vid.currentTime / vid.duration) * 100;
+            if(!isNaN(percent)) {
+                document.getElementById('progressBar').style.width = percent + "%";
+                document.getElementById('viewPercent').innerText = toPersianNum(Math.floor(percent)) + "٪";
+            }
+            const m = Math.floor(vid.currentTime / 60);
+            const s = Math.floor(vid.currentTime % 60);
+            document.getElementById('timeDisplay').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+
+            if(!vid.seeking && vid.currentTime > maxTime) {
+                maxTime = vid.currentTime;
+                RankSystem.savePosition(activeVid.id, maxTime);
+                localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
+                lastActivityTime = Date.now();
+                idleReportSent = false; 
+            }
+            
+            if(vid.currentTime > nextCheckTime && !isDone) triggerSecurityCheck();
+            
+            if(vid.duration && percent >= 98 && !isDone) {
+                finishLesson();
+            }
+        });
+
+        vid.addEventListener('seeking', () => {
+            if (isDone) return; 
+            if (isSystemSeeking) return;
+
+            // اگر بیشتر از 3 ثانیه جلو زد
+            if (vid.currentTime > maxTime + 3) {
+                isSystemSeeking = true;
+                vid.pause();
+
+                // بازگشت به عقب
+                vid.currentTime = maxTime;
+                
+                // نمایش هشدار
+                document.getElementById('cheatAlert').innerText = "⛔ جلو زدن مجاز نیست!";
+                document.getElementById('cheatAlert').style.display = 'block';
+                setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
+
+                // 🔥 جریمه آنی (ارسال فوری به سرور)
+                const penaltyPayload = {
+                    action: 'sync', username: currentUser.username, password: currentUser.password,
+                    jsonData: JSON.stringify(RankSystem.data),
+                    force_playback: true 
+                };
+                fetch(API_URL, {
+                    method: 'POST', headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(penaltyPayload)
+                }).catch(e=>{});
+
+                setTimeout(() => isSystemSeeking = false, 1000);
+            }
+        });
+
+        // --- Security Check (سوال ریاضی) ---
         function triggerSecurityCheck() {
             vid.pause();
             const n1 = Math.floor(Math.random()*10)+1; const n2 = Math.floor(Math.random()*10)+1;
@@ -538,6 +557,7 @@
             document.getElementById('mathQ').innerText = `${toPersianNum(n1)} + ${toPersianNum(n2)} = ؟`;
             document.getElementById('mathAns').value = "";
             document.getElementById('securityModal').style.display = 'flex';
+            
             let timeLeft = ANSWER_TIMEOUT;
             document.getElementById('timerDisplay').innerText = toPersianNum(timeLeft);
             if(timerInterval) clearInterval(timerInterval);
@@ -558,33 +578,41 @@
             } else { document.getElementById('mathAns').classList.add('wrong-ans'); }
         }
 
-        function showSyncLoading() { document.getElementById('syncOverlay').style.display = 'flex'; }
-        function hideSyncLoading() { document.getElementById('syncOverlay').style.display = 'none'; }
-
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none';
-            alert("⏰ زمان تمام شد! فیلم از اول شروع می‌شود.");
+            alert("⏰ زمان تمام شد! بازگشت به عقب.");
             
             isSystemSeeking = true;
-            vid.currentTime = 0; 
-            maxTime = 0; 
-            nextCheckTime = CHECK_INTERVAL;
+            // 3 دقیقه عقب (یا شروع فیلم)
+            let penaltyTime = Math.max(0, vid.currentTime - 180);
+            vid.currentTime = penaltyTime; 
+            maxTime = penaltyTime; 
             
             const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
-            localStorage.setItem(localKey, 0); 
+            localStorage.setItem(localKey, penaltyTime); 
             localStorage.setItem('forced_penalty_' + activeVid.id, '1');
             
-            RankSystem.savePosition(activeVid.id, 0, true);
-            document.getElementById('progressBar').style.width = "0%";
-            lastActivityTime = Date.now(); 
+            RankSystem.savePosition(activeVid.id, penaltyTime, true); 
             
             showSyncLoading();
-            setTimeout(() => {
-                hideSyncLoading();
-                isSystemSeeking = false;
-            }, 3000);
+            setTimeout(() => { 
+                hideSyncLoading(); 
+                isSystemSeeking = false; 
+            }, 2000);
         }
 
+        // --- Finish & Confetti ---
+        function finishLesson() {
+            isDone = true;
+            vid.pause();
+            document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
+            RankSystem.addXP(100, `تکمیل درس: ${activeVid.title}`, activeVid.id.toString());
+            launchConfetti();
+            setTimeout(() => alert("🎉 تبریک! درس تکمیل شد و ۱۰۰ امتیاز گرفتی."), 500);
+            renderList();
+        }
+
+        // --- Helper Functions ---
         function checkAndReport(statusMsg, forceSend) {
             if (!activeVid) return;
             const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
@@ -600,47 +628,73 @@
             });
         }
 
-        window.addEventListener('online', () => {
-            if(typeof SyncManager !== 'undefined') SyncManager.processQueue();
+        function showSyncLoading() { document.getElementById('syncOverlay').style.display = 'flex'; }
+        function hideSyncLoading() { document.getElementById('syncOverlay').style.display = 'none'; }
+
+        // --- Confetti Animation ---
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.style.display = 'block';
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            for(let i=0; i<150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    vx: Math.random() * 4 - 2,
+                    vy: Math.random() * 4 + 2,
+                    c: `hsl(${Math.random()*360}, 100%, 50%)`
+                });
+            }
+            
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                let active = false;
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if(p.y < canvas.height) active = true;
+                    ctx.fillStyle = p.c;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+                });
+                if(active) requestAnimationFrame(draw);
+                else canvas.style.display = 'none';
+            }
+            draw();
+        }
+
+        // مخفی کردن کنترل‌ها
+        let fadeTimer;
+        container.addEventListener('mousemove', () => {
+            document.getElementById('controlsBar').classList.remove('fade-out');
+            clearTimeout(fadeTimer);
+            fadeTimer = setTimeout(() => {
+                if(!vid.paused) document.getElementById('controlsBar').classList.add('fade-out');
+            }, 3000);
         });
 
+        // Activity Monitor
         window.addEventListener('blur', () => {
             if (activeVid && !vid.paused && !isDone) {
                 vid.pause();
                 checkAndReport("⚠️ عدم تمرکز (باز کردن برنامه دیگر)", true);
             }
         });
-
         document.addEventListener("visibilitychange", () => {
             if(!activeVid || isDone) return;
             if (document.visibilityState === 'hidden') {
                 vid.pause();
                 checkAndReport("⛔ توقف/خروج (مینیمایز)", true);
-            } else {
-                if(backgroundTimer) clearTimeout(backgroundTimer);
-                if(typeof SyncManager !== 'undefined') SyncManager.processQueue();
             }
         });
-
         window.addEventListener('beforeunload', (e) => {
-            if (activeVid) {
-                const isDonePreviously = RankSystem.data.completed.includes(activeVid.id.toString());
-                const statusText = isDonePreviously ? "⛔ خروج ناگهانی (قبلاً تکمیل شده)" : "⛔ خروج ناگهانی (بستن برنامه)";
-                const data = {
-                    lesson: activeVid.title, status: statusText,
-                    details: `در دقیقه ${Math.floor(vid.currentTime/60)} بسته شد`,
-                    device: getDeviceInfo(), timestamp: Date.now()
-                };
-                let q = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
-                q.push(data);
-                localStorage.setItem('chamran_queue_vfinal', JSON.stringify(q));
-            }
+            if (activeVid) checkAndReport("⛔ خروج ناگهانی", true);
         });
-
         window.addEventListener('popstate', function(event) {
             if (document.getElementById('screen-player').classList.contains('active')) { closePlayer(); }
         });
-
         setInterval(() => {
             if (!activeVid || isDone || vid.paused) return; 
             const timeDiff = (Date.now() - lastActivityTime) / 1000;
@@ -650,73 +704,6 @@
             }
         }, 5000);
 
-        vid.addEventListener('timeupdate', () => {
-            if (isSystemSeeking) return;
-
-            if(!vid.seeking && vid.currentTime > maxTime) {
-                maxTime = vid.currentTime;
-                RankSystem.savePosition(activeVid.id, maxTime);
-                localStorage.setItem(`${DB_KEY}${currentUser.username}_time_${activeVid.id}`, maxTime);
-                lastActivityTime = Date.now();
-                idleReportSent = false; 
-            }
-            if(vid.currentTime > nextCheckTime && !isDone) triggerSecurityCheck();
-            
-            if(vid.duration) {
-                const percent = Math.min(100, Math.floor((maxTime / vid.duration) * 100));
-                document.getElementById('progressBar').style.width = percent + "%";
-                document.getElementById('viewPercent').innerText = toPersianNum(percent) + "٪";
-                if(percent >= 98 && !isDone) {
-                    isDone = true;
-                    document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
-                    RankSystem.addXP(100, `تکمیل درس: ${activeVid.title}`, activeVid.id.toString());
-                    renderList();
-                }
-            }
-        });
-
-        vid.addEventListener('seeking', () => {
-            if (isDone) return; 
-            if (isSystemSeeking) return;
-
-            if (vid.currentTime > maxTime) {
-                cheatAttempts++;
-                if (cheatResetTimer) clearTimeout(cheatResetTimer);
-                cheatResetTimer = setTimeout(() => { cheatAttempts = 0; }, 5000);
-
-                if (cheatAttempts >= 3) {
-                    vid.pause(); 
-                    isSystemSeeking = true;
-
-                    let penaltyTime = Math.max(0, maxTime - 60);
-                    vid.currentTime = penaltyTime;
-                    maxTime = penaltyTime; 
-                    
-                    const localKey = `${DB_KEY}${currentUser.username}_time_${activeVid.id}`;
-                    localStorage.setItem(localKey, penaltyTime);
-                    localStorage.setItem('forced_penalty_' + activeVid.id, '1');
-                    
-                    RankSystem.savePosition(activeVid.id, penaltyTime, true); 
-                    
-                    cheatAttempts = 0; 
-                    alert("⚠️ هشدار امنیتی!\nبه دلیل تلاش مکرر برای رد کردن فیلم، ۶۰ ثانیه جریمه شدید و به عقب برگشتید.");
-                    
-                    showSyncLoading();
-                    setTimeout(() => { 
-                        hideSyncLoading();
-                        isSystemSeeking = false; 
-                    }, 3000);
-                    return; 
-                }
-
-                if (vid.currentTime > maxTime + 3) {
-                    vid.currentTime = maxTime;
-                    document.getElementById('cheatAlert').innerText = "⛔ جلو زدن مجاز نیست (فرجه: ۳ ثانیه)";
-                    document.getElementById('cheatAlert').style.display = 'block';
-                    setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 3000);
-                }
-            }
-        });
     </script>
 </body>
 </html>
