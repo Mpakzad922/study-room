@@ -1,11 +1,12 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه نهایی و هماهنگ)
+// 🎮 فایل هسته: rank.js (نسخه امن و پایدار V2)
 // ********************************************
 
-const REPORT_WEBAPP_URL = "https://chamran-api.liara.run";
+// تذکر: API_URL باید در فایل HTML تعریف شده باشد. اگر نبود، پیش‌فرض استفاده می‌شود.
+const SERVER_URL = (typeof API_URL !== 'undefined') ? API_URL : "https://chamran-api.liara.run"; 
 
 const RankSystem = {
-    // لیست مقام‌ها (صرفاً جهت نمایش آفلاین، محاسبه اصلی با سرور است)
+    // لیست مقام‌ها (صرفاً جهت نمایش، محاسبه اصلی با سرور است)
     ranks: [
         { min: 0, title: "🐣 نوآموز" },
         { min: 500, title: "🛡️ محافظ" },
@@ -20,16 +21,12 @@ const RankSystem = {
     // مقداردهی اولیه با داده‌های سرور
     init: function(serverJson) {
         let serverData = {};
-        
-        // تلاش برای خواندن جیسون سرور
         if(serverJson && serverJson !== "{}") {
             try { 
                 serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson; 
-            } catch(e) { 
-                console.error("Server JSON Error", e); 
-            }
+            } catch(e) { console.error("JSON Error", e); }
             
-            // جایگزینی مستقیم داده‌ها (سرور اولویت دارد)
+            // جایگزینی مستقیم داده‌ها (سرور همیشه درست می‌گوید)
             this.data = {
                 xp: serverData.xp || 0,
                 rank: serverData.rank || "🐣 نوآموز",
@@ -38,11 +35,8 @@ const RankSystem = {
                 exams: serverData.exams || {}
             };
         }
-
-        // بروزرسانی ظاهر برنامه
         this.updateUI();
-        
-        // اگر تابع رندر لیست وجود داشت (در صفحه اصلی)، لیست را آپدیت کن
+        // اگر در صفحه لیست دروس باشیم، لیست را رفرش کن تا تیک‌های سبز بیاید
         setTimeout(() => { 
             if(typeof renderList === 'function') renderList(); 
         }, 500);
@@ -53,9 +47,7 @@ const RankSystem = {
         const sId = id.toString();
         this.data.playback[sId] = Math.floor(time);
         
-        // استراتژی ذخیره:
-        // هر 5 ثانیه یکبار یا اگر دستور اجباری (forceSync) آمد، به صف ارسال بفرست
-        // (عدد 5 باعث می‌شود ادمین دقیق‌تر ببیند)
+        // استراتژی ذخیره: هر 5 ثانیه یکبار یا اگر دستور اجباری آمد
         if(Math.floor(time) % 5 === 0 || forceSync) {
              SyncManager.addToQueue('sync', null, forceSync); 
         }
@@ -66,39 +58,14 @@ const RankSystem = {
         return this.data.playback[id.toString()] || 0; 
     },
 
-    // افزودن امتیاز
+    // 🔒 تغییر مهم: درخواست امتیاز فقط از طریق سرور
+    // این تابع قبلاً امتیاز می‌داد، الان فقط به کاربر پیام می‌دهد
+    // عملیات واقعی توسط SyncManager با اکشن claim_reward انجام می‌شود
     addXP: function(amount, reason, uniqueId) {
-        const sId = uniqueId.toString();
-        
-        // اگر قبلاً بابت این آیتم امتیاز گرفته، دوباره نده
-        if(uniqueId && this.data.completed.includes(sId)) return;
-        
-        this.data.xp += amount;
-        if(uniqueId) { this.data.completed.push(sId); }
-        
-        // نکته مهم: محاسبه رنک اصلی وقتی به سرور رسید انجام می‌شود
-        // اینجا فقط برای خوشحالی کاربر بصورت محلی آپدیت می‌کنیم
-        this.checkRankUpLocal(); 
-        this.updateUI(); 
-        
-        // ارسال فوری گزارش به سرور
-        SyncManager.addToQueue('report', { 
-            lesson: reason, 
-            status: 'کسب امتیاز / تکمیل', 
-            details: `مجموع XP: ${this.data.xp}`, 
-            device: this.getDevice() 
-        });
-    },
-
-    // محاسبه محلی رنک (فقط برای نمایش آنی، تا قبل از سینک سرور)
-    checkRankUpLocal: function() {
-        let currentRankTitle = this.ranks[0].title;
-        for (let i = this.ranks.length - 1; i >= 0; i--) {
-            if (this.data.xp >= this.ranks[i].min) { currentRankTitle = this.ranks[i].title; break; }
-        }
-        if(this.data.rank !== currentRankTitle) {
-            this.data.rank = currentRankTitle;
-        }
+        console.log("Requesting XP from server...");
+        // اینجا امتیاز محلی اضافه نمی‌کنیم! منتظر سرور می‌مانیم.
+        // فقط برای UX شاید لازم باشد پیامی نشان دهیم، اما در دیزاین جدید
+        // پیام‌ها در بخش‌های دیگر هندل شده‌اند.
     },
 
     updateUI: function() {
@@ -117,44 +84,64 @@ const RankSystem = {
 };
 
 // ********************************************
-// 📡 مدیر همگام‌سازی (Sync Manager)
+// 📡 مدیر همگام‌سازی ضد گلوله (Bulletproof Sync)
 // ********************************************
 const SyncManager = {
     queue: [], 
     username: null, 
     password: null,
+    isSyncing: false,
 
     init: function(user, pass) {
         this.username = user; 
         this.password = pass;
-        // بازیابی صف قبلی از حافظه
+        // 💾 بازیابی صف از دیسک (مهم برای زمانی که کاربر مرورگر را بسته)
         this.queue = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
+        
         this.processQueue();
         
-        // تلاش برای ارسال صف هر 5 ثانیه
+        // تلاش دوره‌ای برای ارسال (اگر اینترنت قطع و وصل شد)
         setInterval(() => this.processQueue(), 5000);
+        
+        // لیسنر وضعیت آنلاین/آفلاین
+        window.addEventListener('online', () => this.processQueue());
+        window.addEventListener('offline', () => this.updateOfflineBadge());
     },
 
     addToQueue: function(action, logData = null, forcePlayback = false) {
+        // برای claim_reward پارامترهای خاصی داریم که در logData می‌آید
+        // باید آنها را استخراج کنیم و در سطح بدنه درخواست بگذاریم
+        let extraParams = {};
+        if (action === 'claim_reward' && logData) {
+            extraParams = { ...logData }; // کپی پارامترها (reward_type, reward_id, exam_score)
+        }
+
         const item = {
             action: action, 
             username: this.username, 
             password: this.password,
             jsonData: JSON.stringify(RankSystem.data), // همیشه آخرین وضعیت دیتا را بفرست
-            logData: logData, 
+            logData: logData, // این فقط برای لاگ است
             timestamp: Date.now(),
-            force_playback: forcePlayback 
+            force_playback: forcePlayback,
+            ...extraParams // پارامترهای اضافه مثل پاداش
         };
 
-        // بهینه‌سازی هوشمند: اگر آیتم قبلی هم sync بود، آن را آپدیت کن تا صف شلوغ نشود
-        // مگر اینکه فورس باشد (مثل جریمه)
-        if(action === 'sync' && !forcePlayback && this.queue.length > 0 && this.queue[this.queue.length-1].action === 'sync') {
-             this.queue[this.queue.length-1] = item;
+        // ✅ بهینه‌سازی هوشمند: ادغام درخواست‌های تکراری Sync
+        // اگر درخواست قبلی sync بود و این هم sync است، قبلی را آپدیت کن (جلوگیری از اسپم)
+        // اما درخواست‌های مهم مثل claim_reward یا report نباید ادغام شوند
+        if(action === 'sync' && !forcePlayback && this.queue.length > 0) {
+             const lastItem = this.queue[this.queue.length-1];
+             if (lastItem.action === 'sync') {
+                 this.queue[this.queue.length-1] = item; // جایگزینی با دیتای جدیدتر
+             } else {
+                 this.queue.push(item);
+             }
         } else {
              this.queue.push(item);
         }
         
-        this.saveQueue(); 
+        this.saveQueue(); // 💾 ذخیره فوری در دیسک
         this.processQueue();
     },
 
@@ -168,12 +155,12 @@ const SyncManager = {
         if(badge) {
             if(this.queue.length > 0 && !navigator.onLine) { 
                 badge.style.display = 'block'; 
-                badge.innerText = `📡 در انتظار اتصال... (${this.queue.length})`; 
+                badge.innerText = `📡 در انتظار اینترنت... (${this.queue.length})`; 
                 badge.style.background = "#c0392b"; 
             } else if (this.queue.length > 0 && navigator.onLine) {
                 badge.style.display = 'block'; 
                 badge.innerText = `🔄 در حال ارسال...`; 
-                badge.style.background = "#e67e22";
+                badge.style.background = "#f39c12";
             } else { 
                 badge.style.display = 'none'; 
             }
@@ -181,16 +168,20 @@ const SyncManager = {
     },
 
     processQueue: function() {
-        if(this.queue.length === 0 || !navigator.onLine) {
+        if(this.queue.length === 0 || !navigator.onLine || this.isSyncing) {
             this.updateOfflineBadge();
             return;
         }
 
-        const item = this.queue[0];
-        // آپدیت دیتا به آخرین لحظه قبل از ارسال
-        item.jsonData = JSON.stringify(RankSystem.data); 
+        this.isSyncing = true;
+        const item = this.queue[0]; // گرفتن اولین آیتم
         
-        fetch(REPORT_WEBAPP_URL, {
+        // قبل از ارسال، مطمئن می‌شویم آخرین وضعیت دیتا را دارد
+        if(item.action === 'sync') {
+            item.jsonData = JSON.stringify(RankSystem.data); 
+        }
+        
+        fetch(SERVER_URL, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(item)
@@ -198,14 +189,48 @@ const SyncManager = {
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
+                // ✅ موفقیت
                 this.queue.shift(); // حذف از صف
                 this.saveQueue();
+                
+                // اگر سرور دیتای جدید فرستاد (مثلاً بعد از گرفتن پاداش)، آپدیت کن
+                if (data.serverData) {
+                    console.log("Server data received & updated.");
+                    RankSystem.init(data.serverData);
+                    
+                    // ذخیره کردشال (Credential) جدید در لوکال استوریج (چون XP عوض شده)
+                    const creds = JSON.parse(localStorage.getItem('chamran_db_vfinal_creds') || "{}");
+                    creds.jsonData = data.serverData;
+                    localStorage.setItem('chamran_db_vfinal_creds', JSON.stringify(creds));
+                    
+                    // اگر پیام پاداش بود
+                    if (data.added && data.added > 0) {
+                        alert(`🎉 تبریک! ${data.added} امتیاز از سرور دریافت شد.`);
+                    }
+                }
+
                 // اگر باز هم چیزی در صف هست، سریع بعدی را بفرست
-                if(this.queue.length > 0) setTimeout(() => this.processQueue(), 200);
+                this.isSyncing = false;
+                if(this.queue.length > 0) setTimeout(() => this.processQueue(), 100);
+            } else {
+                // خطای منطقی سرور (مثلاً یوزر بن شده)
+                console.error("Server Logic Error:", data.message);
+                if(data.message && data.message.includes('مسدود')) {
+                    alert("⛔ حساب شما مسدود شده است.");
+                    this.queue = []; // خالی کردن صف چون فایده ندارد
+                    this.saveQueue();
+                } else {
+                    // سایر خطاها: حذف کن که گیر نکند
+                    this.queue.shift();
+                    this.saveQueue();
+                }
+                this.isSyncing = false;
             }
         })
         .catch(err => {
-            console.log("Sync Error (Retrying later)", err);
+            // ❌ خطای شبکه: در صف نگه دار و بعداً تلاش کن
+            console.log("Network Error (Retrying later)", err);
+            this.isSyncing = false;
             this.updateOfflineBadge();
         });
     }
