@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سالن امتحانات چمران</title>
+    <title>سالن امتحانات چمران (نسخه امن)</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
         body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; user-select: none; }
@@ -42,10 +42,6 @@
 
         /* انیمیشن آتش بازی */
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none; }
-        
-        /* انیمیشن ارتقا رنک */
-        .rank-up-anim { animation: bounce 1s infinite alternate; color: #f1c40f; text-shadow: 0 0 10px #f39c12; }
-        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
 <body>
@@ -56,6 +52,9 @@
         <div style="font-size: 3rem; margin-bottom: 10px;">📝</div>
         <h3 id="welcomeText">سالن امتحانات</h3>
         <p style="font-size: 0.9rem; color: #777;">آزمون مورد نظر را انتخاب کنید:</p>
+        <div id="resumeAlert" style="display:none; background:#fff3cd; color:#856404; padding:10px; border-radius:10px; margin-bottom:10px; font-size:0.9rem;">
+            ⚠️ یک آزمون ناتمام دارید! در حال بازگشت...
+        </div>
         <div id="examList"></div>
         <div id="loading">⏳ در حال دریافت آزمون‌ها...</div>
         <div id="errorBox"></div>
@@ -87,29 +86,19 @@
         <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
         <div class="stat-row"><span>⚪ بدون پاسخ:</span><span id="statEmpty">0</span></div>
         
-        <div id="xpRewardMsg" style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 1rem; font-weight: bold; display:none; border: 2px solid #ffeeba;">
-            🎉 جایزه عملکرد عالی: +<span id="xpAmount">0</span> امتیاز!
-        </div>
-
-        <div id="rankUpMsg" style="background: linear-gradient(45deg, #8e44ad, #9b59b6); color: white; padding: 15px; border-radius: 12px; margin-top: 10px; font-size: 1.1rem; font-weight: bold; display:none; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);">
-            👑 تبریک! مقام شما ارتقا یافت!
-        </div>
-
-        <div id="saveMsg" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem;">
-            نتیجه در سرور ثبت شد. ✅
-        </div>
-        <div id="offlineMsg" class="offline-notice">
-            ⚠️ اینترنت قطع است! نمره ذخیره شد و به محض اتصال ارسال می‌شود.
+        <div id="xpRewardMsg" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 0.9rem; font-weight: bold; display:none; border: 2px solid #c3e6cb;">
+            درخواست ثبت نمره و پاداش به سرور ارسال شد. 📡
         </div>
 
         <button class="btn btn-back" onclick="goToHome()">بازگشت به کلاس</button>
     </div>
 
-    <script src="rank.js" onerror="alert('خطا: فایل rank.js یافت نشد! لطفا بررسی کنید.')"></script>
+    <script src="rank.js"></script>
 
     <script>
-        const API_URL = "https://chamran-api.liara.run";
+        const API_URL = "https://chamran-api.liara.run"; // 🔴 آدرس نهایی سرور خودت را اینجا بزن
         const DB_KEY = "chamran_db_vfinal_"; 
+        const EXAM_STATE_KEY = "active_exam_state_v2"; // کلید ذخیره وضعیت آزمون
 
         function toPersianNum(n) {
             if (n === undefined || n === null) return "";
@@ -126,6 +115,7 @@
         let timeRemaining = 0;
         let isExamActive = false;
 
+        // --- 1. احراز هویت و بررسی وضعیت قبلی ---
         function initAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
             if(!savedUser) { alert("لطفا ابتدا وارد کلاس شوید!"); window.location.href = 'index.html'; return; }
@@ -139,45 +129,81 @@
                     RankSystem.init(currentUser.jsonData);
                     performSilentSync(currentUser.username, currentUser.password);
                 }
+
+                // 🌟 چک کردن اگر آزمونی ناتمام مانده (ضد رفرش)
+                checkActiveSession();
+
             } catch(e) {
                 localStorage.removeItem(DB_KEY + 'creds');
                 window.location.href = 'index.html';
             }
         }
 
+        function checkActiveSession() {
+            const savedState = localStorage.getItem(EXAM_STATE_KEY);
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    // محاسبه زمان باقی‌مانده واقعی
+                    const elapsedSeconds = Math.floor((Date.now() - state.startTime) / 1000);
+                    const realRemaining = state.duration - elapsedSeconds;
+
+                    if (realRemaining <= 0) {
+                        // زمان تمام شده در حالی که کاربر نبوده
+                        currentExamId = state.id;
+                        currentQuestions = state.questions;
+                        userAnswers = state.answers;
+                        localStorage.removeItem(EXAM_STATE_KEY); // پاک کردن وضعیت
+                        alert("⏰ زمان آزمون در غیاب شما به پایان رسید!");
+                        finishExamLogic(true); // پایان اجباری
+                    } else {
+                        // بازیابی آزمون
+                        document.getElementById('resumeAlert').style.display = 'block';
+                        setTimeout(() => {
+                            currentExamId = state.id;
+                            currentQuestions = state.questions; // سوالات هم از حافظه می آیند (مهم برای آفلاین)
+                            userAnswers = state.answers || {};
+                            currentQIndex = 0; // برای راحتی از اول نشان میدهیم ولی جوابها هست
+                            timeRemaining = realRemaining;
+                            restoreExamUI();
+                        }, 1000);
+                    }
+                } catch(e) {
+                    localStorage.removeItem(EXAM_STATE_KEY);
+                }
+            } else {
+                loadExams(); // اگر آزمونی نبود، لیست را بگیر
+            }
+        }
+
         async function performSilentSync(u, p) {
+            if(!navigator.onLine) return;
             try {
-                if(!navigator.onLine) return;
-                const res = await fetch(API_URL, {
-                    method: 'POST', headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: 'login', username: u, password: p })
-                });
+                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: u, password: p }) });
                 const data = await res.json();
                 if(data.status === 'success') {
                     RankSystem.init(data.jsonData); 
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
-                    renderExamList(); 
+                    if(!document.getElementById('resumeAlert').style.display === 'block') renderExamList(); 
                 }
-            } catch(e) { console.log("Sync failed in exam page"); }
+            } catch(e) {}
         }
         
         initAuth();
 
+        // --- 2. دریافت و نمایش لیست ---
         async function loadExams() {
             try {
-                const res = await fetch(API_URL, {
-                    method: 'POST', headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: 'get_exams' })
-                });
+                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
                 const result = await res.json();
                 if(result.status === 'success') { processExamsData(result.data); } 
-                else { throw new Error("خطا در دریافت لیست آزمون‌ها"); }
+                else { throw new Error("خطا در دریافت"); }
             } catch(e) {
                 document.getElementById('loading').style.display = 'none';
                 const errBox = document.getElementById('errorBox');
                 errBox.style.display = 'block';
-                errBox.innerHTML = `❌ <b>مشکل در دریافت آزمون:</b><br>${e.message}`;
+                errBox.innerHTML = `❌ عدم ارتباط با سرور.<br>لطفا اینترنت را بررسی کنید.`;
             }
         }
         
@@ -232,6 +258,7 @@
             if(confirm(`آیا آماده شروع آزمون "${exam.title}" هستید؟`)) startExam(id);
         }
 
+        // --- 3. منطق شروع و ذخیره وضعیت ---
         function startExam(id) {
             isExamActive = true; 
             currentExamId = id;
@@ -240,24 +267,47 @@
             currentQIndex = 0;
             userAnswers = {};
             
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('examArea').style.display = 'block';
-            startTimer();
-            showQuestion();
+            // 💾 ذخیره وضعیت اولیه در لوکال استوریج (ضد رفرش)
+            const state = {
+                id: id,
+                startTime: Date.now(),
+                duration: timeRemaining,
+                questions: currentQuestions, // کپی سوالات برای آفلاین شدن
+                answers: {}
+            };
+            localStorage.setItem(EXAM_STATE_KEY, JSON.stringify(state));
+
+            restoreExamUI();
             
             SyncManager.addToQueue('report', {
                 lesson: `آزمون: ${examsMap[id].title}`, status: 'شروع آزمون', details: 'ورود به جلسه امتحان', device: getDeviceInfo()
             });
         }
 
+        function restoreExamUI() {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('examArea').style.display = 'block';
+            startTimer();
+            showQuestion();
+        }
+
         function startTimer() {
             const timerDiv = document.getElementById('timer');
+            if(timerInterval) clearInterval(timerInterval);
+            
             timerInterval = setInterval(() => {
                 timeRemaining--;
                 const m = Math.floor(timeRemaining / 60);
                 const s = timeRemaining % 60;
                 timerDiv.innerText = toPersianNum(`${m}:${s < 10 ? '0'+s : s}`);
-                if(timeRemaining <= 0) { clearInterval(timerInterval); alert("⏰ زمان تمام شد!"); finishExam(); }
+                
+                // ذخیره زمان نیست چون با timestamp اولیه محاسبه میکنیم
+                // اما اگر زمان تمام شد:
+                if(timeRemaining <= 0) { 
+                    clearInterval(timerInterval); 
+                    alert("⏰ زمان تمام شد!"); 
+                    finishExam(); 
+                }
             }, 1000);
         }
 
@@ -298,17 +348,31 @@
             document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
             el.classList.add('selected');
             userAnswers[currentQIndex] = optIndex;
+
+            // 💾 آپدیت لحظه‌ای جواب در حافظه (ضد کرش)
+            const saved = localStorage.getItem(EXAM_STATE_KEY);
+            if(saved) {
+                const state = JSON.parse(saved);
+                state.answers = userAnswers;
+                localStorage.setItem(EXAM_STATE_KEY, JSON.stringify(state));
+            }
         }
         function nextQuestion() { currentQIndex++; showQuestion(); }
 
-        function finishExam() {
+        // --- 4. پایان آزمون و ارسال امن ---
+        function finishExam() { finishExamLogic(false); }
+
+        function finishExamLogic(isForced) {
             clearInterval(timerInterval);
             isExamActive = false; 
             
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
             
-            localStorage.setItem('taken_' + currentExamId, 'done');
+            // پاک کردن وضعیت موقت چون تمام شد
+            localStorage.removeItem(EXAM_STATE_KEY);
+            // ثبت محلی که دوباره نتواند شرکت کند
+            if(currentExamId) localStorage.setItem('taken_' + currentExamId, 'done');
 
             let correct = 0; let wrong = 0; let empty = 0;
             currentQuestions.forEach((q, idx) => {
@@ -320,81 +384,41 @@
             const score = (correct / currentQuestions.length) * 20; 
             const finalScore = parseFloat(score.toFixed(1));
             
-            document.getElementById('reportTitle').innerText = examsMap[currentExamId].title;
+            // نمایش نتایج
+            document.getElementById('reportTitle').innerText = isForced ? "آزمون (پایان خودکار)" : "نتیجه نهایی";
             document.getElementById('scoreNum').innerText = toPersianNum(finalScore);
             document.getElementById('statCorrect').innerText = toPersianNum(correct);
             document.getElementById('statWrong').innerText = toPersianNum(wrong);
             document.getElementById('statEmpty').innerText = toPersianNum(empty);
             
-            // ذخیره در داده‌های لوکال (برای سینک شدن)
-            if(!RankSystem.data.exams) RankSystem.data.exams = {};
-            RankSystem.data.exams[currentExamId] = finalScore;
-            
-            // محاسبه جایزه
-            let xpBonus = 0;
-            if(finalScore >= 20) xpBonus = 300;
-            else if(finalScore >= 17) xpBonus = 100;
-            else if(finalScore >= 10) xpBonus = 20;
-            
-            const oldRank = RankSystem.data.rank;
+            // 🎉 جشن اگر نمره خوب بود
+            if(finalScore >= 10) launchConfetti();
 
-            if(xpBonus > 0) {
-                RankSystem.addXP(xpBonus, `پاداش آزمون: ${examsMap[currentExamId].title}`, 'exam_'+currentExamId);
-                document.getElementById('xpRewardMsg').style.display = 'block';
-                document.getElementById('xpAmount').innerText = toPersianNum(xpBonus);
-                launchConfetti(); // 🎉 جشن برای نمره خوب
-            } else {
-                // اگر امتیاز نگرفت، فقط نمره را سینک کن
-                SyncManager.addToQueue('sync', null);
-            }
-
-            // بررسی ارتقا رنک
-            if(RankSystem.data.rank !== oldRank) {
-                document.getElementById('rankUpMsg').style.display = 'block';
-                document.getElementById('rankUpMsg').classList.add('rank-up-anim');
-                launchConfetti(); // 🎉 جشن مضاعف
-            }
-
-            const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | نمره: ${toPersianNum(finalScore)}`;
-            SyncManager.addToQueue('report', {
-                lesson: `آزمون: ${examsMap[currentExamId].title}`,
-                status: `پایان آزمون (نمره: ${toPersianNum(finalScore)})`,
-                details: detailLog,
-                device: getDeviceInfo()
-            });
+            // 🔒 ارسال امن به سرور (Claim Reward)
+            // به جای اینکه خودمان XP بدهیم، به سرور میگوییم این نمره را گرفتیم
+            document.getElementById('xpRewardMsg').style.display = 'block';
             
-            if(!navigator.onLine) {
-                document.getElementById('saveMsg').style.display = 'none';
-                document.getElementById('offlineMsg').style.display = 'block';
+            if(typeof SyncManager !== 'undefined') {
+                SyncManager.addToQueue('claim_reward', {
+                    reward_type: 'exam',
+                    reward_id: currentExamId,
+                    exam_score: finalScore
+                });
+                
+                // یک گزارش هم می‌فرستیم
+                SyncManager.addToQueue('report', {
+                    lesson: `آزمون: ${currentExamId}`,
+                    status: `پایان آزمون (نمره: ${finalScore})`,
+                    details: `درست:${correct} | غلط:${wrong}`,
+                    device: getDeviceInfo()
+                });
             }
         }
         
-        function goToHome() {
-            isExamActive = false;
-            window.location.href = 'index.html';
-        }
-
+        function goToHome() { window.location.href = 'index.html'; }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
         
-        document.addEventListener("visibilitychange", () => {
-            if(isExamActive && document.visibilityState === 'hidden') {
-                SyncManager.addToQueue('report', {
-                    lesson: `آزمون: ${examsMap[currentExamId].title}`, status: '⚠️ رفتار مشکوک', details: 'خروج از صفحه', device: getDeviceInfo()
-                });
-            }
-        });
-
-        window.addEventListener('beforeunload', (e) => {
-            if (isExamActive) {
-                let q = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
-                q.push({
-                    lesson: `آزمون: ${examsMap[currentExamId].title}`, status: "⛔ فرار از آزمون", details: "بستن مرورگر هنگام امتحان", device: getDeviceInfo(), timestamp: Date.now()
-                });
-                localStorage.setItem('chamran_queue_vfinal', JSON.stringify(q));
-            }
-        });
-
-        // --- Confetti Logic ---
+        // --- Confetti ---
         function launchConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             canvas.style.display = 'block';
@@ -403,11 +427,7 @@
             canvas.height = window.innerHeight;
             const particles = [];
             for(let i=0; i<150; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height,
-                    vx: Math.random() * 4 - 2, vy: Math.random() * 4 + 2,
-                    c: `hsl(${Math.random()*360}, 100%, 50%)`
-                });
+                particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height-canvas.height, vx: Math.random()*4-2, vy: Math.random()*4+2, c: `hsl(${Math.random()*360},100%,50%)` });
             }
             function draw() {
                 ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -421,8 +441,6 @@
             }
             draw();
         }
-
-        loadExams();
     </script>
 </body>
 </html>
