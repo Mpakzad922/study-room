@@ -269,17 +269,45 @@
 
     // --- (1) لیست کاربران ---
     function renderUsersList(users) {
+        users.sort((a, b) => {
+        const timeA = a.ts || 0; 
+        const timeB = b.ts || 0;
+        return timeB - timeA; 
+      });
         const container = document.getElementById('usersList');
         container.innerHTML = '';
         if(users.length === 0) { container.innerHTML = '<p style="text-align:center;color:#777">کاربری یافت نشد.</p>'; return; }
         users.forEach(u => {
-            const div = document.createElement('div');
-            div.className = 'card user-card';
-            div.onclick = () => showUserDetail(u);
-            const role = u.parsedData.rank || 'نوآموز';
-            div.innerHTML = `<div><div style="font-weight:bold; color:#2c3e50;">${u.n}</div><div style="font-size:0.8rem; color:#7f8c8d;">${u.u}</div></div><div style="text-align:left;"><span class="badge bg-blue">${u.parsedData.xp||0} XP</span><div style="font-size:0.7rem; color:#95a5a6;">${role}</div></div>`;
-            container.appendChild(div);
-        });
+        const div = document.createElement('div');
+        div.className = 'card user-card';
+        div.onclick = () => showUserDetail(u);
+
+        // --- بخش محاسبات رنگ (که در مرحله قبل اضافه کردی) ---
+        const lastTime = u.ts || 0;
+        const now = Date.now();
+        const diffMins = (now - lastTime) / 1000 / 60;
+        let dotColor = '#bdc3c7'; // خاکستری
+        if (diffMins < 5) dotColor = '#2ecc71'; // سبز
+        else if (diffMins < 60) dotColor = '#f1c40f'; // زرد
+        // --------------------------------------------------
+
+        // --- بخش ظاهر کارت (همین تکه 3 که الان گفتم) ---
+        div.innerHTML = `
+            <div>
+                <div style="font-weight:bold; color:#2c3e50;">
+                    <span style="display:inline-block; width:10px; height:10px; background:${dotColor}; border-radius:50%; margin-left:5px;"></span>
+                    ${u.n}
+                </div>
+                <div style="font-size:0.8rem; color:#7f8c8d;">${u.u}</div>
+            </div>
+            <div style="text-align:left;">
+                <span class="badge bg-blue">${u.parsedData.xp || 0} XP</span>
+                <div style="font-size:0.7rem; color:#95a5a6; margin-top:5px;">${u.last || '---'}</div>
+            </div>
+        `;
+        
+        container.appendChild(div);
+    });
     }
     function filterUsers() {
         const q = document.getElementById('searchBox').value.toLowerCase();
