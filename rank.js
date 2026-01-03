@@ -1,34 +1,35 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه آنلاین - بدون کش)
+// 🎮 فایل هسته: rank.js (نسخه هماهنگ با سرور هوشمند)
 // ********************************************
 
 const REPORT_WEBAPP_URL = "https://chamran-api.liara.run";
 
 const RankSystem = {
+    // لیست مقام‌ها (صرفاً جهت نمایش آفلاین، محاسبه اصلی با سرور است)
     ranks: [
-        { min: 0, title: "🐣 نوآموز", color: "#7f8c8d" },
-        { min: 500, title: "🛡️ محافظ", color: "#27ae60" },
-        { min: 1500, title: "⚔️ جنگجو", color: "#2980b9" },
-        { min: 3000, title: "👑 فرمانده", color: "#8e44ad" },
-        { min: 5000, title: "💎 اسطوره", color: "#c0392b" }
+        { min: 0, title: "🐣 نوآموز" },
+        { min: 500, title: "🛡️ محافظ" },
+        { min: 1500, title: "⚔️ جنگجو" },
+        { min: 3000, title: "👑 فرمانده" },
+        { min: 5000, title: "💎 اسطوره" }
     ],
 
-    // داده‌های پیش‌فرض همیشه صفر هستند تا وقتی سرور پرشان کند
+    // داده‌های پیش‌فرض
     data: { xp: 0, rank: "🐣 نوآموز", completed: [], playback: {}, exams: {} },
     
-    // کلید ذخیره‌سازی فقط برای صف آفلاین استفاده می‌شود، نه پروفایل
-    STORAGE_KEY: 'chamran_local_rank_online_only', 
-
+    // مقداردهی اولیه با داده‌های سرور
     init: function(serverJson) {
-        // 🛑 تغییر مهم: حذف کامل خواندن از LocalStorage برای پروفایل
-        // فقط و فقط اگر سرور دیتا داد، آن را قبول کن.
-
         let serverData = {};
+        
+        // تلاش برای خواندن جیسون سرور
         if(serverJson && serverJson !== "{}") {
-            try { serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson; } 
-            catch(e) { console.error("Server JSON Error", e); }
+            try { 
+                serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson; 
+            } catch(e) { 
+                console.error("Server JSON Error", e); 
+            }
             
-            // جایگزینی مستقیم داده‌های سرور
+            // جایگزینی مستقیم داده‌ها (سرور اولویت دارد)
             this.data = {
                 xp: serverData.xp || 0,
                 rank: serverData.rank || "🐣 نوآموز",
@@ -36,45 +37,50 @@ const RankSystem = {
                 playback: serverData.playback || {},
                 exams: serverData.exams || {}
             };
-        } else {
-            // اگر سرور هنوز دیتا نداده، همه چیز صفر بماند (از کش نخوان)
-            this.data = { xp: 0, rank: "🐣 نوآموز", completed: [], playback: {}, exams: {} };
         }
 
-        this.checkRankUp(); 
+        // بروزرسانی ظاهر برنامه
         this.updateUI();
-        setTimeout(() => { if(typeof renderList === 'function') renderList(); }, 500);
+        
+        // اگر تابع رندر لیست وجود داشت (در صفحه اصلی)، لیست را آپدیت کن
+        setTimeout(() => { 
+            if(typeof renderList === 'function') renderList(); 
+        }, 500);
     },
 
-    savePosition: function(id, time, force = false) {
+    // ذخیره موقعیت فیلم (چقدر دیده شده)
+    savePosition: function(id, time, forceSync = false) {
         const sId = id.toString();
-        // فقط در رم (RAM) ذخیره کن که اگر صفحه رفرش شد بپرد (چون خواستید همه چیز از سرور باشد)
-        // اما برای سینک شدن با سرور، در آبجکت data می‌ریزیم
         this.data.playback[sId] = Math.floor(time);
         
-        // بلافاصله به صف ارسال بفرست
-        if(Math.floor(time) % 10 === 0 || force) {
-             SyncManager.addToQueue('sync', null, force); 
+        // استراتژی ذخیره:
+        // هر 10 ثانیه یکبار یا اگر دستور اجباری (forceSync) آمد، به صف ارسال بفرست
+        if(Math.floor(time) % 10 === 0 || forceSync) {
+             SyncManager.addToQueue('sync', null, forceSync); 
         }
     },
 
+    // دریافت آخرین موقعیت دیده شده
     getLastPosition: function(id) { 
-        // 🛑 فقط از دیتایی که الان از سرور آمده بخوان
         return this.data.playback[id.toString()] || 0; 
     },
 
+    // افزودن امتیاز
     addXP: function(amount, reason, uniqueId) {
         const sId = uniqueId.toString();
+        
+        // اگر قبلاً بابت این آیتم امتیاز گرفته، دوباره نده
         if(uniqueId && this.data.completed.includes(sId)) return;
         
         this.data.xp += amount;
         if(uniqueId) { this.data.completed.push(sId); }
         
-        this.checkRankUp();
+        // نکته مهم: اینجا ما فقط عدد را زیاد می‌کنیم تا کاربر خوشحال شود
+        // اما محاسبه رنک اصلی وقتی به سرور رسید انجام می‌شود
+        this.checkRankUpLocal(); 
         this.updateUI(); 
-        this.showToast(`⭐ +${amount} امتیاز: ${reason}`); 
         
-        // بلافاصله به سرور بگو
+        // ارسال فوری گزارش به سرور
         SyncManager.addToQueue('report', { 
             lesson: reason, 
             status: 'کسب امتیاز / تکمیل', 
@@ -83,49 +89,50 @@ const RankSystem = {
         });
     },
 
-    saveToDisk: function() { 
-        // 🛑 این تابع را غیرفعال می‌کنیم تا پروفایل در کش ذخیره نشود
-        // (خالی می‌گذاریم)
-    },
-
-    checkRankUp: function() {
+    // محاسبه محلی رنک (فقط برای نمایش آنی، تا قبل از سینک سرور)
+    checkRankUpLocal: function() {
         let currentRankTitle = this.ranks[0].title;
         for (let i = this.ranks.length - 1; i >= 0; i--) {
             if (this.data.xp >= this.ranks[i].min) { currentRankTitle = this.ranks[i].title; break; }
         }
         if(this.data.rank !== currentRankTitle) {
             this.data.rank = currentRankTitle;
+            // اینجا می‌توانیم بعداً انیمیشن ارتقا رنک را صدا بزنیم
         }
     },
 
     updateUI: function() {
         const xpEl = document.getElementById('user-xp');
         const rankEl = document.getElementById('user-rank');
-        if(xpEl) xpEl.innerText = `${toPersianNum(this.data.xp)} XP`;
+        if(xpEl) xpEl.innerText = `${this.toPersianNum(this.data.xp)} XP`;
         if(rankEl) rankEl.innerText = this.data.rank;
     },
     
-    showToast: function(msg) {
-        const t = document.createElement('div');
-        t.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#2c3e50; color:#f1c40f; padding:10px 20px; border-radius:30px; z-index:9000; box-shadow:0 5px 15px rgba(0,0,0,0.3); font-weight:bold; animation: fadeInOut 3s forwards; font-family:'Vazirmatn'; font-size:0.9rem;";
-        t.innerText = msg;
-        document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
-    },
-
-    getDevice: function() { return /Mobile|Android/i.test(navigator.userAgent) ? "موبایل" : "کامپیوتر"; }
+    getDevice: function() { return /Mobile|Android/i.test(navigator.userAgent) ? "موبایل" : "کامپیوتر"; },
+    
+    toPersianNum: function(n) { 
+        if(n === undefined || n === null) return "۰"; 
+        return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); 
+    }
 };
 
-// SyncManager همان قبلی بماند چون برای صف ارسال (Send) لازم است
-// فقط در دریافت (Receive) دیگر چیزی را در LocalStorage ذخیره نمی‌کنیم.
+// ********************************************
+// 📡 مدیر همگام‌سازی (Sync Manager)
+// ********************************************
 const SyncManager = {
-    queue: [], username: null, password: null,
+    queue: [], 
+    username: null, 
+    password: null,
 
     init: function(user, pass) {
-        this.username = user; this.password = pass;
+        this.username = user; 
+        this.password = pass;
+        // بازیابی صف قبلی از حافظه (اگر اینترنت قطع بوده و کاربر خارج شده)
         this.queue = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
         this.processQueue();
-        setInterval(() => this.processQueue(), 10000);
+        
+        // تلاش برای ارسال صف هر 5 ثانیه
+        setInterval(() => this.processQueue(), 5000);
     },
 
     addToQueue: function(action, logData = null, forcePlayback = false) {
@@ -133,36 +140,54 @@ const SyncManager = {
             action: action, 
             username: this.username, 
             password: this.password,
-            jsonData: JSON.stringify(RankSystem.data),
+            jsonData: JSON.stringify(RankSystem.data), // همیشه آخرین وضعیت دیتا را بفرست
             logData: logData, 
             timestamp: Date.now(),
             force_playback: forcePlayback 
         };
+
+        // بهینه‌سازی: اگر آیتم قبلی هم sync بود و این هم sync است، قبلی را آپدیت کن (جلوگیری از ترافیک الکی)
+        // مگر اینکه forcePlayback باشد (مثل جریمه) که باید حتما جداگانه برود
         if(action === 'sync' && !forcePlayback && this.queue.length > 0 && this.queue[this.queue.length-1].action === 'sync') {
              this.queue[this.queue.length-1] = item;
         } else {
              this.queue.push(item);
         }
+        
         this.saveQueue(); 
         this.processQueue();
     },
 
     saveQueue: function() {
-        // صف ارسال را نگه می‌داریم تا اگر نت قطع شد، نمرات نپرد
         localStorage.setItem('chamran_queue_vfinal', JSON.stringify(this.queue));
+        this.updateOfflineBadge();
+    },
+
+    updateOfflineBadge: function() {
         const badge = document.getElementById('offlineBadge');
         if(badge) {
-            if(this.queue.length > 0) { 
+            if(this.queue.length > 0 && !navigator.onLine) { 
                 badge.style.display = 'block'; 
-                badge.innerText = `📡 ارسال به سرور...`; 
-                badge.style.background = navigator.onLine ? "#e67e22" : "#c0392b"; 
-            } else { badge.style.display = 'none'; }
+                badge.innerText = `📡 در انتظار اتصال... (${this.queue.length})`; 
+                badge.style.background = "#c0392b"; 
+            } else if (this.queue.length > 0 && navigator.onLine) {
+                badge.style.display = 'block'; 
+                badge.innerText = `🔄 در حال ارسال...`; 
+                badge.style.background = "#e67e22";
+            } else { 
+                badge.style.display = 'none'; 
+            }
         }
     },
 
     processQueue: function() {
-        if(this.queue.length === 0 || !navigator.onLine) return;
+        if(this.queue.length === 0 || !navigator.onLine) {
+            this.updateOfflineBadge();
+            return;
+        }
+
         const item = this.queue[0];
+        // آپدیت دیتا به آخرین لحظه قبل از ارسال
         item.jsonData = JSON.stringify(RankSystem.data); 
         
         fetch(REPORT_WEBAPP_URL, {
@@ -173,16 +198,15 @@ const SyncManager = {
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                this.queue.shift(); 
+                this.queue.shift(); // حذف از صف
                 this.saveQueue();
+                // اگر باز هم چیزی در صف هست، سریع بعدی را بفرست
                 if(this.queue.length > 0) setTimeout(() => this.processQueue(), 200);
             }
         })
-        .catch(err => console.log("Sync Error", err));
+        .catch(err => {
+            console.log("Sync Error (Retrying later)", err);
+            this.updateOfflineBadge();
+        });
     }
 };
-
-function toPersianNum(n) { 
-    if(n === undefined || n === null) return "۰"; 
-    return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); 
-}
