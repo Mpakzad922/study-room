@@ -183,20 +183,26 @@
     </div>
 
 <script>
+    // 🔴 آدرس سرور (لیارا)
     const API_URL = "https://chamran-api.liara.run";
-    const ADMIN_TOKEN_KEY = "chamran_admin_2025_secret_key";
+    
+    // ✅ متغیر خالی برای رمز (امنیت ۱۰۰٪)
+    // این متغیر با تایپ کردن شما پر می‌شود
+    let ADMIN_TOKEN = ""; 
     
     let ALL_USERS = [];
     let META_EXAMS = {};    
     let META_LESSONS = {}; 
 
     function doLogin() {
-        const pass = document.getElementById('adminPass').value;
-        if(pass === ADMIN_TOKEN_KEY) {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
+        const pass = document.getElementById('adminPass').value.trim();
+        if(pass.length > 0) {
+            // ذخیره موقت رمز در متغیر
+            ADMIN_TOKEN = pass;
+            
+            // تست اتصال با رمز وارد شده
             fetchData();
-        } else { alert("❌ رمز عبور اشتباه است"); }
+        } else { alert("❌ لطفاً رمز عبور را وارد کنید"); }
     }
 
     async function fetchData() {
@@ -204,10 +210,15 @@
         try {
             const res = await fetch(API_URL, {
                 method: 'POST', headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: 'get_all_users', admin_token: ADMIN_TOKEN_KEY })
+                body: JSON.stringify({ action: 'get_all_users', admin_token: ADMIN_TOKEN })
             });
             const data = await res.json();
+            
             if(data.status === 'success') {
+                // اگر رمز درست بود، پنل را باز کن
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                
                 ALL_USERS = data.users.map(u => {
                     try { u.parsedData = JSON.parse(u.json); } catch(e) { u.parsedData = {}; }
                     return u;
@@ -218,7 +229,14 @@
                 }
                 processData();
                 document.getElementById('lastUpdate').innerText = 'بروزرسانی: ' + new Date().toLocaleTimeString('fa-IR');
-            } else { alert("خطا: " + data.message); }
+            } else { 
+                // اگر رمز غلط بود
+                alert("⛔ " + data.message); 
+                // اگر قبلا وارد شده بودیم و الان غلط شد (مثلا سرور ریست شد)، برگرد به لاگین
+                if(document.getElementById('mainApp').style.display === 'block') {
+                    location.reload();
+                }
+            }
         } catch(e) { console.error(e); alert("❌ خطای ارتباط با سرور"); }
         document.getElementById('loadingBox').style.display = 'none';
     }
@@ -344,7 +362,7 @@
     function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
 
     async function performAdminOp(type, username, itemId) {
-        let body = { action: 'admin_op', admin_token: ADMIN_TOKEN_KEY, target_user: username, op_type: type };
+        let body = { action: 'admin_op', admin_token: ADMIN_TOKEN, target_user: username, op_type: type };
         if(type === 'give_xp') { const amt = prompt("چقدر امتیاز اضافه شود؟"); if(!amt) return; body.amount = amt; } 
         else if(type === 'take_xp') { 
             const amt = prompt("چقدر امتیاز کسر شود؟"); 
@@ -460,7 +478,7 @@
     async function callDeleteApi(actionName, payload) {
         document.getElementById('loadingBox').style.display = 'flex';
         try {
-            payload.action = actionName; payload.admin_token = ADMIN_TOKEN_KEY;
+            payload.action = actionName; payload.admin_token = ADMIN_TOKEN;
             const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
             if((await res.json()).status === 'success') { alert("✅ حذف شد."); fetchData(); } else alert("خطا");
         } catch(e) { alert("خطا"); }
@@ -507,7 +525,7 @@
                 method: 'POST', headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     action: 'update_user', 
-                    admin_token: ADMIN_TOKEN_KEY, 
+                    admin_token: ADMIN_TOKEN, 
                     target_user: originalUsername, 
                     new_n: newName,
                     new_u: newUser, 
@@ -541,7 +559,7 @@
         try {
             const res = await fetch(API_URL, {
                 method: 'POST', headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: 'create_user', admin_token: ADMIN_TOKEN_KEY, new_u: u, new_p: p, new_n: n })
+                body: JSON.stringify({ action: 'create_user', admin_token: ADMIN_TOKEN, new_u: u, new_p: p, new_n: n })
             });
             const d = await res.json();
             if(d.status === 'success') { 
