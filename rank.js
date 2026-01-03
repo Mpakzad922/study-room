@@ -48,7 +48,7 @@ const RankSystem = {
         this.data.playback[sId] = Math.floor(time);
         
         // استراتژی ذخیره: هر 5 ثانیه یکبار یا اگر دستور اجباری آمد
-        if(Math.floor(time) % 5 === 0 || forceSync) {
+        if(Math.floor(time) % 15 === 0 || forceSync) {
              SyncManager.addToQueue('sync', null, forceSync); 
         }
     },
