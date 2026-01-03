@@ -7,31 +7,50 @@
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
         body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; user-select: none; }
-        .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; }
+        .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; animation: fadeIn 0.5s; position: relative; z-index: 10; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         h2 { color: #2c3e50; margin: 0 0 15px 0; }
         .btn { border: none; padding: 12px 20px; border-radius: 12px; font-size: 1.1rem; cursor: pointer; font-family: 'Vazirmatn'; width: 100%; transition: 0.2s; margin-top: 10px; font-weight: bold; }
         .btn-start { background: #8e44ad; color: white; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3); }
         .btn-next { background: #2980b9; color: white; }
         .btn-finish { background: #27ae60; color: white; display: none; }
         .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
-        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; }
+        
+        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .exam-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
         .exam-info h4 { margin: 0; color: #4a148c; }
         .exam-info small { color: #7f8c8d; font-size: 0.85rem; }
+        
         #examArea, #reportCard { display: none; }
         .timer-box { font-size: 1.8rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 5px 15px; border-radius: 10px; display: inline-block; margin-bottom: 10px; min-width: 80px; font-family: 'Vazirmatn'; }
+        
         .option { display: flex; align-items: center; justify-content: start; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; min-height: 40px; font-size: 1.1rem; }
         .option:hover { background: #e8f5e9; border-color: #a5d6a7; }
-        .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; }
+        .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; transform: scale(1.02); }
         .option img { max-width: 100%; max-height: 150px; border-radius: 8px; margin: 5px 0; border: 1px solid #ddd; }
+        
         #questionImage { width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px; margin-bottom: 15px; display: none; border: 1px solid #eee; }
-        .score-circle { width: 130px; height: 130px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2.5rem; color: #2ecc71; font-weight: bold; font-family: 'Vazirmatn'; }
+        
+        .score-circle { width: 130px; height: 130px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2.5rem; color: #2ecc71; font-weight: bold; font-family: 'Vazirmatn'; transition: transform 0.5s; }
         .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 1rem; }
+        
         #loading { color: #7f8c8d; margin-top: 20px; font-weight: bold; }
         #errorBox { color: red; background: #fee; padding: 10px; border-radius: 10px; display: none; margin-top: 10px; font-size: 0.9rem; text-align: right; direction: ltr; }
         .offline-notice { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem; display:none; }
+
+        /* انیمیشن آتش بازی */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none; }
+        
+        /* انیمیشن ارتقا رنک */
+        .rank-up-anim { animation: bounce 1s infinite alternate; color: #f1c40f; text-shadow: 0 0 10px #f39c12; }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.1); } }
     </style>
 </head>
 <body>
+
+    <canvas id="confetti-canvas"></canvas>
 
     <div id="lobby" class="card">
         <div style="font-size: 3rem; margin-bottom: 10px;">📝</div>
@@ -56,15 +75,24 @@
     </div>
 
     <div id="reportCard" class="card">
-        <h2>📊 کارنامه آزمون</h2>
-        <h3 id="reportTitle" style="color:#8e44ad;"></h3>
-        <div class="score-circle"><span id="scoreNum">0</span><span style="font-size:0.8rem; margin-top:-5px;">نمره</span></div>
+        <h2 style="color:#8e44ad;">📊 کارنامه آزمون</h2>
+        <h3 id="reportTitle" style="color:#555; margin-bottom:20px;"></h3>
+        
+        <div class="score-circle" id="scoreCircle">
+            <span id="scoreNum">0</span>
+            <span style="font-size:0.8rem; margin-top:-5px;">نمره</span>
+        </div>
+        
         <div class="stat-row"><span>✅ پاسخ صحیح:</span><span id="statCorrect">0</span></div>
         <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
         <div class="stat-row"><span>⚪ بدون پاسخ:</span><span id="statEmpty">0</span></div>
         
-        <div id="xpRewardMsg" style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; font-weight: bold; display:none;">
+        <div id="xpRewardMsg" style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 1rem; font-weight: bold; display:none; border: 2px solid #ffeeba;">
             🎉 جایزه عملکرد عالی: +<span id="xpAmount">0</span> امتیاز!
+        </div>
+
+        <div id="rankUpMsg" style="background: linear-gradient(45deg, #8e44ad, #9b59b6); color: white; padding: 15px; border-radius: 12px; margin-top: 10px; font-size: 1.1rem; font-weight: bold; display:none; box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);">
+            👑 تبریک! مقام شما ارتقا یافت!
         </div>
 
         <div id="saveMsg" style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem;">
@@ -80,9 +108,6 @@
     <script src="rank.js" onerror="alert('خطا: فایل rank.js یافت نشد! لطفا بررسی کنید.')"></script>
 
     <script>
-        // ***********************************************
-        // تنظیمات (اتصال به سرور لیارا)
-        // ***********************************************
         const API_URL = "https://chamran-api.liara.run";
         const DB_KEY = "chamran_db_vfinal_"; 
 
@@ -124,13 +149,11 @@
             try {
                 if(!navigator.onLine) return;
                 const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
+                    method: 'POST', headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: 'login', username: u, password: p })
                 });
                 const data = await res.json();
                 if(data.status === 'success') {
-                    console.log("📥 Sync Exam Data:", data.jsonData);
                     RankSystem.init(data.jsonData); 
                     const userData = { username: u, password: p, displayName: data.displayName, jsonData: data.jsonData };
                     localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData));
@@ -143,23 +166,14 @@
 
         async function loadExams() {
             try {
-                // درخواست لیست آزمون‌ها از سرور لیارا
                 const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
+                    method: 'POST', headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: 'get_exams' })
                 });
-
-                if(!res.ok) throw new Error(`خطای شبکه: ${res.status}`);
                 const result = await res.json();
-                
-                if(result.status === 'success') {
-                    processExamsData(result.data);
-                } else {
-                    throw new Error("خطا در دریافت لیست آزمون‌ها");
-                }
+                if(result.status === 'success') { processExamsData(result.data); } 
+                else { throw new Error("خطا در دریافت لیست آزمون‌ها"); }
             } catch(e) {
-                console.error(e);
                 document.getElementById('loading').style.display = 'none';
                 const errBox = document.getElementById('errorBox');
                 errBox.style.display = 'block';
@@ -170,13 +184,7 @@
         function processExamsData(serverExams) {
             examsMap = {};
             serverExams.forEach(ex => {
-                examsMap[ex.id] = {
-                    id: ex.id,
-                    title: ex.title,
-                    duration: ex.time, // در دیتابیس time ذخیره شده
-                    password: ex.pass, // در دیتابیس pass ذخیره شده
-                    questions: ex.questions // آرایه سوالات
-                };
+                examsMap[ex.id] = { id: ex.id, title: ex.title, duration: ex.time, password: ex.pass, questions: ex.questions };
             });
             renderExamList();
         }
@@ -187,15 +195,11 @@
             list.innerHTML = "";
             const ids = Object.keys(examsMap);
             
-            if(ids.length === 0) {
-                list.innerHTML = "<p style='color:red'>آزمونی یافت نشد.</p>";
-                return;
-            }
+            if(ids.length === 0) { list.innerHTML = "<p style='color:red'>آزمونی یافت نشد.</p>"; return; }
 
             ids.forEach(id => {
                 const exam = examsMap[id];
                 const takenCloud = RankSystem.data.exams && RankSystem.data.exams[id];
-                // فقط اگر در دیتای سرور (RankSystem.data.exams) نمره داشت، قفل شود
                 const isLocked = (takenCloud !== undefined);
                 const scoreDisplay = takenCloud !== undefined ? takenCloud : 'ثبت شده';
                 
@@ -220,7 +224,6 @@
             if((RankSystem.data.exams && RankSystem.data.exams[id] !== undefined) || localStorage.getItem('taken_' + id)) {
                 return alert("⛔ شما قبلاً در این آزمون شرکت کرده‌اید.");
             }
-            
             const exam = examsMap[id];
             if(exam.password && exam.password.length > 0) {
                 const userPass = prompt("🔒 رمز آزمون را وارد کنید:");
@@ -243,10 +246,7 @@
             showQuestion();
             
             SyncManager.addToQueue('report', {
-                lesson: `آزمون: ${examsMap[id].title}`,
-                status: 'شروع آزمون',
-                details: 'ورود به جلسه امتحان',
-                device: getDeviceInfo()
+                lesson: `آزمون: ${examsMap[id].title}`, status: 'شروع آزمون', details: 'ورود به جلسه امتحان', device: getDeviceInfo()
             });
         }
 
@@ -276,17 +276,11 @@
             
             const qImg = document.getElementById('questionImage');
             if(q.img && q.img.length > 5) {
-                qImg.src = q.img;
-                qImg.style.display = 'block';
-            } else {
-                qImg.style.display = 'none';
-            }
+                qImg.src = q.img; qImg.style.display = 'block';
+            } else { qImg.style.display = 'none'; }
 
             const cont = document.getElementById('optionsContainer');
             cont.innerHTML = "";
-            
-            // در سرور جدید آپشن‌ها در آرایه options هستند
-            // [o1, o2, o3, o4]
             q.options.forEach((opt, idx) => {
                 const div = document.createElement('div');
                 div.className = 'option';
@@ -319,11 +313,7 @@
             let correct = 0; let wrong = 0; let empty = 0;
             currentQuestions.forEach((q, idx) => {
                 const ans = userAnswers[idx];
-                // در سرور جدید فیلد صحیح c نام دارد ولی ممکن است correct هم باشد
-                // با توجه به index.js ما c را نداریم، احتمالا در ذخیره سازی اسمش correct باشد یا c
-                // بررسی میکنیم: اگر q.c وجود داشت از آن استفاده کن، وگرنه q.correct
                 const correctOption = q.c || q.correct;
-                
                 if(!ans) empty++; else if(ans == correctOption) correct++; else wrong++;
             });
             
@@ -336,23 +326,36 @@
             document.getElementById('statWrong').innerText = toPersianNum(wrong);
             document.getElementById('statEmpty').innerText = toPersianNum(empty);
             
+            // ذخیره در داده‌های لوکال (برای سینک شدن)
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             RankSystem.data.exams[currentExamId] = finalScore;
             
+            // محاسبه جایزه
             let xpBonus = 0;
             if(finalScore >= 20) xpBonus = 300;
             else if(finalScore >= 17) xpBonus = 100;
+            else if(finalScore >= 10) xpBonus = 20;
             
+            const oldRank = RankSystem.data.rank;
+
             if(xpBonus > 0) {
                 RankSystem.addXP(xpBonus, `پاداش آزمون: ${examsMap[currentExamId].title}`, 'exam_'+currentExamId);
                 document.getElementById('xpRewardMsg').style.display = 'block';
                 document.getElementById('xpAmount').innerText = toPersianNum(xpBonus);
+                launchConfetti(); // 🎉 جشن برای نمره خوب
             } else {
-                RankSystem.saveToDisk();
+                // اگر امتیاز نگرفت، فقط نمره را سینک کن
+                SyncManager.addToQueue('sync', null);
+            }
+
+            // بررسی ارتقا رنک
+            if(RankSystem.data.rank !== oldRank) {
+                document.getElementById('rankUpMsg').style.display = 'block';
+                document.getElementById('rankUpMsg').classList.add('rank-up-anim');
+                launchConfetti(); // 🎉 جشن مضاعف
             }
 
             const detailLog = `✅ درست: ${toPersianNum(correct)} | ❌ غلط: ${toPersianNum(wrong)} | نمره: ${toPersianNum(finalScore)}`;
-            
             SyncManager.addToQueue('report', {
                 lesson: `آزمون: ${examsMap[currentExamId].title}`,
                 status: `پایان آزمون (نمره: ${toPersianNum(finalScore)})`,
@@ -371,38 +374,55 @@
             window.location.href = 'index.html';
         }
 
-        function getDeviceInfo() {
-            return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC";
-        }
+        function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
         
         document.addEventListener("visibilitychange", () => {
             if(isExamActive && document.visibilityState === 'hidden') {
                 SyncManager.addToQueue('report', {
-                    lesson: `آزمون: ${examsMap[currentExamId].title}`,
-                    status: '⚠️ رفتار مشکوک',
-                    details: 'خروج از صفحه (Minimizing/Tab Switch)',
-                    device: getDeviceInfo()
+                    lesson: `آزمون: ${examsMap[currentExamId].title}`, status: '⚠️ رفتار مشکوک', details: 'خروج از صفحه', device: getDeviceInfo()
                 });
             }
         });
 
         window.addEventListener('beforeunload', (e) => {
             if (isExamActive) {
-                const data = {
-                    lesson: `آزمون: ${examsMap[currentExamId].title}`,
-                    status: "⛔ فرار از آزمون",
-                    details: "بستن مرورگر هنگام امتحان",
-                    device: getDeviceInfo(),
-                    timestamp: Date.now()
-                };
                 let q = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
-                q.push(data);
+                q.push({
+                    lesson: `آزمون: ${examsMap[currentExamId].title}`, status: "⛔ فرار از آزمون", details: "بستن مرورگر هنگام امتحان", device: getDeviceInfo(), timestamp: Date.now()
+                });
                 localStorage.setItem('chamran_queue_vfinal', JSON.stringify(q));
             }
         });
+
+        // --- Confetti Logic ---
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.style.display = 'block';
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const particles = [];
+            for(let i=0; i<150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height,
+                    vx: Math.random() * 4 - 2, vy: Math.random() * 4 + 2,
+                    c: `hsl(${Math.random()*360}, 100%, 50%)`
+                });
+            }
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                let active = false;
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if(p.y < canvas.height) active = true;
+                    ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+                });
+                if(active) requestAnimationFrame(draw); else canvas.style.display = 'none';
+            }
+            draw();
+        }
 
         loadExams();
     </script>
 </body>
 </html>
-
