@@ -22,11 +22,26 @@
         .btn-back { background: #ecf0f1; color: #2c3e50; }
         
         /* لیست آزمون‌ها */
-        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 16px; padding: 15px; margin-bottom: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 16px; padding: 15px; margin-bottom: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; position: relative; overflow: hidden; }
         .exam-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .exam-item.locked { background: #f8f9fa; border-color: #bdc3c7; opacity: 0.9; }
         .exam-info h4 { margin: 0; color: #4a148c; font-size: 1rem; }
         .exam-info small { color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 5px; }
+        
+        /* تیک جدید */
+        .new-badge { position: absolute; top: 0; left: 0; background: var(--danger); color: white; font-size: 0.7rem; padding: 3px 10px; border-radius: 0 0 10px 0; animation: pulse 1.5s infinite; font-weight: bold; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        /* صفحه راهنما (Intro) */
+        .intro-box { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 1px solid #ddd; border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .intro-stat { display: flex; justify-content: space-around; margin: 20px 0; }
+        .istat { text-align: center; }
+        .istat-val { font-size: 1.5rem; font-weight: bold; color: var(--primary); display: block; }
+        .istat-label { font-size: 0.8rem; color: #7f8c8d; }
+        
+        .reward-list { text-align: right; background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #ccc; }
+        .reward-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .reward-row:last-child { margin-bottom: 0; }
         
         /* تایمر */
         .timer-box { font-size: 1.4rem; font-weight: bold; color: var(--danger); background: #fadbd8; padding: 5px 15px; border-radius: 12px; display: inline-block; }
@@ -89,6 +104,43 @@
         <div id="resumeAlert" style="display:none; background:#fff3cd; color:#856404; padding:12px; border-radius:12px; margin-bottom:15px; border:1px solid #ffeeba;">⚠️ آزمون ناتمام بازیابی شد!</div>
         <div id="examList"></div>
         <button class="btn btn-back" onclick="window.location.href='index.html'">🏠 بازگشت به کلاس</button>
+    </div>
+
+    <div id="introCard" class="card" style="display:none;">
+        <h2 style="color:var(--primary); margin-bottom:10px;" id="introTitle">عنوان آزمون</h2>
+        
+        <div class="intro-box">
+            <div class="intro-stat">
+                <div class="istat">
+                    <span class="istat-val" id="introQCount">0</span>
+                    <span class="istat-label">سوال</span>
+                </div>
+                <div class="istat">
+                    <span class="istat-val" id="introTime">0</span>
+                    <span class="istat-label">دقیقه زمان</span>
+                </div>
+            </div>
+            <p style="font-size:0.9rem; color:#e67e22; font-weight:bold;">⚠️ نکته مهم: امکان بازگشت به سوال قبل وجود ندارد!</p>
+        </div>
+
+        <div class="reward-list">
+            <h4 style="margin:0 0 10px 0; color:#27ae60;">🎁 جوایز این آزمون:</h4>
+            <div class="reward-row">
+                <span>💎 عالی (نمره ۲۰)</span>
+                <span style="font-weight:bold; color:#8e44ad;" id="rewEx">300 XP</span>
+            </div>
+            <div class="reward-row">
+                <span>🥇 خیلی خوب (۱۷ تا ۱۹)</span>
+                <span style="font-weight:bold; color:#27ae60;" id="rewVg">100 XP</span>
+            </div>
+            <div class="reward-row">
+                <span>🙂 خوب (۱۰ تا ۱۶)</span>
+                <span style="font-weight:bold; color:#2980b9;" id="rewNr">20 XP</span>
+            </div>
+        </div>
+
+        <button class="btn btn-start" onclick="startExamNow()" style="padding:15px; font-size:1.2rem;">🚀 شروع آزمون</button>
+        <button class="btn btn-back" onclick="location.reload()">انصراف</button>
     </div>
 
     <div id="examArea" class="card" style="display: none;">
@@ -166,7 +218,6 @@
                 currentUser = JSON.parse(savedUser);
                 document.getElementById('welcomeText').innerText = `سلام ${currentUser.displayName}`;
                 
-                // مقداردهی اولیه هسته با دیتای لوکال (برای سرعت)
                 if(currentUser.jsonData) RankSystem.init(currentUser.jsonData);
                 SyncManager.init(currentUser.username, currentUser.password);
                 
@@ -181,7 +232,6 @@
 
         async function performFullSync() {
             try {
-                // دریافت لیست آزمون‌ها با پارامتر زمان برای جلوگیری از کش
                 const resExams = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
                 const examData = await resExams.json();
 
@@ -189,13 +239,12 @@
                     processExams(examData.data || []);
                     checkActiveSession();
                     
-                    // آپدیت دیتای کاربر در پس‌زمینه
                     fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) })
                     .then(r=>r.json()).then(d=>{
                          if(d.status==='success') {
                              RankSystem.init(d.jsonData);
                              updateLocalCreds(d.jsonData);
-                             processExams(examData.data || []); // رفرش وضعیت (برای سینک شدن نمرات)
+                             processExams(examData.data || []); 
                          }
                     });
                 }
@@ -220,7 +269,6 @@
             list.reverse().forEach(ex => {
                 examsMap[ex.id] = ex;
                 const sId = String(ex.id);
-                // خواندن مستقیم از هسته (RankSystem) که شامل دیتای لوکال است
                 const userExams = RankSystem.data.exams || {};
                 const score = userExams[sId]; 
                 const isTaken = (score !== undefined);
@@ -229,7 +277,6 @@
                 div.className = `exam-item ${isTaken ? 'locked' : ''}`;
                 
                 if(isTaken) {
-                    // تبدیل نمره به توصیفی برای لیست ورودی
                     let quality = "";
                     if(score >= 20) quality = "💎 فوق‌العاده";
                     else if(score >= 17) quality = "🥇 خیلی خوب";
@@ -249,18 +296,42 @@
                             <button onclick="goToReview('${sId}')" style="background:none; border:none; color:#2980b9; cursor:pointer; font-size:0.8rem; padding:0; margin-top:5px;">🔍 مرور پاسخ‌ها</button>
                         </div>`;
                 } else {
+                    // نمایش برچسب جدید
+                    const newBadge = ex.is_new ? '<div class="new-badge">جدید 🔥</div>' : '';
                     div.innerHTML = `
+                        ${newBadge}
                         <div><h4>${ex.title}</h4><small>${ex.time} دقیقه</small></div>
-                        <button class="btn-start" style="padding:5px 15px; border-radius:8px; border:none; cursor:pointer;" onclick="checkStart('${ex.id}')">شروع</button>`;
+                        <button class="btn-start" style="padding:5px 15px; border-radius:8px; border:none; cursor:pointer;" onclick="showIntro('${ex.id}')">شروع</button>`;
                 }
                 container.appendChild(div);
             });
         }
 
-        function checkStart(id) {
+        // --- منطق راهنما (Intro) ---
+        function showIntro(id) {
             const ex = examsMap[id];
+            if(!ex) return;
             if(ex.pass && prompt("رمز:") !== ex.pass) return alert("رمز اشتباه");
-            startExam(id);
+            
+            // پر کردن اطلاعات راهنما
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('introCard').style.display = 'block';
+            
+            document.getElementById('introTitle').innerText = ex.title;
+            document.getElementById('introQCount').innerText = toPersianNum(ex.questions.length);
+            document.getElementById('introTime').innerText = toPersianNum(ex.time);
+            
+            // نمایش جوایز متغیر
+            const r = ex.rewards || { excellent: 300, good: 100, normal: 20 };
+            document.getElementById('rewEx').innerText = `${r.excellent} XP`;
+            document.getElementById('rewVg').innerText = `${r.good} XP`;
+            document.getElementById('rewNr').innerText = `${r.normal} XP`;
+            
+            currentExamId = id; // ذخیره موقت
+        }
+
+        function startExamNow() {
+            startExam(currentExamId);
         }
 
         function startExam(id) {
@@ -296,6 +367,7 @@
 
         function showExamUI(time) {
             document.getElementById('lobby').style.display = 'none';
+            document.getElementById('introCard').style.display = 'none';
             document.getElementById('examArea').style.display = 'block';
             let t = time;
             timerInterval = setInterval(() => {
@@ -351,26 +423,23 @@
 
             const score = parseFloat(((correct / currentQuestions.length) * 20).toFixed(1));
 
-            // 🚀 ذخیره آنی در حافظه قبل از ارسال به سرور
+            // ذخیره آنی
             const sId = String(currentExamId);
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             if(!RankSystem.data.exam_details) RankSystem.data.exam_details = {};
             
             RankSystem.data.exams[sId] = score;
-            // ذخیره تاریخ شمسی تقریبی برای نمایش فوری (سرور بعداً دقیقش را می‌فرستد)
-            const today = new Date().toLocaleDateString('fa-IR');
             RankSystem.data.exam_details[sId] = {
-                score: score, wrong: wrongIndices, answers: userAnswers, date: today
+                score: score, wrong: wrongIndices, answers: userAnswers, date: new Date().toLocaleDateString('fa-IR')
             };
-            RankSystem.saveToLocal(); // ذخیره در localStorage
+            RankSystem.saveToLocal(); 
 
-            // ارسال به صف همگام‌سازی
+            // ارسال به صف
             SyncManager.addToQueue('claim_reward', {
                 reward_type: 'exam', reward_id: currentExamId, exam_score: score,
                 wrong_list: wrongIndices, user_answers: userAnswers
             });
             
-            // آپدیت حافظه کاربری برای اطمینان
             updateLocalCreds(JSON.stringify(RankSystem.data));
 
             showReportCard(score, correct, wrong, empty);
@@ -386,7 +455,6 @@
 
             setTimeout(() => { document.getElementById('scorePointer').style.left = ((score/20)*100) + '%'; }, 200);
 
-            // محاسبه توصیفی برای کارنامه
             let qText = "", color = "";
             if(score >= 20) { qText = "💎 فوق‌العاده"; color="#8e44ad"; launchConfetti(); }
             else if(score >= 17) { qText = "🥇 خیلی خوب"; color="#2ecc71"; }
@@ -415,12 +483,10 @@
             document.getElementById('loading').innerText = "بازیابی پاسخ‌برگ...";
             document.getElementById('loading').style.display = 'block';
 
-            // اول لوکال را چک کن (برای سرعت و حل مشکل پیدا نشد)
             const sTargetId = String(targetId);
             let myData = (RankSystem.data.exam_details || {})[sTargetId];
             
             let examList = [];
-            // دریافت لیست آزمون‌ها (بدون کش)
             try {
                 const resEx = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
                 const eData = await resEx.json();
@@ -429,7 +495,6 @@
 
             const exam = examList.find(e => String(e.id) === sTargetId);
 
-            // اگر دیتای لوکال نبود، از سرور بگیر (برای وقتی با دستگاه دیگر وارد شده)
             if(!myData) {
                 try {
                      const resUser = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) });
@@ -446,7 +511,6 @@
                 document.getElementById('reviewArea').style.display = 'block';
                 renderReview(exam.questions, myData.answers || {});
             } else { 
-                // اگر آزمون در سرور هم نبود (یعنی پاک شده)
                 alert("اطلاعات آزمون یافت نشد (احتمالاً حذف شده است)."); 
                 window.location.href = 'azmoon.html'; 
             }
@@ -480,12 +544,10 @@
         function optIsImage(s) { return s.startsWith('http') || s.startsWith('/uploads'); }
         function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').style.display = 'flex'; }
         
-        // تابع کانفتی با زمان بیشتر (هماهنگ با rank.js)
         function launchConfetti() {
             if(typeof window.launchConfetti === 'function') {
-                window.launchConfetti(); // استفاده از تابع اصلی در rank.js
+                window.launchConfetti();
             } else {
-                // فال‌بک (اگر rank.js لود نشد)
                 const c = document.getElementById('confetti-canvas');
                 const ctx = c.getContext('2d');
                 c.width = window.innerWidth; c.height = window.innerHeight;
@@ -494,6 +556,8 @@
                 draw(); setTimeout(()=>c.style.display='none',3000);
             }
         }
+
+        function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
 
         window.onload = init;
     </script>
