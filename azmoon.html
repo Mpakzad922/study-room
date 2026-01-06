@@ -136,13 +136,13 @@
         </div>
 
         <button id="btnReview" class="btn" style="background:#f39c12; color:white; display:none;" onclick="startReviewMode()">🔍 تحلیل و مرور پاسخ‌ها</button>
-        <button class="btn btn-back" onclick="window.location.href='index.html'">🏠 بازگشت به خانه</button>
+        <button class="btn btn-back" onclick="window.location.href='index.html'">🏠 بازگشت به کلاس</button>
     </div>
 
     <div id="reviewArea" class="card" style="display: none; text-align: right;">
         <h3 style="text-align:center; color:#e67e22; border-bottom:2px solid #eee; padding-bottom:10px;">🧐 تحلیل آزمون</h3>
         <div id="reviewContent"></div>
-        <button class="btn btn-back" onclick="location.reload()">پایان مرور</button>
+        <button class="btn btn-back" onclick="window.location.href='index.html'">🏠 پایان مرور و بازگشت</button>
     </div>
 
     <script src="rank.js"></script>
@@ -166,7 +166,7 @@
                 currentUser = JSON.parse(savedUser);
                 document.getElementById('welcomeText').innerText = `سلام ${currentUser.displayName}`;
                 
-                // 🚀 FIX: مقداردهی اولیه هسته با دیتای لوکال
+                // مقداردهی اولیه هسته با دیتای لوکال (برای سرعت)
                 if(currentUser.jsonData) RankSystem.init(currentUser.jsonData);
                 SyncManager.init(currentUser.username, currentUser.password);
                 
@@ -181,7 +181,7 @@
 
         async function performFullSync() {
             try {
-                // درخواست لیست آزمون‌ها با پارامتر زمان برای جلوگیری از کش
+                // دریافت لیست آزمون‌ها با پارامتر زمان برای جلوگیری از کش
                 const resExams = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
                 const examData = await resExams.json();
 
@@ -195,7 +195,7 @@
                          if(d.status==='success') {
                              RankSystem.init(d.jsonData);
                              updateLocalCreds(d.jsonData);
-                             processExams(examData.data || []); // رفرش وضعیت دکمه‌ها (تیک سبز)
+                             processExams(examData.data || []); // رفرش وضعیت (برای سینک شدن نمرات)
                          }
                     });
                 }
@@ -220,7 +220,7 @@
             list.reverse().forEach(ex => {
                 examsMap[ex.id] = ex;
                 const sId = String(ex.id);
-                // خواندن مستقیم از هسته (که شامل دیتای لوکال است)
+                // خواندن مستقیم از هسته (RankSystem) که شامل دیتای لوکال است
                 const userExams = RankSystem.data.exams || {};
                 const score = userExams[sId]; 
                 const isTaken = (score !== undefined);
@@ -229,12 +229,13 @@
                 div.className = `exam-item ${isTaken ? 'locked' : ''}`;
                 
                 if(isTaken) {
+                    // تبدیل نمره به توصیفی برای لیست ورودی
                     let quality = "";
-                    if(score >= 20) quality = "فوق‌العاده";
-                    else if(score >= 16) quality = "خیلی خوب";
-                    else if(score >= 12) quality = "خوب";
-                    else if(score >= 8) quality = "قابل قبول";
-                    else quality = "نیاز به تلاش";
+                    if(score >= 20) quality = "💎 فوق‌العاده";
+                    else if(score >= 17) quality = "🥇 خیلی خوب";
+                    else if(score >= 12) quality = "🙂 خوب";
+                    else if(score >= 8) quality = "⚠️ قابل قبول";
+                    else quality = "⛔ نیاز به تلاش";
 
                     const color = score >= 15 ? '#27ae60' : (score < 10 ? '#c0392b' : '#f39c12');
                     
@@ -273,7 +274,6 @@
             SyncManager.addToQueue('report', { lesson: `آزمون: ${ex.title}`, status: 'شروع' });
         }
         
-        // بازگردانی سشن قبلی (اگر مرورگر بسته شده باشد)
         function checkActiveSession() {
             const saved = localStorage.getItem(EXAM_STATE_KEY);
             if(saved) {
@@ -285,7 +285,7 @@
                             currentExamId = sess.id;
                             const ex = examsMap[sess.id];
                             currentQuestions = ex.questions;
-                            userAnswers = {}; // متاسفانه پاسخ‌های قبلی اینجا نیستند (مگر اینکه ذخیره کنیم که پیچیده می‌شود)
+                            userAnswers = {}; 
                             currentQIndex = 0;
                             showExamUI(remaining);
                         } else { localStorage.removeItem(EXAM_STATE_KEY); }
@@ -351,14 +351,16 @@
 
             const score = parseFloat(((correct / currentQuestions.length) * 20).toFixed(1));
 
-            // 🚀 FIX: ذخیره آنی در حافظه قبل از ارسال
+            // 🚀 ذخیره آنی در حافظه قبل از ارسال به سرور
             const sId = String(currentExamId);
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             if(!RankSystem.data.exam_details) RankSystem.data.exam_details = {};
             
             RankSystem.data.exams[sId] = score;
+            // ذخیره تاریخ شمسی تقریبی برای نمایش فوری (سرور بعداً دقیقش را می‌فرستد)
+            const today = new Date().toLocaleDateString('fa-IR');
             RankSystem.data.exam_details[sId] = {
-                score: score, wrong: wrongIndices, answers: userAnswers, date: new Date().toLocaleDateString('fa-IR')
+                score: score, wrong: wrongIndices, answers: userAnswers, date: today
             };
             RankSystem.saveToLocal(); // ذخیره در localStorage
 
@@ -384,9 +386,10 @@
 
             setTimeout(() => { document.getElementById('scorePointer').style.left = ((score/20)*100) + '%'; }, 200);
 
+            // محاسبه توصیفی برای کارنامه
             let qText = "", color = "";
             if(score >= 20) { qText = "💎 فوق‌العاده"; color="#8e44ad"; launchConfetti(); }
-            else if(score >= 16) { qText = "🥇 خیلی خوب"; color="#2ecc71"; }
+            else if(score >= 17) { qText = "🥇 خیلی خوب"; color="#2ecc71"; }
             else if(score >= 12) { qText = "🙂 خوب"; color="#2980b9"; }
             else if(score >= 8) { qText = "⚠️ قابل قبول"; color="#f1c40f"; }
             else { qText = "⛔ نیاز به تلاش بیشتر"; color="#c0392b"; }
@@ -412,7 +415,7 @@
             document.getElementById('loading').innerText = "بازیابی پاسخ‌برگ...";
             document.getElementById('loading').style.display = 'block';
 
-            // 🚀 FIX: اول لوکال را چک کن (برای سرعت و حل مشکل پیدا نشد)
+            // اول لوکال را چک کن (برای سرعت و حل مشکل پیدا نشد)
             const sTargetId = String(targetId);
             let myData = (RankSystem.data.exam_details || {})[sTargetId];
             
@@ -443,7 +446,8 @@
                 document.getElementById('reviewArea').style.display = 'block';
                 renderReview(exam.questions, myData.answers || {});
             } else { 
-                alert("اطلاعات آزمون یافت نشد. شاید در دستگاه دیگری آزمون داده‌اید و هنوز همگام‌سازی نشده."); 
+                // اگر آزمون در سرور هم نبود (یعنی پاک شده)
+                alert("اطلاعات آزمون یافت نشد (احتمالاً حذف شده است)."); 
                 window.location.href = 'azmoon.html'; 
             }
         }
@@ -475,13 +479,20 @@
 
         function optIsImage(s) { return s.startsWith('http') || s.startsWith('/uploads'); }
         function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').style.display = 'flex'; }
+        
+        // تابع کانفتی با زمان بیشتر (هماهنگ با rank.js)
         function launchConfetti() {
-            const c = document.getElementById('confetti-canvas');
-            const ctx = c.getContext('2d');
-            c.width = window.innerWidth; c.height = window.innerHeight;
-            const p = Array.from({length:100}, () => ({x:Math.random()*c.width, y:Math.random()*c.height-c.height, c:`hsl(${Math.random()*360},100%,50%)`, v:Math.random()*5+2}));
-            function draw(){ctx.clearRect(0,0,c.width,c.height);p.forEach(k=>{k.y+=k.v;ctx.fillStyle=k.c;ctx.beginPath();ctx.arc(k.x,k.y,5,0,Math.PI*2);ctx.fill();if(k.y>c.height)k.y=0;});requestAnimationFrame(draw);}
-            draw(); setTimeout(()=>c.style.display='none',3000);
+            if(typeof window.launchConfetti === 'function') {
+                window.launchConfetti(); // استفاده از تابع اصلی در rank.js
+            } else {
+                // فال‌بک (اگر rank.js لود نشد)
+                const c = document.getElementById('confetti-canvas');
+                const ctx = c.getContext('2d');
+                c.width = window.innerWidth; c.height = window.innerHeight;
+                const p = Array.from({length:100}, () => ({x:Math.random()*c.width, y:Math.random()*c.height-c.height, c:`hsl(${Math.random()*360},100%,50%)`, v:Math.random()*5+2}));
+                function draw(){ctx.clearRect(0,0,c.width,c.height);p.forEach(k=>{k.y+=k.v;ctx.fillStyle=k.c;ctx.beginPath();ctx.arc(k.x,k.y,5,0,Math.PI*2);ctx.fill();if(k.y>c.height)k.y=0;});requestAnimationFrame(draw);}
+                draw(); setTimeout(()=>c.style.display='none',3000);
+            }
         }
 
         window.onload = init;
