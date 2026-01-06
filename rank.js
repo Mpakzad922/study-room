@@ -1,9 +1,39 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه جراحی شده و پایدار 🏥)
+// 🎮 فایل هسته: rank.js (نسخه نهایی با جلوه‌های ویژه ✨)
 // ********************************************
 
 // 🔴 آدرس سرور 
 const SERVER_URL = (typeof API_URL !== 'undefined') ? API_URL : "https://chamran-api.liara.run"; 
+
+// 🎨 تزریق استایل‌های پاپ‌آپ امتیاز (برای اینکه نیازی به تغییر CSS فایل‌های دیگر نباشد)
+const xpPopupStyle = document.createElement('style');
+xpPopupStyle.innerHTML = `
+    .xp-popup-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); z-index: 10000;
+        display: flex; justify-content: center; align-items: center;
+        opacity: 0; transition: opacity 0.5s; backdrop-filter: blur(8px);
+    }
+    .xp-popup-content {
+        text-align: center; color: white; transform: scale(0.5); 
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .xp-value {
+        font-size: 4rem; font-weight: bold; margin: 0;
+        background: linear-gradient(to bottom, #f1c40f, #e67e22);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 20px rgba(241, 196, 15, 0.8));
+    }
+    .xp-label { 
+        font-size: 1.2rem; letter-spacing: 3px; margin-top: -5px; opacity: 0.9; font-family: sans-serif; text-transform: uppercase;
+    }
+    .xp-gem { 
+        font-size: 2.5rem; margin-top: 15px; display: block; 
+        text-shadow: 0 0 15px #9b59b6; animation: floatGem 2s infinite ease-in-out; 
+    }
+    @keyframes floatGem { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+`;
+document.head.appendChild(xpPopupStyle);
 
 const RankSystem = {
     // لیست مقام‌ها بر اساس XP
@@ -27,8 +57,6 @@ const RankSystem = {
                 serverData = typeof serverJson === 'string' ? JSON.parse(serverJson) : serverJson; 
             } catch(e) { console.error("JSON Error", e); }
             
-            // ادغام هوشمند: اگر دیتای لوکال جدیدتر بود (مثلا همین الان آزمون داده)، آن را نگه دار
-            // اما فعلاً برای جلوگیری از تضاد، سرور را مرجع قرار می‌دهیم و فقط در لحظه آزمون لوکال را آپدیت می‌کنیم.
             this.data = {
                 xp: serverData.xp || 0,
                 gem: serverData.gem || 0,
@@ -36,11 +64,11 @@ const RankSystem = {
                 completed: serverData.completed || [],
                 playback: serverData.playback || {},
                 exams: serverData.exams || {},
-                exam_details: serverData.exam_details || {} // ⭐️ حیاتی برای مرور آزمون
+                exam_details: serverData.exam_details || {} 
             };
         }
         this.updateUI();
-        this.saveToLocal(); // ⭐️ ذخیره نسخه تازه در مرورگر
+        this.saveToLocal(); // ⭐️ حیاتی: ذخیره نسخه تازه در مرورگر
         
         // اگر در صفحه اصلی باشیم، لیست درس‌ها را آپدیت کن
         setTimeout(() => { 
@@ -48,14 +76,14 @@ const RankSystem = {
         }, 500);
     },
 
-    // ⭐️ تابع جدید: ذخیره آنی در حافظه مرورگر (برای رفع مشکل پریدن اطلاعات)
+    // ⭐️ تابع جدید: ذخیره آنی در حافظه مرورگر
     saveToLocal: function() {
         try {
             const key = 'chamran_db_vfinal_creds';
             const saved = localStorage.getItem(key);
             if (saved) {
                 const creds = JSON.parse(saved);
-                creds.jsonData = JSON.stringify(this.data); // آپدیت دیتای جیسون درون کردینال
+                creds.jsonData = JSON.stringify(this.data); // آپدیت دیتای جیسون
                 localStorage.setItem(key, JSON.stringify(creds));
             }
         } catch(e) { console.error("Save Local Error", e); }
@@ -100,7 +128,7 @@ const RankSystem = {
                 if(badge) badge.innerText = data.examTitle || "هنوز آزمونی نیست";
 
                 if(data.data.length === 0) {
-                    wall.innerHTML = '<div style="color:rgba(255,255,255,0.9); font-size:0.9rem; padding:15px; width:100%; text-align:center;">هنوز کسی در این آزمون نمره کامل نگرفته!<br>تو اولین نفر باش 💪</div>';
+                    wall.innerHTML = '<div style="color:rgba(255,255,255,0.9); font-size:0.9rem; padding:15px; width:100%; text-align:center;">هنوز کسی نمره کامل نگرفته!</div>';
                 } else {
                     wall.innerHTML = '';
                     data.data.forEach((u) => {
@@ -123,8 +151,7 @@ const RankSystem = {
             }
         })
         .catch(e => {
-            console.error(e);
-            wall.innerHTML = '<small style="color:rgba(255,255,255,0.7)">خطا در دریافت لیست</small>';
+            wall.innerHTML = '<small style="color:rgba(255,255,255,0.7)">...</small>';
         });
     },
 
@@ -152,6 +179,33 @@ const RankSystem = {
         if(xpEl) xpEl.innerText = `${this.toPersianNum(this.data.xp)} XP`;
         if(gemEl) gemEl.innerText = this.toPersianNum(this.data.gem);
         if(rankEl) rankEl.innerText = this.data.rank;
+    },
+    
+    // ✨ پاپ‌آپ جدید و خیره‌کننده (Creative Popup)
+    showRewardPopup: function(xp, gem) {
+        const div = document.createElement('div');
+        div.className = 'xp-popup-overlay';
+        div.innerHTML = `
+            <div class="xp-popup-content">
+                <div class="xp-value">+${xp}</div>
+                <div class="xp-label">XP GAINED</div>
+                ${gem ? `<div class="xp-gem">+${gem} 💎</div>` : ''}
+            </div>
+        `;
+        document.body.appendChild(div);
+        
+        // پخش انیمیشن ورود
+        requestAnimationFrame(() => {
+            div.style.opacity = '1';
+            div.querySelector('.xp-popup-content').style.transform = 'scale(1)';
+        });
+
+        // پخش انیمیشن خروج بعد از ۳ ثانیه
+        setTimeout(() => {
+            div.style.opacity = '0';
+            div.querySelector('.xp-popup-content').style.transform = 'scale(1.5)'; // افکت محو شدن رو به جلو
+            setTimeout(() => div.remove(), 500);
+        }, 3000);
     },
     
     getDevice: function() { return /Mobile|Android/i.test(navigator.userAgent) ? "موبایل" : "کامپیوتر"; },
@@ -196,7 +250,7 @@ const SyncManager = {
                     score: logData.exam_score,
                     wrong: logData.wrong_list,
                     answers: logData.user_answers,
-                    date: new Date().toLocaleDateString('fa-IR')
+                    date: new Date().toLocaleDateString('fa-IR') // اینجا فقط برای نمایش موقت است، سرور تاریخ دقیق را می‌زند
                 };
                 RankSystem.saveToLocal(); // ذخیره نهایی در مرورگر
             }
@@ -213,6 +267,7 @@ const SyncManager = {
             ...extraParams 
         };
 
+        // جلوگیری از تکرار درخواست‌های sync معمولی در صف
         if(action === 'sync' && !forcePlayback && this.queue.length > 0) {
              const lastItem = this.queue[this.queue.length-1];
              if (lastItem.action === 'sync') {
@@ -278,11 +333,12 @@ const SyncManager = {
                 if (data.serverData) {
                     RankSystem.init(data.serverData); // این تابع خودش saveToLocal دارد
                     
+                    // 🌟 نمایش پاپ‌آپ فقط اگر جایزه‌ای دریافت شده باشد
                     if (data.added && data.added > 0) {
-                        const gemMsg = data.addedGem ? ` و ${data.addedGem} الماس 💎` : '';
-                        // فقط اگر کاربر درگیر کار دیگری نیست پیام بده
+                        // چک می‌کنیم که کاربر در حالت تمام صفحه (پلیر) نباشد تا مزاحمش نشود
+                        // یا اگر هست، فقط صدای ریز پخش شود (اینجا فقط بصری را هندل کردیم)
                         if(!document.fullscreenElement) {
-                             alert(`🎉 تبریک! ${data.added} امتیاز${gemMsg} دریافت شد.`);
+                             RankSystem.showRewardPopup(data.added, data.addedGem);
                         }
                     }
                 }
@@ -294,11 +350,13 @@ const SyncManager = {
                 this.isSyncing = false;
                 if(this.queue.length > 0) setTimeout(() => this.processQueue(), 100);
             } else {
+                // مدیریت خطاها
                 if(data.message && data.message.includes('مسدود')) {
                     alert("⛔ حساب شما مسدود شده است.");
                     this.queue = []; 
                     this.saveQueue();
                 } else {
+                    // اگر خطای نامشخص بود، آیتم را رد کن تا صف گیر نکند
                     this.queue.shift();
                     this.saveQueue();
                 }
@@ -313,19 +371,20 @@ const SyncManager = {
     }
 };
 
+// تابع جشن (برای تکمیل درس یا آزمون عالی)
 function launchConfetti() {
-    const canvas = document.getElementById('confetti-canvas');
-    if(!canvas) return;
-    canvas.style.display = 'block';
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const c = document.getElementById('confetti-canvas');
+    if(!c) return;
+    c.style.display = 'block';
+    const ctx = c.getContext('2d');
+    c.width = window.innerWidth;
+    c.height = window.innerHeight;
     
     const pieces = [];
     for(let i=0; i<300; i++) {
         pieces.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height - canvas.height,
+            x: Math.random() * c.width,
+            y: Math.random() * c.height - c.height,
             rotation: Math.random() * 360,
             color: `hsl(${Math.random() * 360}, 100%, 50%)`,
             speed: Math.random() * 3 + 2
@@ -334,7 +393,7 @@ function launchConfetti() {
 
     let animationId;
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, c.width, c.height);
         pieces.forEach(p => {
             ctx.fillStyle = p.color;
             ctx.beginPath();
@@ -342,13 +401,13 @@ function launchConfetti() {
             ctx.fill();
             p.y += p.speed;
             p.rotation += 2;
-            if(p.y > canvas.height) p.y = -10;
+            if(p.y > c.height) p.y = -10;
         });
         animationId = requestAnimationFrame(draw);
     }
     draw();
     setTimeout(() => {
         cancelAnimationFrame(animationId);
-        canvas.style.display = 'none';
-    }, 4000);
+        c.style.display = 'none';
+    }, 7000); // ⏱️ زمان جشن: 7 ثانیه
 }
