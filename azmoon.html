@@ -28,11 +28,11 @@
         .exam-info h4 { margin: 0; color: #4a148c; font-size: 1rem; }
         .exam-info small { color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 5px; }
         
-        /* تیک جدید (چشمک‌زن) */
-        .new-badge { position: absolute; top: 0; left: 0; background: var(--danger); color: white; font-size: 0.7rem; padding: 3px 10px; border-radius: 0 0 10px 0; animation: pulse 1.5s infinite; font-weight: bold; z-index: 2; }
+        /* تیک جدید */
+        .new-badge { position: absolute; top: 0; left: 0; background: var(--danger); color: white; font-size: 0.7rem; padding: 3px 10px; border-radius: 0 0 10px 0; animation: pulse 1.5s infinite; font-weight: bold; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-        /* 🆕 استایل صفحه راهنما (Intro Box) */
+        /* صفحه راهنما (Intro) */
         .intro-box { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border: 1px solid #ddd; border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
         .intro-stat { display: flex; justify-content: space-around; margin: 20px 0; }
         .istat { text-align: center; }
@@ -46,10 +46,9 @@
         /* تایمر */
         .timer-box { font-size: 1.4rem; font-weight: bold; color: var(--danger); background: #fadbd8; padding: 5px 15px; border-radius: 12px; display: inline-block; }
 
-        /* 🔧 اصلاح نمایش تصاویر (فیت شدن در کادر) */
+        /* تصاویر و لایت‌باکس */
         .q-image { width: 100%; max-width: 100%; height: auto; max-height: 300px; object-fit: contain; border-radius: 12px; border: 1px solid #eee; margin: 15px 0; cursor: zoom-in; background: #fafafa; display: block; margin-left: auto; margin-right: auto; }
-        
-        #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: none; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
+        #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 20000; display: none; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
         #lightbox img { max-width: 95%; max-height: 95%; border-radius: 10px; box-shadow: 0 0 50px rgba(255,255,255,0.2); animation: zoomIn 0.3s; }
         @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -57,8 +56,6 @@
         .option { background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; box-sizing: border-box; }
         .option:hover { border-color: #b2bec3; }
         .option.selected { background: #e8f6f3; border-color: var(--success); color: var(--success); font-weight: bold; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); transform: scale(1.01); }
-        
-        /* 🔧 اصلاح تصویر داخل گزینه‌ها */
         .option img { max-width: 100%; height: auto; max-height: 250px; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; align-self: center; margin-top: 5px; display: block; }
 
         /* نوار نمره */
@@ -86,9 +83,12 @@
         .stat-label { font-size: 0.8rem; color: #7f8c8d; }
 
         #loading { color: #7f8c8d; font-weight: bold; margin-top: 20px; }
-        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; }
+        /* 🔧 اصلاح کانواس جشن */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100000; display: none; }
         
+        /* 🔧 اصلاح استایل بخش مرور برای موبایل */
         .review-q { border-bottom: 1px solid #eee; padding: 20px 0; }
+        .review-q img { max-width: 100% !important; height: auto !important; border-radius: 10px; margin: 10px auto; display: block; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
         .r-opt { padding: 10px; margin: 5px 0; border-radius: 10px; border: 1px solid #eee; background: #fff; }
     </style>
 </head>
@@ -423,7 +423,6 @@
 
             const score = parseFloat(((correct / currentQuestions.length) * 20).toFixed(1));
 
-            // ذخیره آنی
             const sId = String(currentExamId);
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             if(!RankSystem.data.exam_details) RankSystem.data.exam_details = {};
@@ -434,7 +433,6 @@
             };
             RankSystem.saveToLocal(); 
 
-            // ارسال به صف
             SyncManager.addToQueue('claim_reward', {
                 reward_type: 'exam', reward_id: currentExamId, exam_score: score,
                 wrong_list: wrongIndices, user_answers: userAnswers
@@ -455,15 +453,21 @@
 
             setTimeout(() => { document.getElementById('scorePointer').style.left = ((score/20)*100) + '%'; }, 200);
 
-            let qText = "", color = "";
-            if(score >= 20) { qText = "💎 فوق‌العاده"; color="#8e44ad"; launchConfetti(); }
-            else if(score >= 17) { qText = "🥇 خیلی خوب"; color="#2ecc71"; launchConfetti(); } // جشن برای خیلی خوب هم اضافه شد
-            else if(score >= 12) { qText = "🙂 خوب"; color="#2980b9"; }
-            else if(score >= 8) { qText = "⚠️ قابل قبول"; color="#f1c40f"; }
-            else { qText = "⛔ نیاز به تلاش بیشتر"; color="#c0392b"; }
+            // 🔧 فیکس باگ سه نقطه: استفاده از شرط‌های دقیق و پارس فلوت
+            let qText = "نیاز به تلاش"; 
+            let color = "#c0392b";
+            
+            const numScore = parseFloat(score);
+
+            if(numScore >= 20) { qText = "💎 فوق‌العاده"; color="#8e44ad"; launchConfetti(); }
+            else if(numScore >= 17) { qText = "🥇 خیلی خوب"; color="#2ecc71"; launchConfetti(); }
+            else if(numScore >= 12) { qText = "🙂 خوب"; color="#2980b9"; }
+            else if(numScore >= 8) { qText = "⚠️ قابل قبول"; color="#f1c40f"; }
             
             const qEl = document.getElementById('qualitativeScore');
-            qEl.innerText = qText; qEl.style.color = color;
+            qEl.innerText = qText; 
+            qEl.style.color = color;
+            
             document.getElementById('btnReview').style.display = 'block';
             document.getElementById('xpMsg').style.display = 'block';
         }
@@ -523,7 +527,7 @@
                 const uAns = answers[i];
                 const isCorrect = (uAns == q.correct);
                 let html = `<div class="review-q"><b>سوال ${i+1}:</b> ${q.q}`;
-                if(q.img) html += `<br><img src="${q.img}" style="max-height:250px; margin:5px 0;">`;
+                if(q.img) html += `<br><img src="${q.img}" onclick="openLightbox(this.src)">`;
                 
                 q.options.forEach((op, idx) => {
                     const val = idx+1;
@@ -531,11 +535,17 @@
                     if(val == q.correct) { color = "#d4edda"; border = "#c3e6cb"; } 
                     else if(val == uAns) { color = "#f8d7da"; border = "#f5c6cb"; } 
                     
-                    let content = optIsImage(op) ? `<img src="${op}" style="max-height:150px; vertical-align:middle">` : op;
+                    let content = optIsImage(op) ? `<img src="${op}" style="max-height:100px; vertical-align:middle">` : op;
                     html += `<div style="background:${color}; border:1px solid ${border}; padding:10px; margin:5px 0; border-radius:10px;">${val}) ${content}</div>`;
                 });
                 
-                if(q.desc) html += `<div style="background:#fff3cd; padding:10px; margin-top:10px; border-radius:8px; font-size:0.9rem;">💡 <b>توضیح:</b> ${q.desc}</div>`;
+                // 🔧 فیکس باگ عکس تشریحی (Explanatory Image Fix)
+                if(q.desc || q.desc_img) {
+                    html += `<div style="background:#fff3cd; padding:10px; margin-top:10px; border-radius:8px; font-size:0.9rem;">💡 <b>توضیح:</b> ${q.desc || ''}`;
+                    if(q.desc_img) html += `<br><img src="${q.desc_img}" onclick="openLightbox(this.src)" style="max-width:100%; border-radius:8px; margin-top:5px;">`;
+                    html += `</div>`;
+                }
+                
                 html += `</div>`;
                 c.innerHTML += html;
             });
@@ -544,17 +554,44 @@
         function optIsImage(s) { return s.startsWith('http') || s.startsWith('/uploads'); }
         function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').style.display = 'flex'; }
         
+        // تابع جشن مستقل (کانفتی) با z-index بالا
         function launchConfetti() {
-            if(typeof window.launchConfetti === 'function') {
-                window.launchConfetti();
-            } else {
-                const c = document.getElementById('confetti-canvas');
-                const ctx = c.getContext('2d');
-                c.width = window.innerWidth; c.height = window.innerHeight;
-                const p = Array.from({length:100}, () => ({x:Math.random()*c.width, y:Math.random()*c.height-c.height, c:`hsl(${Math.random()*360},100%,50%)`, v:Math.random()*5+2}));
-                function draw(){ctx.clearRect(0,0,c.width,c.height);p.forEach(k=>{k.y+=k.v;ctx.fillStyle=k.c;ctx.beginPath();ctx.arc(k.x,k.y,5,0,Math.PI*2);ctx.fill();if(k.y>c.height)k.y=0;});requestAnimationFrame(draw);}
-                draw(); setTimeout(()=>c.style.display='none',3000);
+            const c = document.getElementById('confetti-canvas');
+            const ctx = c.getContext('2d');
+            c.style.display = 'block';
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+            
+            const pieces = [];
+            for(let i=0; i<300; i++) {
+                pieces.push({
+                    x: Math.random() * c.width,
+                    y: Math.random() * c.height - c.height,
+                    rotation: Math.random() * 360,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    speed: Math.random() * 4 + 2
+                });
             }
+
+            let animationId;
+            function draw() {
+                ctx.clearRect(0, 0, c.width, c.height);
+                pieces.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    p.y += p.speed;
+                    p.rotation += 2;
+                    if(p.y > c.height) p.y = -10;
+                });
+                animationId = requestAnimationFrame(draw);
+            }
+            draw();
+            setTimeout(() => {
+                cancelAnimationFrame(animationId);
+                c.style.display = 'none';
+            }, 6000);
         }
 
         function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
