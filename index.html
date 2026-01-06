@@ -139,7 +139,18 @@
         @keyframes shine { to { background-position: 200%; } }
         .footer-signature { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.05); opacity: 0; transition: opacity 2s ease; }
         .footer-signature.show { opacity: 1; }
-        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none; }
+        
+        /* 🔧 اصلاح کانواس جشن (نسخه اصلاح شده و دقیق) */
+        #confetti-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            pointer-events: none; 
+            z-index: 100000; /* لایه بسیار بالا برای نمایش روی همه چیز */
+            display: none; 
+        }
     </style>
 </head>
 <body>
@@ -723,24 +734,27 @@
             RankSystem.savePosition(activeVid.id, penaltyTime, true); 
         }
 
+        // 🟢 تابع اصلاح شده و صحیح پایان درس
         function finishLesson() {
-    if(isDone) return; // جلوگیری از تکرار
-    isDone = true; 
-    vid.pause();
-    
-    // 🟢 اصلاح مهم: خروج از حالت تمام صفحه تا جشن دیده شود
-    if(document.fullscreenElement) document.exitFullscreen();
-    if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+            if (isDone) return;
+            isDone = true;
+            vid.pause();
 
-    document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
-    SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id });
-    
-    // اجرای جشن با کمی تاخیر تا صفحه کامل لود شود
-    setTimeout(() => {
-        launchConfetti(); 
-        setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
-    }, 300);
-}
+            // Exit fullscreen first
+            if (document.fullscreenElement) document.exitFullscreen();
+            if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+
+            document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
+
+            // Queue reward (Server now gives 0 gems for lessons, handled by backend)
+            SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id });
+
+            // Launch Confetti
+            setTimeout(() => {
+                launchConfetti();
+                setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
+            }, 300);
+        }
 
         function openLightbox(src) {
             document.getElementById('lightboxImg').src = src;
@@ -752,19 +766,49 @@
             document.getElementById('controlsBar').classList.remove('fade-out'); clearTimeout(fadeTimer); fadeTimer = setTimeout(() => { if(!vid.paused && !isDragging) document.getElementById('controlsBar').classList.add('fade-out'); }, 3000);
         });
         
+        // 🌟 تابع جشن مستقل (کانفتی) - کپی شده از فایل آزمون
         function launchConfetti() {
-            if(typeof window.launchConfetti === 'function') {
-                window.launchConfetti();
-            } else {
-                const c = document.getElementById('confetti-canvas');
-                const ctx = c.getContext('2d');
-                c.width = window.innerWidth; c.height = window.innerHeight;
-                const p = Array.from({length:100}, () => ({x:Math.random()*c.width, y:Math.random()*c.height-c.height, c:`hsl(${Math.random()*360},100%,50%)`, v:Math.random()*5+2}));
-                function draw(){ctx.clearRect(0,0,c.width,c.height);p.forEach(k=>{k.y+=k.v;ctx.fillStyle=k.c;ctx.beginPath();ctx.arc(k.x,k.y,5,0,Math.PI*2);ctx.fill();if(k.y>c.height)k.y=0;});requestAnimationFrame(draw);}
-                draw(); setTimeout(()=>c.style.display='none',3000);
+            const c = document.getElementById('confetti-canvas');
+            if (!c) return;
+            
+            const ctx = c.getContext('2d');
+            c.style.display = 'block';
+            c.width = window.innerWidth;
+            c.height = window.innerHeight;
+            
+            const pieces = [];
+            for(let i=0; i<300; i++) { // تعداد ذرات مثل آزمون
+                pieces.push({
+                    x: Math.random() * c.width,
+                    y: Math.random() * c.height - c.height,
+                    rotation: Math.random() * 360,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    speed: Math.random() * 4 + 2
+                });
             }
+
+            let animationId;
+            function draw() {
+                ctx.clearRect(0, 0, c.width, c.height);
+                pieces.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    p.y += p.speed;
+                    p.rotation += 2;
+                    if(p.y > c.height) p.y = -10;
+                });
+                animationId = requestAnimationFrame(draw);
+            }
+            draw();
+            
+            // توقف بعد از ۶ ثانیه
+            setTimeout(() => {
+                cancelAnimationFrame(animationId);
+                c.style.display = 'none';
+            }, 6000);
         }
     </script>
 </body>
 </html>
-
