@@ -1,16 +1,16 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه نهایی با جلوه‌های ویژه ✨)
+// 🎮 فایل هسته: rank.js (نسخه کامل و دقیق - بازبینی شده ✅)
 // ********************************************
 
 // 🔴 آدرس سرور 
 const SERVER_URL = (typeof API_URL !== 'undefined') ? API_URL : "https://chamran-api.liara.run"; 
 
-// 🎨 تزریق استایل‌های پاپ‌آپ امتیاز (برای اینکه نیازی به تغییر CSS فایل‌های دیگر نباشد)
+// 🎨 استایل‌های پاپ‌آپ و انیمیشن‌ها (تزریق به صفحه)
 const xpPopupStyle = document.createElement('style');
 xpPopupStyle.innerHTML = `
     .xp-popup-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); z-index: 10000;
+        background: rgba(0,0,0,0.85); z-index: 20000;
         display: flex; justify-content: center; align-items: center;
         opacity: 0; transition: opacity 0.5s; backdrop-filter: blur(8px);
     }
@@ -36,7 +36,7 @@ xpPopupStyle.innerHTML = `
 document.head.appendChild(xpPopupStyle);
 
 const RankSystem = {
-    // لیست مقام‌ها بر اساس XP
+    // لیست مقام‌ها بر اساس XP (همان منطق قبلی)
     ranks: [
         { min: 0, title: "🐣 نوآموز" },
         { min: 500, title: "🛡️ محافظ" },
@@ -64,19 +64,19 @@ const RankSystem = {
                 completed: serverData.completed || [],
                 playback: serverData.playback || {},
                 exams: serverData.exams || {},
-                exam_details: serverData.exam_details || {} 
+                exam_details: serverData.exam_details || {}
             };
         }
         this.updateUI();
-        this.saveToLocal(); // ⭐️ حیاتی: ذخیره نسخه تازه در مرورگر
+        this.saveToLocal(); // ذخیره نسخه تازه در مرورگر
         
-        // اگر در صفحه اصلی باشیم، لیست درس‌ها را آپدیت کن
+        // اگر در صفحه اصلی باشیم، لیست درس‌ها را آپدیت کن (برای تیک سبز)
         setTimeout(() => { 
             if(typeof renderList === 'function') renderList(); 
         }, 500);
     },
 
-    // ⭐️ تابع جدید: ذخیره آنی در حافظه مرورگر
+    // ⭐️ تابع ذخیره آنی در حافظه مرورگر
     saveToLocal: function() {
         try {
             const key = 'chamran_db_vfinal_creds';
@@ -128,7 +128,7 @@ const RankSystem = {
                 if(badge) badge.innerText = data.examTitle || "هنوز آزمونی نیست";
 
                 if(data.data.length === 0) {
-                    wall.innerHTML = '<div style="color:rgba(255,255,255,0.9); font-size:0.9rem; padding:15px; width:100%; text-align:center;">هنوز کسی نمره کامل نگرفته!</div>';
+                    wall.innerHTML = '<div style="color:rgba(255,255,255,0.9); font-size:0.9rem; padding:15px; width:100%; text-align:center;">هنوز کسی نمره کامل نگرفته!<br>تو اولین نفر باش 💪</div>';
                 } else {
                     wall.innerHTML = '';
                     data.data.forEach((u) => {
@@ -139,6 +139,7 @@ const RankSystem = {
                         const parts = u.n.split(' ');
                         if(parts.length >= 2) displayName = `${parts[0]} ${parts[1]}`;
 
+                        // ساخت کارت‌ها (دقیقاً همان کلاس‌هایی که در CSS ایندکس تعریف شده)
                         wall.innerHTML += `
                             <div class="champion-card">
                                 <div class="champ-icon">${icon}</div>
@@ -151,16 +152,17 @@ const RankSystem = {
             }
         })
         .catch(e => {
-            wall.innerHTML = '<small style="color:rgba(255,255,255,0.7)">...</small>';
+            wall.innerHTML = '<small style="color:rgba(255,255,255,0.7)">خطا در دریافت</small>';
         });
     },
 
-    // 4. ذخیره موقعیت پخش فیلم
+    // 4. ذخیره موقعیت پخش فیلم (برای ادامه پخش)
     savePosition: function(id, time, forceSync = false) {
         const sId = id.toString();
         this.data.playback[sId] = Math.floor(time);
         this.saveToLocal(); // ذخیره محلی فوری
         
+        // هر 15 ثانیه به سرور بفرست تا ترافیک زیاد نشود
         if(Math.floor(time) % 15 === 0 || forceSync) {
              SyncManager.addToQueue('sync', null, forceSync); 
         }
@@ -194,16 +196,16 @@ const RankSystem = {
         `;
         document.body.appendChild(div);
         
-        // پخش انیمیشن ورود
+        // انیمیشن ورود
         requestAnimationFrame(() => {
             div.style.opacity = '1';
             div.querySelector('.xp-popup-content').style.transform = 'scale(1)';
         });
 
-        // پخش انیمیشن خروج بعد از ۳ ثانیه
+        // انیمیشن خروج
         setTimeout(() => {
             div.style.opacity = '0';
-            div.querySelector('.xp-popup-content').style.transform = 'scale(1.5)'; // افکت محو شدن رو به جلو
+            div.querySelector('.xp-popup-content').style.transform = 'scale(1.5)';
             setTimeout(() => div.remove(), 500);
         }, 3000);
     },
@@ -217,7 +219,7 @@ const RankSystem = {
 };
 
 // ********************************************
-// 📡 مدیر همگام‌سازی (Sync Manager) - تقویت شده
+// 📡 مدیر همگام‌سازی (Sync Manager) - با منطق صف
 // ********************************************
 const SyncManager = {
     queue: [], 
@@ -231,6 +233,7 @@ const SyncManager = {
         this.queue = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
         this.processQueue();
         
+        // تلاش مجدد خودکار
         setInterval(() => this.processQueue(), 5000);
         window.addEventListener('online', () => this.processQueue());
         window.addEventListener('offline', () => this.updateOfflineBadge());
@@ -242,15 +245,15 @@ const SyncManager = {
             extraParams = { ...logData }; 
             
             // ⭐️ حیاتی: اگر آزمون تمام شده، همین الان در دیتای اصلی ثبت کن
-            // تا قبل از ارسال به سرور هم قابل دسترسی باشد
             if(logData.reward_type === 'exam') {
                 const sId = String(logData.reward_id);
                 RankSystem.data.exams[sId] = logData.exam_score;
+                // تاریخ شمسی تقریبی برای نمایش فوری
                 RankSystem.data.exam_details[sId] = {
                     score: logData.exam_score,
                     wrong: logData.wrong_list,
                     answers: logData.user_answers,
-                    date: new Date().toLocaleDateString('fa-IR') // اینجا فقط برای نمایش موقت است، سرور تاریخ دقیق را می‌زند
+                    date: new Date().toLocaleDateString('fa-IR') 
                 };
                 RankSystem.saveToLocal(); // ذخیره نهایی در مرورگر
             }
@@ -318,7 +321,7 @@ const SyncManager = {
             item.jsonData = JSON.stringify(RankSystem.data); 
         }
         
-        // ⭐️ اضافه کردن پارامتر زمان برای جلوگیری از کش شدن پاسخ
+        // ارسال به سرور با پارامتر زمان (ضد کش)
         fetch(`${SERVER_URL}?t=${Date.now()}`, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
@@ -331,12 +334,10 @@ const SyncManager = {
                 this.saveQueue();
                 
                 if (data.serverData) {
-                    RankSystem.init(data.serverData); // این تابع خودش saveToLocal دارد
+                    RankSystem.init(data.serverData); // سینک شدن با دیتای سرور
                     
                     // 🌟 نمایش پاپ‌آپ فقط اگر جایزه‌ای دریافت شده باشد
                     if (data.added && data.added > 0) {
-                        // چک می‌کنیم که کاربر در حالت تمام صفحه (پلیر) نباشد تا مزاحمش نشود
-                        // یا اگر هست، فقط صدای ریز پخش شود (اینجا فقط بصری را هندل کردیم)
                         if(!document.fullscreenElement) {
                              RankSystem.showRewardPopup(data.added, data.addedGem);
                         }
@@ -350,13 +351,11 @@ const SyncManager = {
                 this.isSyncing = false;
                 if(this.queue.length > 0) setTimeout(() => this.processQueue(), 100);
             } else {
-                // مدیریت خطاها
                 if(data.message && data.message.includes('مسدود')) {
                     alert("⛔ حساب شما مسدود شده است.");
                     this.queue = []; 
                     this.saveQueue();
                 } else {
-                    // اگر خطای نامشخص بود، آیتم را رد کن تا صف گیر نکند
                     this.queue.shift();
                     this.saveQueue();
                 }
@@ -371,7 +370,7 @@ const SyncManager = {
     }
 };
 
-// تابع جشن (برای تکمیل درس یا آزمون عالی)
+// 🌟 تابع جشن و پایکوبی (Confetti) - تقویت شده
 function launchConfetti() {
     const c = document.getElementById('confetti-canvas');
     if(!c) return;
@@ -381,13 +380,14 @@ function launchConfetti() {
     c.height = window.innerHeight;
     
     const pieces = [];
-    for(let i=0; i<300; i++) {
+    for(let i=0; i<400; i++) { // تعداد ذرات بیشتر
         pieces.push({
             x: Math.random() * c.width,
             y: Math.random() * c.height - c.height,
             rotation: Math.random() * 360,
             color: `hsl(${Math.random() * 360}, 100%, 50%)`,
-            speed: Math.random() * 3 + 2
+            speed: Math.random() * 4 + 2,
+            size: Math.random() * 6 + 2
         });
     }
 
@@ -397,7 +397,7 @@ function launchConfetti() {
         pieces.forEach(p => {
             ctx.fillStyle = p.color;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
             ctx.fill();
             p.y += p.speed;
             p.rotation += 2;
