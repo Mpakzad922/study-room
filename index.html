@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>میز مطالعه هوشمند چمران (نسخه تاریخچه 📜)</title>
+    <title>میز مطالعه هوشمند چمران (نسخه نهایی 💎)</title>
     
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
@@ -12,17 +12,16 @@
         :root { --primary: #2c3e50; --accent: #e67e22; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); --gem: #9b59b6; }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; overflow-x: hidden; user-select: none; }
         
+        /* --- استایل‌های اصلی شما (حفظ شده) --- */
         .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
         .card.show-content { opacity: 1; }
         .active { display: block; }
 
-        /* پنل کاربری */
         .user-panel { background: #2c3e50; color: white; padding: 15px; border-radius: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(44, 62, 80, 0.3); position: relative; overflow: hidden; }
         .user-panel::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent); animation: shinePanel 5s infinite; }
         @keyframes shinePanel { 0% {transform: translateX(-100%);} 100% {transform: translateX(100%);} }
         .rank-badge { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; margin-top: 5px; display: inline-block; }
 
-        /* بخش الماس و اعلانات */
         .top-icons { display: flex; gap: 10px; align-items: center; }
         .icon-btn { position: relative; cursor: pointer; font-size: 1.4rem; transition: 0.3s; }
         .icon-btn:hover { transform: scale(1.1); }
@@ -31,7 +30,7 @@
         
         .gem-box { display: flex; align-items: center; gap: 5px; background: rgba(155, 89, 182, 0.3); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(155, 89, 182, 0.5); }
 
-        /* --- دیوار افتخار (روبان مدال‌ها - افقی + بارش) --- */
+        /* --- دیوار افتخار (استایل دقیق قبلی) --- */
         .wall-of-fame { 
             background: linear-gradient(to right, #2c3e50, #34495e); 
             padding: 15px; 
@@ -67,13 +66,12 @@
         .champ-icon { font-size: 1.8rem; margin-bottom: 5px; display: block; }
         .champ-name { font-size: 0.85rem; font-weight: bold; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; margin: 0 auto; display: block; }
         .champ-score { font-size: 0.7rem; color: #27ae60; font-weight: bold; background: #e8f5e9; padding: 2px 6px; border-radius: 10px; margin-top: 5px; display: inline-block; }
-        
+
         /* لیست ویدیوها */
         .video-item { background: #fff; border: 2px solid #f1f2f6; border-radius: 15px; margin-bottom: 15px; padding: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; text-align: right; position: relative; }
         .video-item:active { transform: scale(0.98); border-color: var(--accent); }
         .video-item.done { border-color: var(--success); background: #f0fdf4; }
         .video-icon { font-size: 1.5rem; background: #f1f2f6; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--primary); }
-        
         .new-badge { position: absolute; top: -10px; left: 10px; background: var(--danger); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); animation: popIn 0.5s; }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
@@ -84,7 +82,7 @@
         .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: 10px; }
         .btn-loading { opacity: 0.7; cursor: wait; }
 
-        /* مودال عمومی (تاریخچه و اعلانات) */
+        /* مودال عمومی */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: white; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; padding: 20px; border-radius: 20px; text-align: right; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -94,17 +92,12 @@
         .notif-item.type-success { background: #f0fdf4; border-right: 3px solid green; }
         .notif-item.type-info { background: #f0f8ff; border-right: 3px solid #3498db; }
 
-        /* استایل کارت‌های تاریخچه (جدید) */
-        .history-list { display: flex; flex-direction: column; gap: 10px; }
-        .h-card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-right: 5px solid #ccc; transition: 0.2s; }
-        .h-card:active { transform: scale(0.98); }
-        .h-info { flex: 1; }
-        .h-title { font-weight: bold; color: #2c3e50; font-size: 0.95rem; margin-bottom: 3px; }
-        .h-meta { font-size: 0.75rem; color: #95a5a6; }
-        .h-score-badge { font-weight: bold; padding: 5px 10px; border-radius: 8px; font-size: 0.9rem; min-width: 30px; text-align: center; }
-        .h-action { background: #ecf0f1; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-right: 10px; color: #2c3e50; }
+        /* لایت باکس (جدید برای زوم) */
+        #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: none; justify-content: center; align-items: center; cursor: zoom-out; }
+        #lightbox img { max-width: 95%; max-height: 95%; border-radius: 10px; box-shadow: 0 0 30px rgba(255,255,255,0.1); animation: zoomIn 0.3s; }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* پلیر پیشرفته */
+        /* پلیر پیشرفته (بدون تغییر ظاهر) */
         #playerContainer { position: relative; width: 100%; background: #000; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; }
         #playerContainer:fullscreen { width: 100vw; height: 100vh; border-radius: 0; aspect-ratio: unset; }
         #playerContainer:fullscreen video { height: 100%; width: 100%; object-fit: contain; }
@@ -136,6 +129,7 @@
         .offline-badge { position:fixed; bottom:10px; left:10px; background:orange; color:white; padding:8px 15px; border-radius:30px; font-size:0.8rem; display:none; z-index:2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
+        /* --- بخش امضای انیمیشن دار (بازگردانی شده) --- */
         #intro-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         #intro-overlay.move-down { top: 85%; transform: scale(0.6); opacity: 0; pointer-events: none; }
         .signature-container { text-align: center; direction: ltr; margin-top: 20px; }
@@ -151,6 +145,10 @@
 <body>
 
     <canvas id="confetti-canvas"></canvas>
+
+    <div id="lightbox" onclick="this.style.display='none'">
+        <img id="lightboxImg" src="">
+    </div>
 
     <div id="intro-overlay">
         <div class="signature-container">
@@ -298,7 +296,7 @@
         
         let currentUser = null;
         let playlist = [];
-        let allExamsList = []; // برای ذخیره لیست آزمون‌ها و پیدا کردن اسمشان
+        let allExamsList = []; 
         let activeVid = null;
         let maxTime = 0;
         let isDone = false;
@@ -313,7 +311,7 @@
         const pThumb = document.getElementById('progressThumb');
         const pContainer = document.getElementById('progressBarContainer');
 
-        // --- 1. شروع برنامه ---
+        // --- 1. شروع برنامه (با انیمیشن اینترو) ---
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('intro-overlay').classList.add('move-down');
@@ -329,7 +327,7 @@
         function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
 
-        // --- 2. سیستم احراز هویت ---
+        // --- 2. سیستم احراز هویت (متصل به سرور) ---
         async function checkAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
             if(savedUser) {
@@ -345,7 +343,11 @@
                     const data = await res.json();
                     
                     if(data.status === 'success') {
-                        currentUser = { username: creds.username, password: creds.password, displayName: data.displayName, jsonData: data.jsonData };
+                        // ذخیره جدیدترین دیتا
+                        const userData = { username: creds.username, password: creds.password, displayName: data.displayName, jsonData: data.jsonData };
+                        localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData)); // فقط برای لاگین خودکار بعدی
+                        
+                        currentUser = userData;
                         if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
                         if(typeof RankSystem !== 'undefined') {
                             RankSystem.init(data.jsonData);
@@ -355,8 +357,8 @@
                         document.getElementById('displayName').innerText = data.displayName;
                         document.getElementById('intro-overlay').style.display = 'none';
                         showScreen('screen-library');
-                        fetchPlaylist(); // دریافت درس‌ها
-                        fetchExamsForHistory(); // دریافت لیست آزمون‌ها برای تاریخچه
+                        fetchPlaylist(); 
+                        fetchExamsForHistory(); 
                         
                         if(typeof RankSystem !== 'undefined') RankSystem.loadWallOfFame();
 
@@ -444,6 +446,7 @@
             list.innerHTML = "";
             if(!playlist || playlist.length === 0) { list.innerHTML = "<p style='text-align:center;'>📭 درسی یافت نشد.</p>"; return; }
             playlist.forEach(item => {
+                // چک کردن از روی دیتای RankSystem (سرور)
                 const isCompleted = RankSystem.data.completed.includes(item.id.toString());
                 const icon = isCompleted ? '✅' : '▶️';
                 const hasFile = (item.attach && item.attach.length > 3);
@@ -457,7 +460,7 @@
             });
         }
 
-        // --- 🌟 بخش تاریخچه و پرونده (جدید) ---
+        // --- 🌟 بخش تاریخچه و پرونده (با حفظ طراحی) ---
         async function fetchExamsForHistory() {
             try {
                 const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
@@ -471,7 +474,6 @@
             const container = document.getElementById('historyListContainer');
             container.innerHTML = '';
             
-            // گرفتن جزئیات آزمون‌های کاربر
             const details = RankSystem.data.exam_details || {};
             const takenIds = Object.keys(details);
             
@@ -480,38 +482,42 @@
                 return;
             }
 
-            // مرتب‌سازی بر اساس تاریخ (اگر تاریخ نباشد، پیش‌فرض می‌ماند)
             takenIds.reverse(); 
 
             takenIds.forEach(eid => {
                 const examDetail = details[eid];
-                // پیدا کردن نام آزمون از لیست کلی
                 const examInfo = allExamsList.find(e => String(e.id) === String(eid));
                 const title = examInfo ? examInfo.title : "آزمون حذف شده";
                 const date = examDetail.date || "تاریخ نامشخص";
                 const score = parseFloat(examDetail.score || 0);
                 
-                // رنگ‌بندی نمره
-                let badgeColor = "#95a5a6"; // خاکستری
-                if(score >= 19) badgeColor = "#2ecc71"; // سبز
-                else if(score >= 15) badgeColor = "#f1c40f"; // زرد
-                else badgeColor = "#e74c3c"; // قرمز
+                let badgeColor = "#95a5a6"; 
+                if(score >= 19) badgeColor = "#2ecc71"; 
+                else if(score >= 15) badgeColor = "#f1c40f"; 
+                else badgeColor = "#e74c3c"; 
 
+                // استایل خاص تاریخچه شما
                 const div = document.createElement('div');
-                div.className = 'h-card';
-                div.style.borderRightColor = badgeColor;
-                
-                // دکمه بازبینی
-                const reviewBtn = `<button class="h-action" onclick="goToReview('${eid}')">🔍 مرور</button>`;
+                div.style.background = "white";
+                div.style.border = "1px solid #eee";
+                div.style.borderRadius = "12px";
+                div.style.padding = "15px";
+                div.style.display = "flex";
+                div.style.justifyContent = "space-between";
+                div.style.alignItems = "center";
+                div.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
+                div.style.borderRight = `5px solid ${badgeColor}`;
+                div.style.marginBottom = "10px";
+                div.style.transition = "0.2s";
                 
                 div.innerHTML = `
                     <div class="h-info">
-                        <div class="h-title">${title}</div>
-                        <div class="h-meta">${date}</div>
+                        <div style="font-weight: bold; color: #2c3e50; font-size: 0.95rem; margin-bottom: 3px;">${title}</div>
+                        <div style="font-size: 0.75rem; color: #95a5a6;">${date}</div>
                     </div>
                     <div style="display:flex; align-items:center;">
-                        ${reviewBtn}
-                        <div class="h-score-badge" style="background:${badgeColor}; color:white;">${toPersianNum(score)}</div>
+                        <button onclick="goToReview('${eid}')" style="background: #ecf0f1; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-left: 10px; color: #2c3e50;">🔍 مرور</button>
+                        <div style="font-weight: bold; padding: 5px 10px; border-radius: 8px; font-size: 0.9rem; min-width: 30px; text-align: center; background:${badgeColor}; color:white;">${toPersianNum(score)}</div>
                     </div>
                 `;
                 container.appendChild(div);
@@ -519,8 +525,7 @@
         }
 
         function goToReview(examId) {
-            // ذخیره اطلاعات لازم برای مرور در لوکال استوریج
-            // ما نیاز داریم به صفحه azmoon.html بفهمانیم که حالت مرور است
+            // ذخیره برای مرور
             localStorage.setItem('review_target_id', examId);
             window.location.href = 'azmoon.html?mode=history_review';
         }
@@ -539,15 +544,21 @@
                 container.innerHTML = '<p style="color:#999; text-align:center;">پیام جدیدی نیست.</p>';
             } else {
                 list.forEach(n => {
+                    // ساپورت لایت باکس در متن اعلان
+                    const content = n.text.replace(/(https?:\/\/[^\s]+)/g, (url) => {
+                        if(url.match(/\.(jpeg|jpg|gif|png)$/) != null) return `<img src="${url}" onclick="openLightbox('${url}')" style="max-width:100%; border-radius:8px; margin-top:5px; cursor:zoom-in;">`;
+                        return `<a href="${url}" target="_blank">${url}</a>`;
+                    });
+
                     const div = document.createElement('div');
                     div.className = `notif-item type-${n.type}`;
-                    div.innerHTML = `<div>${n.text}</div><div style="font-size:0.7rem; color:#ccc; margin-top:4px;">${n.date}</div>`;
+                    div.innerHTML = `<div>${content}</div><div style="font-size:0.7rem; color:#ccc; margin-top:4px;">${n.date}</div>`;
                     container.appendChild(div);
                 });
             }
         }
 
-        // --- 5. منطق پلیر (بدون تغییر) ---
+        // --- 5. منطق پلیر (با اصلاحات امنیتی و حفظ دانلود) ---
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
@@ -555,6 +566,8 @@
             isDone = RankSystem.data.completed.includes(item.id.toString());
             vid.src = item.link;
             lastActivityTime = Date.now();
+            
+            // دانلودها با استایل شما
             const dlContainer = document.getElementById('downloadContainer');
             dlContainer.innerHTML = ""; 
             if(item.attach && item.attach.length > 3) {
@@ -565,15 +578,21 @@
                     if(link.length > 5) dlContainer.innerHTML += `<a href="${link}" target="_blank" class="download-btn"><div style="display:flex;align-items:center;"><span class="dl-icon">📥</span><span class="dl-text">${name}</span></div><span class="dl-arrow">دریافت</span></a>`;
                 });
             }
+            
+            // 🛑 دریافت زمان از سرور (نه لوکال)
             const serverLastTime = RankSystem.getLastPosition(item.id);
-            const localMax = parseFloat(localStorage.getItem('local_max_' + item.id) || 0);
-            maxTime = isDone ? 999999 : Math.max(localMax, serverLastTime);
-            let startPos = serverLastTime;
+            maxTime = isDone ? 999999 : serverLastTime;
+            
             nextCheckTime = (isDone ? 999999 : (maxTime + CHECK_INTERVAL));
             showScreen('screen-player');
+            
             if(isDone) { updateProgressUI(100); document.getElementById('viewStatus').innerText = "تکمیل شد! ✅"; document.getElementById('viewPercent').innerText = "۱۰۰٪"; } 
             else { document.getElementById('viewStatus').innerText = "در حال تماشا..."; updateProgressUI(0); }
-            if(startPos > 5 && !isDone) { if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = startPos; else vid.currentTime = 0; } else vid.currentTime = 0;
+            
+            if(serverLastTime > 5 && !isDone) { 
+                if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = serverLastTime; else vid.currentTime = 0; 
+            } else vid.currentTime = 0;
+            
             SyncManager.addToQueue('report', { lesson: item.title, status: 'شروع درس', details: 'ورود به پلیر', device: getDeviceInfo() });
         }
 
@@ -638,8 +657,13 @@
             if(!isNaN(percent)) { updateProgressUI(percent); document.getElementById('viewPercent').innerText = toPersianNum(Math.floor(percent)) + "٪"; }
             const m = Math.floor(vid.currentTime / 60); const s = Math.floor(vid.currentTime % 60);
             document.getElementById('timeDisplay').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-            if(!vid.seeking && vid.currentTime > maxTime) { maxTime = vid.currentTime; localStorage.setItem('local_max_' + activeVid.id, maxTime); }
-            RankSystem.savePosition(activeVid.id, vid.currentTime);
+            
+            // ذخیره موقعیت در سرور (به جای لوکال)
+            if(!vid.seeking && vid.currentTime > maxTime) { 
+                maxTime = vid.currentTime; 
+                RankSystem.savePosition(activeVid.id, vid.currentTime); // اتوماتیک به صف می‌رود
+            }
+            
             if(!isDone && vid.currentTime > nextCheckTime) triggerSecurityCheck();
             if(vid.duration && percent >= 98 && !isDone) finishLesson();
         });
@@ -668,12 +692,28 @@
             } else { document.getElementById('mathAns').style.borderColor = 'red'; }
         }
 
+        // ✅ تابع جریمه (با فیکس امنیتی سرور)
         function punishUser() {
-            document.getElementById('securityModal').style.display = 'none'; alert("⏰ زمان تمام شد! بازگشت به عقب."); let penaltyTime = Math.max(0, vid.currentTime - 180); vid.currentTime = penaltyTime; maxTime = penaltyTime; localStorage.setItem('local_max_' + activeVid.id, maxTime); SyncManager.addToQueue('sync', null, true); 
+            document.getElementById('securityModal').style.display = 'none'; 
+            alert("⏰ زمان تمام شد! بازگشت به عقب."); 
+            let penaltyTime = Math.max(0, vid.currentTime - 180); 
+            vid.currentTime = penaltyTime; 
+            maxTime = penaltyTime; 
+            
+            // 🛑 نکته مهم: اینجا پارامتر سوم true است تا سرور را مجبور به عقبگرد کند
+            RankSystem.savePosition(activeVid.id, penaltyTime, true); 
         }
 
         function finishLesson() {
-            isDone = true; vid.pause(); document.getElementById('viewStatus').innerText = "تکمیل شد! ✅"; SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id }); launchConfetti(); setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
+            isDone = true; vid.pause(); document.getElementById('viewStatus').innerText = "تکمیل شد! ✅"; 
+            SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id }); 
+            launchConfetti(); setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
+        }
+
+        // لایت باکس
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').style.display = 'flex';
         }
 
         let fadeTimer;
