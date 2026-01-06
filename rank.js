@@ -1,12 +1,12 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه الماس 💎)
+// 🎮 فایل هسته: rank.js (نسخه نهایی الماس 💎)
 // ********************************************
 
-// 🔴🔴🔴 آدرس سرور (لیارا) - اینجا را حتما با آدرس خودت چک کن
+// 🔴 آدرس سرور (اگر در فایل HTML تعریف نشده باشد، از این استفاده می‌کند)
 const SERVER_URL = (typeof API_URL !== 'undefined') ? API_URL : "https://chamran-api.liara.run"; 
 
 const RankSystem = {
-    // لیست مقام‌ها
+    // لیست مقام‌ها بر اساس XP
     ranks: [
         { min: 0, title: "🐣 نوآموز" },
         { min: 500, title: "🛡️ محافظ" },
@@ -15,11 +15,11 @@ const RankSystem = {
         { min: 5000, title: "💎 اسطوره" }
     ],
 
-    // داده‌های پیش‌فرض
+    // داده‌های پیش‌فرض کاربر
     data: { xp: 0, gem: 0, rank: "🐣 نوآموز", completed: [], playback: {}, exams: {} },
     notifications: [],
     
-    // مقداردهی اولیه با داده‌های سرور
+    // 1. مقداردهی اولیه با داده‌های سرور
     init: function(serverJson) {
         let serverData = {};
         if(serverJson && serverJson !== "{}") {
@@ -29,7 +29,7 @@ const RankSystem = {
             
             this.data = {
                 xp: serverData.xp || 0,
-                gem: serverData.gem || 0, // الماس اضافه شد
+                gem: serverData.gem || 0, // دریافت الماس
                 rank: serverData.rank || "🐣 نوآموز",
                 completed: serverData.completed || [],
                 playback: serverData.playback || {},
@@ -38,20 +38,19 @@ const RankSystem = {
         }
         this.updateUI();
         
-        // رفرش لیست درس‌ها اگر باز باشد (برای تیک سبز)
+        // اگر در صفحه اصلی باشیم، لیست درس‌ها را آپدیت کن (برای تیک سبز)
         setTimeout(() => { 
             if(typeof renderList === 'function') renderList(); 
         }, 500);
     },
 
-    // مدیریت اعلانات (Notifications)
+    // 2. مدیریت اعلانات (Notifications)
     updateNotifications: function(notifList) {
         if (!notifList) return;
         this.notifications = notifList;
         
-        // بررسی پیام‌های جدید (با مقایسه آخرین ID ذخیره شده در لوکال)
+        // بررسی پیام‌های جدید (با مقایسه ID آخرین پیام دیده شده)
         const lastSeen = parseInt(localStorage.getItem('last_seen_notif') || 0);
-        // اگر پیامی هست که ID آن بزرگتر از آخرین بازدید است، یعنی جدید است
         const hasNew = notifList.some(n => n.id > lastSeen);
         
         const dot = document.getElementById('notifDot');
@@ -60,7 +59,6 @@ const RankSystem = {
 
     markNotifsAsRead: function() {
         if(this.notifications.length > 0) {
-            // جدیدترین پیام (اولین در لیست) را به عنوان دیده شده علامت می‌زنیم
             const newestId = this.notifications[0].id;
             localStorage.setItem('last_seen_notif', newestId);
             const dot = document.getElementById('notifDot');
@@ -68,11 +66,13 @@ const RankSystem = {
         }
     },
 
-    // دریافت دیوار افتخار (Wall of Fame)
+    // 3. دریافت و ساخت دیوار افتخار (نسخه روبان افقی)
     loadWallOfFame: function() {
         const wall = document.getElementById('wallContainer');
+        const badge = document.getElementById('examNameBadge');
         if(!wall) return;
         
+        // درخواست به سرور
         fetch(SERVER_URL, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
@@ -81,27 +81,48 @@ const RankSystem = {
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
+                // نمایش نام آخرین آزمون
+                if(badge) badge.innerText = data.examTitle || "هنوز آزمونی نیست";
+
                 if(data.data.length === 0) {
-                    wall.innerHTML = '<small style="color:#aaa;">هنوز قهرمانی نداریم!</small>';
+                    wall.innerHTML = '<div style="color:rgba(255,255,255,0.9); font-size:0.9rem; padding:15px; width:100%; text-align:center;">هنوز کسی در این آزمون نمره کامل نگرفته!<br>تو اولین نفر باش 💪</div>';
                 } else {
                     wall.innerHTML = '';
-                    data.data.forEach((u, i) => {
-                        const icon = i === 0 ? '👑' : (i < 3 ? '🥈' : '🎖️');
-                        // نمایش نام و XP
-                        wall.innerHTML += `<div class="wall-item">${icon} <b>${u.n}</b> (${u.xp} XP)</div>`;
+                    // حلقه برای ساخت کارت‌ها
+                    data.data.forEach((u) => {
+                        // انتخاب تصادفی آیکون برای تنوع
+                        const icons = ['🥇', '🎖️', '🌟', '👑', '💎']; 
+                        const icon = icons[Math.floor(Math.random() * icons.length)];
+                        
+                        // کوتاه کردن اسم (فقط دو بخش اول)
+                        let displayName = u.n;
+                        const parts = u.n.split(' ');
+                        if(parts.length >= 2) displayName = `${parts[0]} ${parts[1]}`;
+
+                        // ساخت HTML کارت
+                        wall.innerHTML += `
+                            <div class="champion-card">
+                                <div class="champ-icon">${icon}</div>
+                                <div class="champ-name">${displayName}</div>
+                                <div class="champ-score">نمره عالی</div>
+                            </div>
+                        `;
                     });
                 }
             }
         })
-        .catch(e => wall.innerHTML = '<small style="color:red">خطا در بارگذاری</small>');
+        .catch(e => {
+            console.error(e);
+            wall.innerHTML = '<small style="color:rgba(255,255,255,0.7)">خطا در دریافت لیست</small>';
+        });
     },
 
-    // ذخیره موقعیت فیلم
+    // 4. ذخیره موقعیت پخش فیلم
     savePosition: function(id, time, forceSync = false) {
         const sId = id.toString();
         this.data.playback[sId] = Math.floor(time);
         
-        // استراتژی ذخیره: هر 15 ثانیه یکبار
+        // هر 15 ثانیه ذخیره کن
         if(Math.floor(time) % 15 === 0 || forceSync) {
              SyncManager.addToQueue('sync', null, forceSync); 
         }
@@ -111,6 +132,7 @@ const RankSystem = {
         return this.data.playback[id.toString()] || 0; 
     },
 
+    // 5. بروزرسانی ظاهر (XP و الماس)
     updateUI: function() {
         const xpEl = document.getElementById('user-xp');
         const gemEl = document.getElementById('user-gem');
@@ -130,7 +152,7 @@ const RankSystem = {
 };
 
 // ********************************************
-// 📡 مدیر همگام‌سازی (Sync Manager) - قلب تپنده ارتباط با سرور
+// 📡 مدیر همگام‌سازی (Sync Manager)
 // ********************************************
 const SyncManager = {
     queue: [], 
@@ -141,23 +163,20 @@ const SyncManager = {
     init: function(user, pass) {
         this.username = user; 
         this.password = pass;
-        // بازیابی صف از حافظه
+        // بازیابی صف قبلی اگر مانده باشد
         this.queue = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
         
         this.processQueue();
         
-        // تلاش دوره‌ای
+        // تلاش مجدد خودکار
         setInterval(() => this.processQueue(), 5000);
-        
-        // لیسنرهای شبکه
         window.addEventListener('online', () => this.processQueue());
         window.addEventListener('offline', () => this.updateOfflineBadge());
     },
 
     addToQueue: function(action, logData = null, forcePlayback = false) {
         let extraParams = {};
-        // اضافه کردن پارامترهای خاص برای آزمون (لیست غلط و نمره)
-        // این پارامترها در logData پاس داده می‌شوند
+        // اگر پاداش است، پارامترهای اضافی (نمره، غلط‌ها) را هم بفرست
         if (action === 'claim_reward' && logData) {
             extraParams = { ...logData }; 
         }
@@ -166,18 +185,18 @@ const SyncManager = {
             action: action, 
             username: this.username, 
             password: this.password,
-            jsonData: JSON.stringify(RankSystem.data), // همیشه آخرین وضعیت دیتا را بفرست
+            jsonData: JSON.stringify(RankSystem.data), // همیشه آخرین وضعیت دیتا
             logData: logData,
             timestamp: Date.now(),
             force_playback: forcePlayback,
             ...extraParams 
         };
 
-        // بهینه‌سازی: جلوگیری از تکرار درخواست‌های sync معمولی
+        // جلوگیری از تکرار درخواست‌های sync معمولی در صف
         if(action === 'sync' && !forcePlayback && this.queue.length > 0) {
              const lastItem = this.queue[this.queue.length-1];
              if (lastItem.action === 'sync') {
-                 this.queue[this.queue.length-1] = item; // جایگزینی
+                 this.queue[this.queue.length-1] = item; 
              } else {
                  this.queue.push(item);
              }
@@ -220,7 +239,7 @@ const SyncManager = {
         this.isSyncing = true;
         const item = this.queue[0]; 
         
-        // قبل از ارسال، مطمئن می‌شویم آخرین وضعیت دیتا را دارد
+        // اطمینان از ارسال آخرین نسخه دیتا
         if(item.action === 'sync') {
             item.jsonData = JSON.stringify(RankSystem.data); 
         }
@@ -233,19 +252,19 @@ const SyncManager = {
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                // ✅ موفقیت
+                // موفقیت: حذف از صف
                 this.queue.shift(); 
                 this.saveQueue();
                 
-                // اگر سرور دیتای جدید فرستاد (مثلاً بعد از پاداش)
+                // اگر سرور دیتای جدیدی فرستاد (مثلاً بعد از پاداش)
                 if (data.serverData) {
                     RankSystem.init(data.serverData);
-                    // آپدیت کردن اطلاعات ذخیره شده در لوکال
+                    // آپدیت کردن کش لوکال
                     const creds = JSON.parse(localStorage.getItem('chamran_db_vfinal_creds') || "{}");
                     creds.jsonData = data.serverData;
                     localStorage.setItem('chamran_db_vfinal_creds', JSON.stringify(creds));
                     
-                    // نمایش پیام پاداش
+                    // نمایش پیام پاداش (شامل الماس)
                     if (data.added && data.added > 0) {
                         const gemMsg = data.addedGem ? ` و ${data.addedGem} الماس 💎` : '';
                         alert(`🎉 تبریک! ${data.added} امتیاز${gemMsg} دریافت شد.`);
@@ -258,16 +277,16 @@ const SyncManager = {
                 }
 
                 this.isSyncing = false;
-                // اگر باز هم چیزی هست، بفرست
+                // اگر باز هم موردی هست، ادامه بده
                 if(this.queue.length > 0) setTimeout(() => this.processQueue(), 100);
             } else {
-                // خطای منطقی (مثل بن شدن)
+                // خطاهای سرور (مثل بن شدن)
                 if(data.message && data.message.includes('مسدود')) {
                     alert("⛔ حساب شما مسدود شده است.");
                     this.queue = []; 
                     this.saveQueue();
                 } else {
-                    // خطای ناشناخته، رد می‌کنیم که گیر نکند
+                    // خطای ناشناخته، رد می‌کنیم
                     this.queue.shift();
                     this.saveQueue();
                 }
@@ -283,7 +302,7 @@ const SyncManager = {
     }
 };
 
-// کانفتی برای جشن (جلوه ویژه)
+// تابع کمکی برای افکت کانفتی (جشن)
 function launchConfetti() {
     const canvas = document.getElementById('confetti-canvas');
     if(!canvas) return;
