@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>سالن امتحانات چمران</title>
+    <title>سالن امتحانات هوشمند</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
         :root { --primary: #2c3e50; --accent: #8e44ad; --bg: #f0f2f5; --success: #27ae60; --danger: #c0392b; --warning: #f1c40f; }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; padding: 15px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
 
-        .card { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px; text-align: center; animation: fadeIn 0.5s; position: relative; }
+        /* کارت‌ها */
+        .card { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px; text-align: center; animation: fadeIn 0.5s; position: relative; overflow: visible; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* دکمه‌ها */
         .btn { border: none; padding: 12px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; font-weight: bold; transition: 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn:active { transform: scale(0.98); }
         .btn-start { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3); }
@@ -19,43 +21,48 @@
         .btn-finish { background: var(--success); color: white; display: none; }
         .btn-back { background: #ecf0f1; color: #2c3e50; }
         
-        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 16px; padding: 15px; margin-bottom: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        /* لیست آزمون‌ها */
+        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 16px; padding: 15px; margin-bottom: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; position: relative; }
+        .exam-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .exam-item.locked { background: #f8f9fa; border-color: #bdc3c7; opacity: 0.9; }
         .exam-info h4 { margin: 0; color: #4a148c; font-size: 1rem; }
         .exam-info small { color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 5px; }
         
+        /* تایمر */
         .timer-box { font-size: 1.4rem; font-weight: bold; color: var(--danger); background: #fadbd8; padding: 5px 15px; border-radius: 12px; display: inline-block; }
 
-        /* لایت باکس */
+        /* تصاویر و لایت‌باکس */
         .q-image { width: 100%; max-height: 250px; object-fit: contain; border-radius: 12px; border: 1px solid #eee; margin: 10px 0; cursor: zoom-in; background: #fafafa; }
         #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: none; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
         #lightbox img { max-width: 95%; max-height: 95%; border-radius: 10px; box-shadow: 0 0 50px rgba(255,255,255,0.2); animation: zoomIn 0.3s; }
         @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* گزینه‌ها (اصلاح سایز عکس) */
+        /* گزینه‌ها */
         .option { background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
         .option:hover { border-color: #b2bec3; }
         .option.selected { background: #e8f6f3; border-color: var(--success); color: var(--success); font-weight: bold; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); transform: scale(1.01); }
-        /* استایل عکس داخل گزینه: بزرگ و خوانا */
-        .option img { max-width: 100%; height: auto; max-height: 250px; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; align-self: center; margin-top: 5px; }
+        .option img { max-width: 100%; height: auto; max-height: 200px; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; align-self: center; margin-top: 5px; }
 
-        /* نوار نمره (اصلاح فلش) */
-        .score-container { margin: 40px 0 20px 0; position: relative; padding-top: 20px; direction: ltr; }
-        .score-bar { height: 20px; width: 100%; border-radius: 10px; background: linear-gradient(90deg, #e74c3c 0%, #e74c3c 39%, #f1c40f 40%, #f1c40f 59%, #2ecc71 60%, #2ecc71 79%, #8e44ad 80%, #8e44ad 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+        /* نوار نمره پیشرفته */
+        .score-container { margin: 40px 0 20px 0; position: relative; padding-top: 20px; direction: ltr; } 
+        .score-bar { height: 25px; width: 100%; border-radius: 15px; background: linear-gradient(90deg, #e74c3c 0%, #e74c3c 39%, #f1c40f 40%, #f1c40f 59%, #2ecc71 60%, #2ecc71 79%, #8e44ad 80%, #8e44ad 100%); position: relative; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); }
         
         .score-pointer { 
             position: absolute; 
-            top: -5px; /* بالای نوار قرار می‌گیرد */
-            width: 0; height: 0; 
+            top: -10px; 
+            width: 0; 
+            height: 0; 
             border-left: 10px solid transparent; 
             border-right: 10px solid transparent; 
-            border-top: 15px solid #2c3e50; 
+            border-top: 18px solid #2c3e50; 
             transform: translateX(-50%); 
             transition: left 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
-            left: 0%; z-index: 10;
+            left: 0%; 
+            z-index: 10;
         }
+        .score-pointer::after { content: ''; position: absolute; top: -20px; left: -2px; width: 4px; height: 4px; background: white; border-radius: 50%; }
 
-        .score-text { font-size: 1.8rem; font-weight: bold; margin-top: 15px; color: #2c3e50; }
+        .score-text { font-size: 2rem; font-weight: bold; margin-top: 25px; color: #2c3e50; text-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
         /* آمار تعداد درست/غلط */
         .stat-grid { display: flex; justify-content: space-around; margin: 20px 0; background: #f8f9fa; padding: 15px; border-radius: 12px; }
@@ -66,8 +73,10 @@
         #loading { color: #7f8c8d; font-weight: bold; margin-top: 20px; }
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; }
         
+        /* استایل مرور */
         .review-q { border-bottom: 1px solid #eee; padding: 20px 0; }
         .r-opt { padding: 10px; margin: 5px 0; border-radius: 10px; border: 1px solid #eee; background: #fff; }
+        .r-opt img { max-width: 100%; max-height: 150px; display: block; margin-top: 5px; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -127,8 +136,8 @@
             </div>
         </div>
 
-        <div id="xpMsg" style="background:#e8f6f3; color:#16a085; padding:10px; border-radius:10px; margin-bottom:15px; display:none;">
-            ✅ اطلاعات با موفقیت ثبت شد.
+        <div id="xpMsg" style="background:#e8f6f3; color:#16a085; padding:10px; border-radius:10px; margin-bottom:15px; display:none; margin-top:20px;">
+            ✅ اطلاعات در سرور ذخیره شد.
         </div>
 
         <button id="btnReview" class="btn" style="background:#f39c12; color:white; display:none;" onclick="startReviewMode()">🔍 تحلیل و مرور پاسخ‌ها</button>
@@ -144,7 +153,7 @@
     <script src="rank.js"></script>
     <script>
         const API_URL = "https://chamran-api.liara.run"; 
-        const EXAM_STATE_KEY = "chamran_exam_active_session_v4"; 
+        const EXAM_STATE_KEY = "chamran_exam_active_session_v6"; 
         
         let currentUser = null;
         let examsMap = {};
@@ -165,7 +174,7 @@
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 if(urlParams.get('mode') === 'history_review') {
-                    prepareReviewMode();
+                    prepareReviewMode(urlParams.get('target'));
                 } else {
                     performFullSync();
                 }
@@ -174,28 +183,18 @@
 
         async function performFullSync() {
             try {
-                // دریافت اطلاعات کاربر
-                const res = await fetch(API_URL, {
-                    method: 'POST', headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password })
-                });
+                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) });
                 const userData = await res.json();
                 
-                // دریافت لیست آزمون‌ها
-                const resExams = await fetch(API_URL, {
-                    method: 'POST', headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: 'get_exams' })
-                });
+                const resExams = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
                 const examData = await resExams.json();
 
-                if(userData.status === 'success' && examData.status === 'success') {
+                if(userData.status === 'success') {
                     RankSystem.init(userData.jsonData);
-                    processExams(examData.data);
+                    processExams(examData.data || []);
                     checkActiveSession();
-                } else { throw new Error("Server Error"); }
-            } catch(e) {
-                document.getElementById('loading').innerHTML = `<span style="color:red">❌ خطا در اتصال به سرور</span>`;
-            }
+                }
+            } catch(e) { document.getElementById('loading').innerHTML = `<span style="color:red">❌ خطا در اتصال</span>`; }
         }
 
         function processExams(list) {
@@ -208,15 +207,14 @@
 
             list.reverse().forEach(ex => {
                 examsMap[ex.id] = ex;
-                const userExams = RankSystem.data.exams || {};
-                const score = userExams[ex.id]; 
+                const score = (RankSystem.data.exams || {})[ex.id];
                 const isTaken = (score !== undefined);
 
                 const div = document.createElement('div');
                 div.className = `exam-item ${isTaken ? 'locked' : ''}`;
                 
-                let btnHtml = '';
                 if(isTaken) {
+                    // محاسبه متن کیفی برای لیست
                     let quality = "";
                     if(score >= 20) quality = "فوق‌العاده";
                     else if(score >= 16) quality = "خیلی خوب";
@@ -225,101 +223,65 @@
                     else quality = "نیاز به تلاش";
 
                     const color = score >= 15 ? '#27ae60' : (score < 10 ? '#c0392b' : '#f39c12');
-                    btnHtml = `
-                        <div style="text-align:left;">
-                            <span style="font-weight:bold; color:${color}; font-size:0.9rem;">${quality}</span>
-                            <br>
-                            <button onclick="goToReview('${ex.id}')" style="background:none; border:none; color:#2980b9; cursor:pointer; font-size:0.8rem; padding:0; margin-top:5px;">🔍 مشاهده پاسخ‌برگ</button>
+                    
+                    div.innerHTML = `
+                        <div><h4>${ex.title}</h4><small>انجام شده</small></div>
+                        <div style="text-align:left">
+                            <span style="font-weight:bold; color:${color}; font-size:0.9rem;">${quality}</span><br>
+                            <button onclick="goToReview('${ex.id}')" style="background:none; border:none; color:blue; cursor:pointer; font-size:0.8rem; margin-top:5px;">🔍 مرور پاسخ‌ها</button>
                         </div>`;
                 } else {
-                    const lockIcon = (ex.pass) ? '🔒 ' : '';
-                    btnHtml = `<button class="btn" style="width:auto; padding:5px 15px; font-size:0.9rem; background:var(--accent); color:white;" onclick="checkStart('${ex.id}')">${lockIcon}شروع</button>`;
+                    div.innerHTML = `
+                        <div><h4>${ex.title}</h4><small>${ex.time} دقیقه</small></div>
+                        <button class="btn-start" style="padding:5px 15px; border-radius:8px; border:none; cursor:pointer;" onclick="checkStart('${ex.id}')">شروع</button>`;
                 }
-
-                div.innerHTML = `
-                    <div class="exam-info">
-                        <h4>${ex.title} ${ex.is_new ? '<span style="background:red; color:white; font-size:0.6rem; padding:2px 5px; border-radius:4px;">جدید</span>' : ''}</h4>
-                        <small>⏱️ ${ex.time} دقیقه | ${ex.questions.length} سوال</small>
-                    </div>
-                    ${btnHtml}
-                `;
                 container.appendChild(div);
             });
         }
 
         function checkStart(id) {
             const ex = examsMap[id];
-            if(ex.pass) {
-                const p = prompt("🔒 رمز آزمون را وارد کنید:");
-                if(p !== ex.pass) return alert("❌ رمز نادرست است");
-            }
-            if(confirm(`آزمون "${ex.title}" آغاز شود؟\n⚠️ زمان: ${ex.time} دقیقه`)) {
-                startExam(id);
-            }
+            if(ex.pass && prompt("رمز:") !== ex.pass) return alert("رمز اشتباه");
+            startExam(id);
         }
 
         function startExam(id) {
             const ex = examsMap[id];
             currentExamId = id;
             currentQuestions = ex.questions;
-            currentQIndex = 0;
             userAnswers = {};
+            currentQIndex = 0;
             
-            const now = Math.floor(Date.now() / 1000);
-            const durationSec = parseInt(ex.time) * 60;
-            const session = { id: id, start: now, end: now + durationSec, questions: ex.questions };
-            localStorage.setItem(EXAM_STATE_KEY, JSON.stringify(session));
-            
-            timeRemaining = durationSec;
-            showExamUI();
-            SyncManager.addToQueue('report', { lesson: `آزمون: ${ex.title}`, status: 'شروع', details: 'ورود به جلسه' });
+            localStorage.setItem(EXAM_STATE_KEY, JSON.stringify({ id, start: Date.now(), end: Date.now() + ex.time*60000 }));
+            showExamUI(ex.time * 60);
+            SyncManager.addToQueue('report', { lesson: `آزمون: ${ex.title}`, status: 'شروع' });
         }
 
-        function checkActiveSession() {
-            const saved = localStorage.getItem(EXAM_STATE_KEY);
-            if(saved) {
-                try {
-                    const session = JSON.parse(saved);
-                    const now = Math.floor(Date.now() / 1000);
-                    const remaining = session.end - now;
-                    if(remaining > 0) {
-                        document.getElementById('resumeAlert').style.display = 'block';
-                        setTimeout(() => {
-                            currentExamId = session.id;
-                            currentQuestions = session.questions;
-                            currentQIndex = 0; 
-                            timeRemaining = remaining;
-                            userAnswers = {}; 
-                            showExamUI();
-                        }, 1500);
-                    } else {
-                        localStorage.removeItem(EXAM_STATE_KEY);
-                    }
-                } catch(e) { localStorage.removeItem(EXAM_STATE_KEY); }
-            }
-        }
-
-        function showExamUI() {
+        function showExamUI(time) {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('examArea').style.display = 'block';
-            startTimer();
+            
+            let t = time;
+            timerInterval = setInterval(() => {
+                t--;
+                const m = Math.floor(t/60), s = t%60;
+                document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
+                if(t<=0) { clearInterval(timerInterval); alert("زمان تمام شد!"); finishExam(true); }
+            }, 1000);
             loadQuestion();
         }
 
-        function startTimer() {
-            clearInterval(timerInterval);
-            const display = document.getElementById('timer');
-            timerInterval = setInterval(() => {
-                timeRemaining--;
-                const m = Math.floor(timeRemaining / 60);
-                const s = timeRemaining % 60;
-                display.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-                if(timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    alert("⏰ زمان تمام شد!");
-                    finishExam(true);
-                }
-            }, 1000);
+        function checkActiveSession() {
+            try {
+                const s = JSON.parse(localStorage.getItem(EXAM_STATE_KEY));
+                if(s && (s.end - Date.now()) > 0) {
+                    document.getElementById('resumeAlert').style.display = 'block';
+                    setTimeout(() => {
+                        currentExamId = s.id; currentQuestions = examsMap[s.id].questions; userAnswers = {}; currentQIndex = 0;
+                        showExamUI(Math.floor((s.end - Date.now())/1000));
+                    }, 1000);
+                } else localStorage.removeItem(EXAM_STATE_KEY);
+            } catch(e){}
         }
 
         function loadQuestion() {
@@ -328,215 +290,143 @@
             document.getElementById('questionText').innerText = q.q;
             
             const imgEl = document.getElementById('questionImage');
-            if(q.img && q.img.length > 3) {
-                imgEl.src = q.img; imgEl.style.display = 'block';
-            } else { imgEl.style.display = 'none'; }
-
+            if(q.img) { imgEl.src = q.img; imgEl.style.display = 'block'; } else imgEl.style.display = 'none';
+            
             const cont = document.getElementById('optionsContainer');
             cont.innerHTML = '';
-            
-            q.options.forEach((opt, idx) => {
-                const val = idx + 1;
+            q.options.forEach((opt, i) => {
+                const val = i+1;
                 const div = document.createElement('div');
-                div.className = `option ${userAnswers[currentQIndex] === val ? 'selected' : ''}`;
+                div.className = `option ${userAnswers[currentQIndex]==val ? 'selected' : ''}`;
                 
-                let content = `<span class="opt-text">${opt}</span>`;
-                if(opt.startsWith('http') || opt.startsWith('/uploads')) {
-                    content = `<img src="${opt}" onclick="event.stopPropagation(); openLightbox('${opt}')">`;
-                }
+                let content = opt;
+                if(opt.startsWith('http') || opt.startsWith('/uploads')) content = `<img src="${opt}" onclick="event.stopPropagation(); openLightbox(this.src)">`;
                 
-                div.innerHTML = `<span style="font-weight:bold; color:#7f8c8d; margin-left:10px;">${val})</span> ${content}`;
-                div.onclick = () => selectOption(val, div);
+                div.innerHTML = `<b>${val})</b> ${content}`;
+                div.onclick = () => { userAnswers[currentQIndex] = val; loadQuestion(); }; 
                 cont.appendChild(div);
             });
 
-            const isLast = currentQIndex === currentQuestions.length - 1;
-            document.getElementById('btnNext').style.display = isLast ? 'none' : 'block';
-            document.getElementById('btnFinish').style.display = isLast ? 'block' : 'none';
-        }
-
-        function selectOption(val, el) {
-            document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
-            el.classList.add('selected');
-            userAnswers[currentQIndex] = val;
+            document.getElementById('btnNext').style.display = currentQIndex < currentQuestions.length-1 ? 'block' : 'none';
+            document.getElementById('btnFinish').style.display = currentQIndex === currentQuestions.length-1 ? 'block' : 'none';
         }
 
         function nextQuestion() { currentQIndex++; loadQuestion(); }
 
-        // --- 3. پایان آزمون ---
         function finishExam(forced = false) {
             clearInterval(timerInterval);
-            localStorage.removeItem(EXAM_STATE_KEY); 
+            localStorage.removeItem(EXAM_STATE_KEY);
 
-            let correctCount = 0;
+            let correct = 0, wrong = 0, empty = 0;
             let wrongIndices = [];
-            let emptyCount = 0;
 
-            currentQuestions.forEach((q, idx) => {
-                if(!userAnswers[idx]) emptyCount++;
-                else if(userAnswers[idx] == q.correct) correctCount++;
-                else wrongIndices.push(idx + 1);
+            currentQuestions.forEach((q, i) => {
+                if(!userAnswers[i]) empty++;
+                else if(userAnswers[i] == q.correct) correct++;
+                else { wrong++; wrongIndices.push(i+1); }
             });
 
-            const score20 = (correctCount / currentQuestions.length) * 20;
-            const finalScore = parseFloat(score20.toFixed(1)); 
+            const score = parseFloat(((correct / currentQuestions.length) * 20).toFixed(1));
 
-            // 🛑 ارسال به سرور
+            // ارسال به سرور
             SyncManager.addToQueue('claim_reward', {
-                reward_type: 'exam',
-                reward_id: currentExamId,
-                exam_score: finalScore,
-                wrong_list: wrongIndices,
-                user_answers: userAnswers
+                reward_type: 'exam', reward_id: currentExamId, exam_score: score,
+                wrong_list: wrongIndices, user_answers: userAnswers
             });
             
-            // 🛑 آپدیت دستی لوکال برای نمایش فوری در مرور و لیست (حل باگ "شرکت نکردید")
+            // 🛑 آپدیت فوری لوکال (برای رفع باگ لیست خالی)
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             if(!RankSystem.data.exam_details) RankSystem.data.exam_details = {};
             
-            RankSystem.data.exams[currentExamId] = finalScore;
+            RankSystem.data.exams[currentExamId] = score;
             RankSystem.data.exam_details[currentExamId] = {
-                score: finalScore,
-                wrong: wrongIndices,
-                answers: userAnswers,
-                date: new Date().toLocaleDateString('fa-IR')
+                score: score, wrong: wrongIndices, answers: userAnswers, date: new Date().toLocaleDateString('fa-IR')
             };
 
-            showReportCard(finalScore, correctCount, wrongIndices.length, emptyCount);
+            showReportCard(score, correct, wrong, empty);
         }
 
         function showReportCard(score, correct, wrong, empty) {
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
 
-            // نمایش آمار
             document.getElementById('resCorrect').innerText = correct;
             document.getElementById('resWrong').innerText = wrong;
             document.getElementById('resEmpty').innerText = empty;
 
-            // فلش و نوار
-            const percent = (score / 20) * 100;
-            setTimeout(() => {
-                document.getElementById('scorePointer').style.left = percent + '%';
-            }, 100);
+            setTimeout(() => { document.getElementById('scorePointer').style.left = ((score/20)*100) + '%'; }, 200);
 
-            // نمره کیفی
-            let quality = "";
-            let color = "";
+            let qText = "", color = "";
+            if(score >= 20) { qText = "💎 فوق‌العاده"; color="#8e44ad"; launchConfetti(); }
+            else if(score >= 16) { qText = "🥇 خیلی خوب"; color="#2ecc71"; }
+            else if(score >= 12) { qText = "🙂 خوب"; color="#2980b9"; }
+            else if(score >= 8) { qText = "⚠️ قابل قبول"; color="#f1c40f"; }
+            else { qText = "⛔ نیاز به تلاش بیشتر"; color="#c0392b"; }
             
-            if(percent >= 100) { quality = "💎 فوق‌العاده"; color = "#8e44ad"; launchConfetti(); }
-            else if(percent >= 80) { quality = "🥇 خیلی خوب"; color = "#2ecc71"; }
-            else if(percent >= 60) { quality = "🙂 خوب"; color = "#2980b9"; }
-            else if(percent >= 40) { quality = "⚠️ قابل قبول"; color = "#f1c40f"; }
-            else { quality = "⛔ نیاز به تلاش بیشتر"; color = "#c0392b"; }
-
             const qEl = document.getElementById('qualitativeScore');
-            qEl.innerText = quality;
-            qEl.style.color = color;
-
-            document.getElementById('btnReview').style.display='block'; 
-            document.getElementById('xpMsg').style.display='block';
+            qEl.innerText = qText; qEl.style.color = color;
+            document.getElementById('btnReview').style.display = 'block';
+            document.getElementById('xpMsg').style.display = 'block';
         }
 
-        // --- 4. مرور ---
         function startReviewMode() {
-            // حالت مرور فوری (بعد از آزمون)
             document.getElementById('reportCard').style.display = 'none';
             document.getElementById('reviewArea').style.display = 'block';
-            renderReview();
+            renderReview(currentQuestions, userAnswers);
         }
 
-        function goToReview(examId) {
-            // حالت مرور از تاریخچه
-            window.location.href = `azmoon.html?mode=history_review&target=${examId}`;
+        function goToReview(id) {
+            window.location.href = `azmoon.html?mode=history_review&target=${id}`;
         }
 
-        async function prepareReviewMode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetId = urlParams.get('target');
+        async function prepareReviewMode(targetId) {
             if(!targetId) return;
-
-            document.getElementById('loading').innerHTML = "درحال بازیابی پاسخ‌برگ...";
+            document.getElementById('loading').innerText = "بازیابی پاسخ‌برگ...";
             document.getElementById('loading').style.display = 'block';
 
             const resUser = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) });
             const userData = await resUser.json();
             RankSystem.init(userData.jsonData); 
 
-            const resExams = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
-            const examData = await resExams.json();
+            const resEx = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
+            const eData = await resEx.json();
 
-            if(userData.status === 'success' && examData.status === 'success') {
-                const userDetails = RankSystem.data.exam_details || {};
-                const myData = userDetails[targetId];
-                const examObj = examData.data.find(e => String(e.id) === String(targetId));
+            const myData = (RankSystem.data.exam_details || {})[targetId];
+            const exam = eData.data.find(e => String(e.id) === String(targetId));
 
-                if(!examObj || !myData) { alert("اطلاعات یافت نشد."); window.location.href='azmoon.html'; return; }
-                
-                currentQuestions = examObj.questions;
-                userAnswers = myData.answers || {};
-                
+            if(exam && myData) {
                 document.getElementById('lobby').style.display = 'none';
                 document.getElementById('reviewArea').style.display = 'block';
-                renderReview();
-            } else { alert("خطا"); }
+                renderReview(exam.questions, myData.answers || {});
+            } else { alert("یافت نشد"); window.location.href = 'azmoon.html'; }
         }
 
-        function renderReview() {
-            const cont = document.getElementById('reviewContent');
-            cont.innerHTML = '';
-            
-            currentQuestions.forEach((q, idx) => {
-                const uAns = userAnswers[idx];
-                const cAns = q.correct;
-                const isCorrect = (uAns == cAns);
+        function renderReview(questions, answers) {
+            const c = document.getElementById('reviewContent');
+            c.innerHTML = '';
+            questions.forEach((q, i) => {
+                const uAns = answers[i];
+                const isCorrect = (uAns == q.correct);
+                let html = `<div class="review-q"><b>سوال ${i+1}:</b> ${q.q}`;
+                if(q.img) html += `<br><img src="${q.img}" style="max-height:150px; margin:5px 0;">`;
                 
-                let statusIcon = isCorrect ? '✅' : '❌';
-                if(!uAns) statusIcon = '⚪'; 
-
-                const div = document.createElement('div');
-                div.className = 'review-q';
-                
-                let opsHtml = '';
-                q.options.forEach((op, i) => {
-                    const val = i+1;
-                    let style = "padding:10px; margin:5px 0; border-radius:10px; border:1px solid #eee;";
-                    if(val == cAns) style += "background:#d4edda; color:#155724; border-color:#c3e6cb;"; 
-                    else if(val == uAns && !isCorrect) style += "background:#f8d7da; color:#721c24; border-color:#f5c6cb;"; 
-                    else style += "background:#fff; color:#777;";
-
-                    opsHtml += `<div style="${style}">${val}) ${renderContent(op)}</div>`;
+                q.options.forEach((op, idx) => {
+                    const val = idx+1;
+                    let color = "#fff", border = "#eee";
+                    if(val == q.correct) { color = "#d4edda"; border = "#c3e6cb"; } 
+                    else if(val == uAns) { color = "#f8d7da"; border = "#f5c6cb"; } 
+                    
+                    let content = op.startsWith('http') ? `<img src="${op}" style="max-height:100px; vertical-align:middle">` : op;
+                    html += `<div style="background:${color}; border:1px solid ${border}; padding:10px; margin:5px 0; border-radius:10px;">${val}) ${content}</div>`;
                 });
-
-                let descHtml = '';
-                if(q.desc || q.desc_img) {
-                    descHtml = `
-                        <div style="background:#fff3cd; padding:10px; border-radius:8px; margin-top:10px; font-size:0.9rem;">
-                            <strong>💡 توضیح استاد:</strong> ${q.desc || ''}
-                            ${q.desc_img ? `<br><img src="${q.desc_img}" onclick="openLightbox(this.src)" style="max-height:150px; margin-top:5px; cursor:zoom-in;">` : ''}
-                        </div>`;
-                }
-
-                div.innerHTML = `
-                    <div style="font-weight:bold; margin-bottom:10px;">${statusIcon} سوال ${idx+1}</div>
-                    <div style="margin-bottom:10px; line-height:1.6;">${q.q}</div>
-                    ${q.img ? `<img src="${q.img}" onclick="openLightbox(this.src)" style="max-height:200px; border-radius:10px; cursor:zoom-in; margin-bottom:10px;">` : ''}
-                    <div>${opsHtml}</div>
-                    ${descHtml}
-                `;
-                cont.appendChild(div);
+                
+                if(q.desc) html += `<div style="background:#fff3cd; padding:10px; margin-top:10px; border-radius:8px; font-size:0.9rem;">💡 <b>توضیح:</b> ${q.desc}</div>`;
+                html += `</div>`;
+                c.innerHTML += html;
             });
         }
 
-        function renderContent(str) {
-            if(str.startsWith('http') || str.startsWith('/uploads')) return `<img src="${str}" onclick="openLightbox(this.src)" style="max-height:120px; vertical-align:middle; border-radius:5px;">`;
-            return str;
-        }
-
-        function openLightbox(src) {
-            document.getElementById('lightboxImg').src = src;
-            document.getElementById('lightbox').style.display = 'flex';
-        }
+        function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').style.display = 'flex'; }
         function launchConfetti() {
             const c = document.getElementById('confetti-canvas');
             const ctx = c.getContext('2d');
@@ -546,7 +436,7 @@
             draw(); setTimeout(()=>c.style.display='none',3000);
         }
 
-        window.addEventListener('load', init);
+        window.onload = init;
     </script>
 </body>
 </html>
