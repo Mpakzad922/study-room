@@ -132,11 +132,11 @@
         </div>
 
         <div id="xpMsg" style="background:#e8f6f3; color:#16a085; padding:10px; border-radius:10px; margin-bottom:15px; display:none; margin-top:20px;">
-            ✅ اطلاعات در سرور ثبت شد.
+            ✅ اطلاعات در سوابق شما ثبت شد.
         </div>
 
         <button id="btnReview" class="btn" style="background:#f39c12; color:white; display:none;" onclick="startReviewMode()">🔍 تحلیل و مرور پاسخ‌ها</button>
-        <button class="btn btn-back" onclick="location.reload()">🔙 بازگشت به لیست آزمون‌ها</button>
+        <button class="btn btn-back" onclick="window.location.href='index.html'">🏠 بازگشت به خانه</button>
     </div>
 
     <div id="reviewArea" class="card" style="display: none; text-align: right;">
@@ -165,6 +165,9 @@
             try {
                 currentUser = JSON.parse(savedUser);
                 document.getElementById('welcomeText').innerText = `سلام ${currentUser.displayName}`;
+                
+                // 🚀 FIX: مقداردهی اولیه هسته با دیتای لوکال
+                if(currentUser.jsonData) RankSystem.init(currentUser.jsonData);
                 SyncManager.init(currentUser.username, currentUser.password);
                 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -178,20 +181,23 @@
 
         async function performFullSync() {
             try {
-                // دریافت اطلاعات کاربر
-                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) });
-                const userData = await res.json();
-                
-                // دریافت لیست آزمون‌ها
-                const resExams = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
+                // درخواست لیست آزمون‌ها با پارامتر زمان برای جلوگیری از کش
+                const resExams = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
                 const examData = await resExams.json();
 
-                if(userData.status === 'success' && examData.status === 'success') {
-                    RankSystem.init(userData.jsonData);
-                    // آپدیت کردن لوکال استوریج برای هماهنگی با index.html
-                    updateLocalCreds(userData.jsonData);
+                if(examData.status === 'success') {
                     processExams(examData.data || []);
                     checkActiveSession();
+                    
+                    // آپدیت دیتای کاربر در پس‌زمینه
+                    fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) })
+                    .then(r=>r.json()).then(d=>{
+                         if(d.status==='success') {
+                             RankSystem.init(d.jsonData);
+                             updateLocalCreds(d.jsonData);
+                             processExams(examData.data || []); // رفرش وضعیت دکمه‌ها (تیک سبز)
+                         }
+                    });
                 }
             } catch(e) { document.getElementById('loading').innerHTML = `<span style="color:red">❌ خطا در اتصال</span>`; }
         }
@@ -213,8 +219,8 @@
 
             list.reverse().forEach(ex => {
                 examsMap[ex.id] = ex;
-                // تبدیل ID به رشته برای مقایسه دقیق
                 const sId = String(ex.id);
+                // خواندن مستقیم از هسته (که شامل دیتای لوکال است)
                 const userExams = RankSystem.data.exams || {};
                 const score = userExams[sId]; 
                 const isTaken = (score !== undefined);
@@ -265,6 +271,27 @@
             localStorage.setItem(EXAM_STATE_KEY, JSON.stringify({ id, start: Date.now(), end: Date.now() + ex.time*60000 }));
             showExamUI(ex.time * 60);
             SyncManager.addToQueue('report', { lesson: `آزمون: ${ex.title}`, status: 'شروع' });
+        }
+        
+        // بازگردانی سشن قبلی (اگر مرورگر بسته شده باشد)
+        function checkActiveSession() {
+            const saved = localStorage.getItem(EXAM_STATE_KEY);
+            if(saved) {
+                const sess = JSON.parse(saved);
+                if(examsMap[sess.id]) {
+                    const remaining = Math.floor((sess.end - Date.now())/1000);
+                    if(remaining > 0) {
+                        if(confirm("یک آزمون ناتمام دارید. ادامه می‌دهید؟")) {
+                            currentExamId = sess.id;
+                            const ex = examsMap[sess.id];
+                            currentQuestions = ex.questions;
+                            userAnswers = {}; // متاسفانه پاسخ‌های قبلی اینجا نیستند (مگر اینکه ذخیره کنیم که پیچیده می‌شود)
+                            currentQIndex = 0;
+                            showExamUI(remaining);
+                        } else { localStorage.removeItem(EXAM_STATE_KEY); }
+                    } else { localStorage.removeItem(EXAM_STATE_KEY); }
+                }
+            }
         }
 
         function showExamUI(time) {
@@ -324,13 +351,7 @@
 
             const score = parseFloat(((correct / currentQuestions.length) * 20).toFixed(1));
 
-            // ارسال به سرور
-            SyncManager.addToQueue('claim_reward', {
-                reward_type: 'exam', reward_id: currentExamId, exam_score: score,
-                wrong_list: wrongIndices, user_answers: userAnswers
-            });
-            
-            // ✅ مهم: آپدیت دستی لوکال برای اینکه بلافاصله در سوابق و مرور بیاید (Fix)
+            // 🚀 FIX: ذخیره آنی در حافظه قبل از ارسال
             const sId = String(currentExamId);
             if(!RankSystem.data.exams) RankSystem.data.exams = {};
             if(!RankSystem.data.exam_details) RankSystem.data.exam_details = {};
@@ -339,7 +360,15 @@
             RankSystem.data.exam_details[sId] = {
                 score: score, wrong: wrongIndices, answers: userAnswers, date: new Date().toLocaleDateString('fa-IR')
             };
-            // ⭐️ آپدیت کردن حافظه اصلی که index.html از آن می‌خواند
+            RankSystem.saveToLocal(); // ذخیره در localStorage
+
+            // ارسال به صف همگام‌سازی
+            SyncManager.addToQueue('claim_reward', {
+                reward_type: 'exam', reward_id: currentExamId, exam_score: score,
+                wrong_list: wrongIndices, user_answers: userAnswers
+            });
+            
+            // آپدیت حافظه کاربری برای اطمینان
             updateLocalCreds(JSON.stringify(RankSystem.data));
 
             showReportCard(score, correct, wrong, empty);
@@ -383,23 +412,40 @@
             document.getElementById('loading').innerText = "بازیابی پاسخ‌برگ...";
             document.getElementById('loading').style.display = 'block';
 
-            const resUser = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) });
-            const userData = await resUser.json();
-            RankSystem.init(userData.jsonData); 
-
-            const resEx = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
-            const eData = await resEx.json();
-
-            // فیکس جستجو با String
+            // 🚀 FIX: اول لوکال را چک کن (برای سرعت و حل مشکل پیدا نشد)
             const sTargetId = String(targetId);
-            const myData = (RankSystem.data.exam_details || {})[sTargetId];
-            const exam = eData.data.find(e => String(e.id) === sTargetId);
+            let myData = (RankSystem.data.exam_details || {})[sTargetId];
+            
+            let examList = [];
+            // دریافت لیست آزمون‌ها (بدون کش)
+            try {
+                const resEx = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
+                const eData = await resEx.json();
+                examList = eData.data || [];
+            } catch(e) {}
+
+            const exam = examList.find(e => String(e.id) === sTargetId);
+
+            // اگر دیتای لوکال نبود، از سرور بگیر (برای وقتی با دستگاه دیگر وارد شده)
+            if(!myData) {
+                try {
+                     const resUser = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) });
+                     const userData = await resUser.json();
+                     if(userData.status === 'success') {
+                         RankSystem.init(userData.jsonData);
+                         myData = (RankSystem.data.exam_details || {})[sTargetId];
+                     }
+                } catch(e) {}
+            }
 
             if(exam && myData) {
                 document.getElementById('lobby').style.display = 'none';
                 document.getElementById('reviewArea').style.display = 'block';
                 renderReview(exam.questions, myData.answers || {});
-            } else { alert("اطلاعات آزمون یافت نشد."); window.location.href = 'azmoon.html'; }
+            } else { 
+                alert("اطلاعات آزمون یافت نشد. شاید در دستگاه دیگری آزمون داده‌اید و هنوز همگام‌سازی نشده."); 
+                window.location.href = 'azmoon.html'; 
+            }
         }
 
         function renderReview(questions, answers) {
