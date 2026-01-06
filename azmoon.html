@@ -3,74 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>سالن امتحانات هوشمند</title>
+    <title>سالن امتحانات چمران</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
         :root { --primary: #2c3e50; --accent: #8e44ad; --bg: #f0f2f5; --success: #27ae60; --danger: #c0392b; --warning: #f1c40f; }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; padding: 15px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; user-select: none; -webkit-tap-highlight-color: transparent; }
 
-        /* کارت‌ها */
-        .card { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px; text-align: center; animation: fadeIn 0.5s; position: relative; overflow: hidden; }
+        .card { background: white; width: 100%; max-width: 650px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 20px; text-align: center; animation: fadeIn 0.5s; position: relative; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* دکمه‌ها */
         .btn { border: none; padding: 12px; border-radius: 12px; font-size: 1rem; cursor: pointer; font-family: inherit; width: 100%; font-weight: bold; transition: 0.2s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn:active { transform: scale(0.98); }
+        .btn-start { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3); }
         .btn-next { background: #2980b9; color: white; }
         .btn-finish { background: var(--success); color: white; display: none; }
         .btn-back { background: #ecf0f1; color: #2c3e50; }
         
-        /* لیست آزمون‌ها */
-        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 16px; padding: 15px; margin-bottom: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; position: relative; }
-        .exam-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 16px; padding: 15px; margin-bottom: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
         .exam-item.locked { background: #f8f9fa; border-color: #bdc3c7; opacity: 0.9; }
+        .exam-info h4 { margin: 0; color: #4a148c; font-size: 1rem; }
+        .exam-info small { color: #7f8c8d; font-size: 0.8rem; display: block; margin-top: 5px; }
         
-        /* تایمر */
         .timer-box { font-size: 1.4rem; font-weight: bold; color: var(--danger); background: #fadbd8; padding: 5px 15px; border-radius: 12px; display: inline-block; }
 
-        /* تصاویر و لایت‌باکس */
+        /* لایت باکس */
         .q-image { width: 100%; max-height: 250px; object-fit: contain; border-radius: 12px; border: 1px solid #eee; margin: 10px 0; cursor: zoom-in; background: #fafafa; }
         #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: none; justify-content: center; align-items: center; cursor: zoom-out; backdrop-filter: blur(5px); }
         #lightbox img { max-width: 95%; max-height: 95%; border-radius: 10px; box-shadow: 0 0 50px rgba(255,255,255,0.2); animation: zoomIn 0.3s; }
         @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* گزینه‌ها */
+        /* گزینه‌ها (اصلاح سایز عکس) */
         .option { background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
         .option:hover { border-color: #b2bec3; }
         .option.selected { background: #e8f6f3; border-color: var(--success); color: var(--success); font-weight: bold; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); transform: scale(1.01); }
-        /* اصلاح سایز تصاویر در گزینه‌ها */
-        .option img { max-width: 100%; height: auto; max-height: 180px; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; align-self: center; margin-top: 5px; }
+        /* استایل عکس داخل گزینه: بزرگ و خوانا */
+        .option img { max-width: 100%; height: auto; max-height: 250px; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; align-self: center; margin-top: 5px; }
 
-        /* نوار نمره پیشرفته */
-        .score-container { margin: 40px 0 20px 0; position: relative; padding-top: 15px; direction: ltr; } /* LTR برای محاسبه دقیق left */
-        .score-bar { height: 25px; width: 100%; border-radius: 15px; background: linear-gradient(90deg, #e74c3c 0%, #e74c3c 39%, #f1c40f 40%, #f1c40f 59%, #2ecc71 60%, #2ecc71 79%, #8e44ad 80%, #8e44ad 100%); position: relative; box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); overflow: hidden; }
+        /* نوار نمره (اصلاح فلش) */
+        .score-container { margin: 40px 0 20px 0; position: relative; padding-top: 20px; direction: ltr; }
+        .score-bar { height: 20px; width: 100%; border-radius: 10px; background: linear-gradient(90deg, #e74c3c 0%, #e74c3c 39%, #f1c40f 40%, #f1c40f 59%, #2ecc71 60%, #2ecc71 79%, #8e44ad 80%, #8e44ad 100%); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
         
-        /* نشانگر فلش */
         .score-pointer { 
             position: absolute; 
-            top: -10px; 
-            width: 0; 
-            height: 0; 
+            top: -5px; /* بالای نوار قرار می‌گیرد */
+            width: 0; height: 0; 
             border-left: 10px solid transparent; 
             border-right: 10px solid transparent; 
-            border-top: 18px solid #2c3e50; 
+            border-top: 15px solid #2c3e50; 
             transform: translateX(-50%); 
             transition: left 1.5s cubic-bezier(0.22, 1, 0.36, 1); 
-            left: 0%; 
-            z-index: 10;
+            left: 0%; z-index: 10;
         }
-        .score-pointer::after { content: ''; position: absolute; top: -20px; left: -2px; width: 4px; height: 4px; background: white; border-radius: 50%; }
 
-        .score-text { font-size: 2rem; font-weight: bold; margin-top: 25px; color: #2c3e50; text-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .score-text { font-size: 1.8rem; font-weight: bold; margin-top: 15px; color: #2c3e50; }
+        
+        /* آمار تعداد درست/غلط */
+        .stat-grid { display: flex; justify-content: space-around; margin: 20px 0; background: #f8f9fa; padding: 15px; border-radius: 12px; }
+        .stat-item { text-align: center; }
+        .stat-num { font-size: 1.3rem; font-weight: bold; display: block; }
+        .stat-label { font-size: 0.8rem; color: #7f8c8d; }
 
         #loading { color: #7f8c8d; font-weight: bold; margin-top: 20px; }
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; }
         
-        /* استایل مرور */
         .review-q { border-bottom: 1px solid #eee; padding: 20px 0; }
         .r-opt { padding: 10px; margin: 5px 0; border-radius: 10px; border: 1px solid #eee; background: #fff; }
-        .r-opt.correct { background: #d4edda; border-color: #c3e6cb; color: #155724; }
-        .r-opt.wrong { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
     </style>
 </head>
 <body>
@@ -85,6 +82,7 @@
         <div style="font-size: 3.5rem; margin-bottom: 5px;">📝</div>
         <h2 id="welcomeText" style="margin:0 0 10px 0;">سالن امتحانات</h2>
         <div id="loading">⏳ در حال دریافت اطلاعات...</div>
+        <div id="resumeAlert" style="display:none; background:#fff3cd; color:#856404; padding:12px; border-radius:12px; margin-bottom:15px; border:1px solid #ffeeba;">⚠️ آزمون ناتمام بازیابی شد!</div>
         <div id="examList"></div>
         <button class="btn btn-back" onclick="window.location.href='index.html'">🏠 بازگشت به کلاس</button>
     </div>
@@ -103,12 +101,10 @@
 
     <div id="reportCard" class="card" style="display: none;">
         <h2 style="color:var(--accent);">📊 نتیجه عملکرد</h2>
-        <h4 id="reportTitle" style="color:#7f8c8d; margin-top:0;"></h4>
         
         <div class="score-container">
-            <div class="score-bar">
-                <div id="scorePointer" class="score-pointer"></div>
-            </div>
+            <div class="score-pointer" id="scorePointer"></div>
+            <div class="score-bar"></div>
             <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#aaa; margin-top:5px; direction:ltr;">
                 <span>0%</span><span>40%</span><span>60%</span><span>80%</span><span>100%</span>
             </div>
@@ -116,8 +112,23 @@
         
         <div id="qualitativeScore" class="score-text">...</div>
 
-        <div id="xpMsg" style="background:#e8f6f3; color:#16a085; padding:10px; border-radius:10px; margin-bottom:15px; display:none; margin-top:20px;">
-            ✅ اطلاعات با موفقیت در سرور ذخیره شد.
+        <div class="stat-grid">
+            <div class="stat-item">
+                <span id="resCorrect" class="stat-num" style="color:var(--success)">0</span>
+                <span class="stat-label">درست ✅</span>
+            </div>
+            <div class="stat-item">
+                <span id="resWrong" class="stat-num" style="color:var(--danger)">0</span>
+                <span class="stat-label">غلط ❌</span>
+            </div>
+            <div class="stat-item">
+                <span id="resEmpty" class="stat-num" style="color:#95a5a6">0</span>
+                <span class="stat-label">نزده ⚪</span>
+            </div>
+        </div>
+
+        <div id="xpMsg" style="background:#e8f6f3; color:#16a085; padding:10px; border-radius:10px; margin-bottom:15px; display:none;">
+            ✅ اطلاعات با موفقیت ثبت شد.
         </div>
 
         <button id="btnReview" class="btn" style="background:#f39c12; color:white; display:none;" onclick="startReviewMode()">🔍 تحلیل و مرور پاسخ‌ها</button>
@@ -152,12 +163,10 @@
                 document.getElementById('welcomeText').innerText = `سلام ${currentUser.displayName}`;
                 SyncManager.init(currentUser.username, currentUser.password);
                 
-                // بررسی مود: آیا برای مرور آمده؟
                 const urlParams = new URLSearchParams(window.location.search);
                 if(urlParams.get('mode') === 'history_review') {
                     prepareReviewMode();
                 } else {
-                    // در غیر این صورت، لیست آزمون‌ها را بگیر
                     performFullSync();
                 }
             } catch(e) { window.location.href = 'index.html'; }
@@ -165,14 +174,14 @@
 
         async function performFullSync() {
             try {
-                // 1. دریافت دیتای یوزر (برای دیدن اینکه کدام را شرکت کرده)
+                // دریافت اطلاعات کاربر
                 const res = await fetch(API_URL, {
                     method: 'POST', headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password })
                 });
                 const userData = await res.json();
                 
-                // 2. دریافت لیست آزمون‌ها
+                // دریافت لیست آزمون‌ها
                 const resExams = await fetch(API_URL, {
                     method: 'POST', headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ action: 'get_exams' })
@@ -182,7 +191,7 @@
                 if(userData.status === 'success' && examData.status === 'success') {
                     RankSystem.init(userData.jsonData);
                     processExams(examData.data);
-                    checkActiveSession(); // چک کردن آزمون ناتمام
+                    checkActiveSession();
                 } else { throw new Error("Server Error"); }
             } catch(e) {
                 document.getElementById('loading').innerHTML = `<span style="color:red">❌ خطا در اتصال به سرور</span>`;
@@ -199,7 +208,6 @@
 
             list.reverse().forEach(ex => {
                 examsMap[ex.id] = ex;
-                // بررسی دیتای سرور
                 const userExams = RankSystem.data.exams || {};
                 const score = userExams[ex.id]; 
                 const isTaken = (score !== undefined);
@@ -209,8 +217,7 @@
                 
                 let btnHtml = '';
                 if(isTaken) {
-                    // محاسبه متن کیفی برای لیست
-                    let quality = "انجام شده";
+                    let quality = "";
                     if(score >= 20) quality = "فوق‌العاده";
                     else if(score >= 16) quality = "خیلی خوب";
                     else if(score >= 12) quality = "خوب";
@@ -334,7 +341,6 @@
                 div.className = `option ${userAnswers[currentQIndex] === val ? 'selected' : ''}`;
                 
                 let content = `<span class="opt-text">${opt}</span>`;
-                // تشخیص عکس
                 if(opt.startsWith('http') || opt.startsWith('/uploads')) {
                     content = `<img src="${opt}" onclick="event.stopPropagation(); openLightbox('${opt}')">`;
                 }
@@ -357,21 +363,25 @@
 
         function nextQuestion() { currentQIndex++; loadQuestion(); }
 
+        // --- 3. پایان آزمون ---
         function finishExam(forced = false) {
             clearInterval(timerInterval);
             localStorage.removeItem(EXAM_STATE_KEY); 
 
             let correctCount = 0;
             let wrongIndices = [];
+            let emptyCount = 0;
+
             currentQuestions.forEach((q, idx) => {
-                if(userAnswers[idx] == q.correct) correctCount++;
+                if(!userAnswers[idx]) emptyCount++;
+                else if(userAnswers[idx] == q.correct) correctCount++;
                 else wrongIndices.push(idx + 1);
             });
 
             const score20 = (correctCount / currentQuestions.length) * 20;
             const finalScore = parseFloat(score20.toFixed(1)); 
 
-            // ارسال به سرور
+            // 🛑 ارسال به سرور
             SyncManager.addToQueue('claim_reward', {
                 reward_type: 'exam',
                 reward_id: currentExamId,
@@ -380,23 +390,37 @@
                 user_answers: userAnswers
             });
             
-            showReportCard(finalScore);
+            // 🛑 آپدیت دستی لوکال برای نمایش فوری در مرور و لیست (حل باگ "شرکت نکردید")
+            if(!RankSystem.data.exams) RankSystem.data.exams = {};
+            if(!RankSystem.data.exam_details) RankSystem.data.exam_details = {};
+            
+            RankSystem.data.exams[currentExamId] = finalScore;
+            RankSystem.data.exam_details[currentExamId] = {
+                score: finalScore,
+                wrong: wrongIndices,
+                answers: userAnswers,
+                date: new Date().toLocaleDateString('fa-IR')
+            };
+
+            showReportCard(finalScore, correctCount, wrongIndices.length, emptyCount);
         }
 
-        function showReportCard(score) {
+        function showReportCard(score, correct, wrong, empty) {
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
 
-            // محاسبه درصد برای نوار
-            const percent = (score / 20) * 100;
-            
-            // انیمیشن فلش هوشمند (Pointer)
-            setTimeout(() => {
-                // فلش دقیقاً روی درصد می‌رود
-                document.getElementById('scorePointer').style.left = percent + '%';
-            }, 300);
+            // نمایش آمار
+            document.getElementById('resCorrect').innerText = correct;
+            document.getElementById('resWrong').innerText = wrong;
+            document.getElementById('resEmpty').innerText = empty;
 
-            // محاسبه متن کیفی دقیق
+            // فلش و نوار
+            const percent = (score / 20) * 100;
+            setTimeout(() => {
+                document.getElementById('scorePointer').style.left = percent + '%';
+            }, 100);
+
+            // نمره کیفی
             let quality = "";
             let color = "";
             
@@ -414,46 +438,40 @@
             document.getElementById('xpMsg').style.display='block';
         }
 
-        // --- بخش مرور و تاریخچه ---
+        // --- 4. مرور ---
+        function startReviewMode() {
+            // حالت مرور فوری (بعد از آزمون)
+            document.getElementById('reportCard').style.display = 'none';
+            document.getElementById('reviewArea').style.display = 'block';
+            renderReview();
+        }
+
         function goToReview(examId) {
+            // حالت مرور از تاریخچه
             window.location.href = `azmoon.html?mode=history_review&target=${examId}`;
         }
 
         async function prepareReviewMode() {
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('target');
-            
+            if(!targetId) return;
+
             document.getElementById('loading').innerHTML = "درحال بازیابی پاسخ‌برگ...";
             document.getElementById('loading').style.display = 'block';
 
-            // 1. اول دیتای یوزر (پاسخ‌برگ) را می‌گیریم
-            const resUser = await fetch(API_URL, {
-                method: 'POST', headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password })
-            });
+            const resUser = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'login', username: currentUser.username, password: currentUser.password }) });
             const userData = await resUser.json();
             RankSystem.init(userData.jsonData); 
 
-            // 2. حالا سوالات آزمون را می‌گیریم
-            const resExams = await fetch(API_URL, {
-                method: 'POST', headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: 'get_exams' })
-            });
+            const resExams = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
             const examData = await resExams.json();
 
-            // 3. ترکیب اطلاعات
             if(userData.status === 'success' && examData.status === 'success') {
                 const userDetails = RankSystem.data.exam_details || {};
                 const myData = userDetails[targetId];
-                
-                // پیدا کردن آزمون از لیست
                 const examObj = examData.data.find(e => String(e.id) === String(targetId));
 
-                if(!examObj || !myData) { 
-                    alert("اطلاعات این آزمون یافت نشد (شاید حذف شده باشد)."); 
-                    window.location.href='azmoon.html'; 
-                    return; 
-                }
+                if(!examObj || !myData) { alert("اطلاعات یافت نشد."); window.location.href='azmoon.html'; return; }
                 
                 currentQuestions = examObj.questions;
                 userAnswers = myData.answers || {};
@@ -461,9 +479,7 @@
                 document.getElementById('lobby').style.display = 'none';
                 document.getElementById('reviewArea').style.display = 'block';
                 renderReview();
-            } else {
-                alert("خطا در دریافت اطلاعات");
-            }
+            } else { alert("خطا"); }
         }
 
         function renderReview() {
@@ -485,10 +501,8 @@
                 q.options.forEach((op, i) => {
                     const val = i+1;
                     let style = "padding:10px; margin:5px 0; border-radius:10px; border:1px solid #eee;";
-                    
-                    // منطق رنگ‌بندی مرور
-                    if(val == cAns) style += "background:#d4edda; color:#155724; border-color:#c3e6cb;"; // سبز (صحیح)
-                    else if(val == uAns && !isCorrect) style += "background:#f8d7da; color:#721c24; border-color:#f5c6cb;"; // قرمز (انتخاب غلط)
+                    if(val == cAns) style += "background:#d4edda; color:#155724; border-color:#c3e6cb;"; 
+                    else if(val == uAns && !isCorrect) style += "background:#f8d7da; color:#721c24; border-color:#f5c6cb;"; 
                     else style += "background:#fff; color:#777;";
 
                     opsHtml += `<div style="${style}">${val}) ${renderContent(op)}</div>`;
