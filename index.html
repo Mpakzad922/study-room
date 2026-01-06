@@ -728,7 +728,7 @@
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none'; 
             alert("⏰ زمان تمام شد! بازگشت به عقب."); 
-            let penaltyTime = Math.max(0, vid.currentTime - 180); 
+            let penaltyTime = Math.max(0, vid.currentTime - 400); 
             vid.currentTime = penaltyTime; 
             maxTime = penaltyTime; 
             RankSystem.savePosition(activeVid.id, penaltyTime, true); 
@@ -752,7 +752,6 @@
             // Launch Confetti
             setTimeout(() => {
                 launchConfetti();
-                setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
             }, 300);
         }
 
@@ -809,6 +808,14 @@
                 c.style.display = 'none';
             }, 6000);
         }
+        // 🛑 توقف خودکار فیلم هنگام خروج از صفحه
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden) {
+                vid.pause(); // فیلم را نگه دار
+                updatePlayBtn(); // آیکون دکمه را به حالت Play تغییر بده
+            }
+        });
     </script>
 </body>
 </html>
+
