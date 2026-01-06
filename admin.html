@@ -87,10 +87,15 @@
         .manage-table td { padding: 8px; border-bottom: 1px solid #eee; background: white; }
         .manage-input { width: 90%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit; text-align: center; font-size: 0.9rem; }
         .manage-input:focus { border-color: #3498db; outline: none; background: #f0f8ff; }
-        .save-row-btn { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        
+        .save-row-btn { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; width: 45px; font-weight: bold; }
         .save-row-btn:active { transform: scale(0.95); }
+        
+        /* دکمه جدید حذف کاربر */
+        .del-row-btn { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 45px; }
+        .del-row-btn:hover { background: #c0392b; }
 
-        /* استایل اعلانات (جدید) */
+        /* استایل اعلانات */
         .notif-input-area { background: #e8f4f8; padding: 15px; border-radius: 15px; border: 1px dashed #3498db; margin-bottom: 20px; }
         .notif-list-item { background: white; padding: 10px; margin-bottom: 10px; border-radius: 10px; border-right: 4px solid #3498db; display: flex; justify-content: space-between; align-items: center; }
     </style>
@@ -166,7 +171,7 @@
                 </div>
             </div>
 
-            <p style="font-size:0.8rem; color:#7f8c8d;">💡 راهنما: می‌توانید اطلاعات و <b>امتیاز</b> را همینجا تغییر دهید و دکمه سبز «ثبت» را بزنید.</p>
+            <p style="font-size:0.8rem; color:#7f8c8d;">💡 راهنما: می‌توانید اطلاعات و <b>امتیاز</b> را همینجا تغییر دهید و دکمه سبز «ثبت» را بزنید. برای حذف دائمی دکمه سطل آشغال را بزنید.</p>
             
             <div style="overflow-x:auto;">
                 <table class="manage-table">
@@ -215,7 +220,7 @@
     
     let ADMIN_TOKEN = ""; 
     let ALL_USERS = [];
-    let META_EXAMS = {};    
+    let META_EXAMS = {};      
     let META_LESSONS = {}; 
     let NOTIFICATIONS = [];
 
@@ -305,7 +310,7 @@
             const xp = u.parsedData.xp || 0;
             const gem = u.parsedData.gem || 0;
             
-            // محاسبه وضعیت آنلاین (RESTORED FEATURE)
+            // محاسبه وضعیت آنلاین
             const lastTs = u.ts || 0;
             const diff = (now - lastTs) / 1000 / 60; // دقیقه
             let statusHtml = '';
@@ -553,7 +558,7 @@
         });
     }
 
-    // --- (4) مدیریت جدول (کدهای حفظ شده) ---
+    // --- (4) مدیریت جدول (همراه با دکمه حذف جدید) ---
     function renderManageTable() {
         const tbody = document.getElementById('manageTableBody');
         tbody.innerHTML = '';
@@ -565,7 +570,10 @@
                 <td><input id="usr_${uid}" value="${u.u}" class="manage-input" style="direction:ltr"></td>
                 <td><input id="pwd_${uid}" value="${u.p}" class="manage-input" style="direction:ltr"></td>
                 <td><input id="xp_${uid}" type="number" value="${u.parsedData.xp || 0}" class="manage-input" style="direction:ltr"></td>
-                <td><button class="save-row-btn" onclick="saveUserRow('${u.u}', '${uid}')">💾 ثبت</button></td>
+                <td style="display:flex; justify-content:center; gap:5px;">
+                    <button class="save-row-btn" onclick="saveUserRow('${u.u}', '${uid}')" title="ذخیره">💾</button>
+                    <button class="del-row-btn" onclick="deleteUser('${u.u}')" title="حذف">🗑️</button>
+                </td>
             `;
             tbody.appendChild(tr);
         });
@@ -603,6 +611,27 @@
         document.getElementById('loadingBox').style.display = 'none';
     }
 
+    // --- تابع جدید: حذف کاربر ---
+    async function deleteUser(username) {
+        if(!confirm(`⚠️ هشدار بسیار مهم!\n\nآیا مطمئن هستید که می‌خواهید کاربر "${username}" را حذف کنید؟\n❌ تمام سوابق، نمرات و اکانت این دانش‌آموز پاک می‌شود و قابل برگشت نیست!`)) return;
+
+        document.getElementById('loadingBox').style.display = 'flex';
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: 'delete_user', admin_token: ADMIN_TOKEN, target_user: username })
+            });
+            const d = await res.json();
+            if(d.status === 'success') { 
+                alert("✅ کاربر با موفقیت حذف شد."); 
+                fetchData(); 
+            } else { 
+                alert("❌ خطا: " + d.message); 
+            }
+        } catch(e) { alert("خطا در ارتباط با سرور"); }
+        document.getElementById('loadingBox').style.display = 'none';
+    }
+
     function toggleNewUserBox() {
         const box = document.getElementById('newUserBox');
         box.style.display = (box.style.display === 'block') ? 'none' : 'block';
@@ -632,7 +661,7 @@
         document.getElementById('loadingBox').style.display = 'none';
     }
 
-    // --- (5) بخش اعلانات (جدید) ---
+    // --- (5) بخش اعلانات ---
     function renderNotifications() {
         const list = document.getElementById('notifHistoryList');
         list.innerHTML = '';
