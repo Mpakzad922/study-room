@@ -67,6 +67,14 @@
         /* حالت ویرایش */
         .edit-mode-badge { background: #f39c12; color: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; display: none; font-weight: bold; animation: slideDown 0.3s; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* 🆕 استایل باکس تنظیم امتیاز */
+        .reward-config { background: #e8f6f3; padding: 15px; border-radius: 10px; border: 1px dashed #27ae60; margin: 20px 0; }
+        .reward-config h4 { margin: 0 0 10px 0; color: #27ae60; border-bottom: 1px solid rgba(39, 174, 96, 0.2); padding-bottom: 5px; }
+        .reward-inputs { display: flex; gap: 10px; flex-wrap: wrap; }
+        .reward-item { flex: 1; min-width: 120px; }
+        .reward-item label { font-size: 0.8rem; margin: 5px 0; color: #555; }
+        .reward-item input { text-align: center; direction: ltr; }
     </style>
 </head>
 <body>
@@ -120,6 +128,24 @@
                     <div style="flex:2"><label>نام آزمون:</label><input id="e_title" placeholder="آزمون علوم"></div>
                     <div style="flex:1"><label>زمان (دقیقه):</label><input type="number" id="e_time" value="15"></div>
                     <div style="flex:1"><label>رمز (اختیاری):</label><input id="e_pass"></div>
+                </div>
+                
+                <div class="reward-config">
+                    <h4>🎁 تنظیم جوایز این آزمون (XP)</h4>
+                    <div class="reward-inputs">
+                        <div class="reward-item">
+                            <label>💎 فوق‌العاده (نمره ۲۰)</label>
+                            <input type="number" id="r_excellent" value="300" style="border-color:#8e44ad; color:#8e44ad; font-weight:bold;">
+                        </div>
+                        <div class="reward-item">
+                            <label>🥇 خیلی خوب (۱۷ تا ۱۹)</label>
+                            <input type="number" id="r_good" value="100" style="border-color:#27ae60; color:#27ae60; font-weight:bold;">
+                        </div>
+                        <div class="reward-item">
+                            <label>🙂 خوب (۱۰ تا ۱۶)</label>
+                            <input type="number" id="r_normal" value="20" style="border-color:#2980b9; color:#2980b9; font-weight:bold;">
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="questions_area"></div>
@@ -247,7 +273,7 @@
             } else { alert("❌ خطا: " + res.message); }
         }
 
-        // --- 5. فرم آزمون ---
+        // --- 5. فرم آزمون (با امتیازهای متغیر) ---
         let qCount = 0;
         function addQuestion(data = null) {
             qCount++;
@@ -263,7 +289,7 @@
             const desc = data ? data.desc : '';
             const descImg = data ? data.desc_img : '';
 
-            // تشخیص عکس در گزینه‌ها (اگر لینک باشد در اینپوت عکس قرار می‌دهیم)
+            // تشخیص عکس در گزینه‌ها
             const opVals = ops.map(op => {
                 const isUrl = op.startsWith('http') || op.startsWith('/uploads');
                 return { txt: isUrl ? '' : op, img: isUrl ? op : '' };
@@ -323,6 +349,11 @@
             const pass = document.getElementById('e_pass').value;
             const isNew = document.getElementById('isNewContent').checked;
             
+            // گرفتن مقادیر امتیاز
+            const rEx = document.getElementById('r_excellent').value;
+            const rGd = document.getElementById('r_good').value;
+            const rNm = document.getElementById('r_normal').value;
+            
             const qElements = document.querySelectorAll('.q-box');
             if(!title || qElements.length === 0) return alert("❌ عنوان و حداقل یک سوال الزامی است!");
 
@@ -346,7 +377,8 @@
             const action = EDIT_MODE ? 'edit_exam' : 'save_exam';
             const payload = { 
                 action: action, admin_token: ADMIN_TOKEN, 
-                title: title, time: time, pass: pass, questions: questions, is_new: isNew 
+                title: title, time: time, pass: pass, questions: questions, is_new: isNew,
+                rewards: { excellent: rEx, good: rGd, normal: rNm } // ارسال تنظیمات امتیاز
             };
             if(EDIT_MODE) payload.exam_id = EDIT_ID;
 
@@ -396,7 +428,6 @@
             // رندر آزمون‌ها
             ALL_DATA.exams.forEach(e => {
                 if(e.title.toLowerCase().includes(q)) {
-                    // برای جلوگیری از مشکل کوتیشن در JSON.stringify
                     const safeData = JSON.stringify(e).replace(/'/g, "&#39;");
                     list.innerHTML += `
                         <div class="history-card" style="border-right-color: #8e44ad;">
@@ -418,18 +449,13 @@
             EDIT_MODE = true;
             EDIT_ID = item.id;
             
-            // نمایش بج حالت ویرایش
             document.getElementById('editModeBadge').style.display = 'block';
             document.getElementById('editTargetName').innerText = item.title;
             
-            // رفتن به تب ساخت
             switchTab('create');
-            
-            // تنظیم نوع محتوا
             document.getElementById('contentType').value = type;
             toggleForm();
 
-            // پر کردن چک‌باکس جدید
             document.getElementById('isNewContent').checked = item.is_new || false;
 
             if(type === 'lesson') {
@@ -447,9 +473,22 @@
                 document.getElementById('e_title').value = item.title;
                 document.getElementById('e_time').value = item.time;
                 document.getElementById('e_pass').value = item.pass || '';
+                
+                // لود امتیازها (اگر وجود دارد)
+                if(item.rewards) {
+                    document.getElementById('r_excellent').value = item.rewards.excellent || 300;
+                    document.getElementById('r_good').value = item.rewards.good || 100;
+                    document.getElementById('r_normal').value = item.rewards.normal || 20;
+                } else {
+                    // ریست اگر قبلا ذخیره نشده
+                    document.getElementById('r_excellent').value = 300;
+                    document.getElementById('r_good').value = 100;
+                    document.getElementById('r_normal').value = 20;
+                }
+
                 document.getElementById('questions_area').innerHTML = '';
                 qCount = 0;
-                item.questions.forEach(q => addQuestion(q)); // اضافه کردن سوالات قبلی
+                item.questions.forEach(q => addQuestion(q)); 
                 document.getElementById('btnSaveExam').innerText = "🔄 بروزرسانی آزمون";
             }
         }
@@ -467,6 +506,12 @@
             document.getElementById('btnSaveLesson').innerText = "💾 ذخیره درس";
             document.getElementById('btnSaveExam').innerText = "💾 ذخیره آزمون";
             document.getElementById('isNewContent').checked = false;
+            
+            // ریست امتیازها به پیش‌فرض
+            document.getElementById('r_excellent').value = 300;
+            document.getElementById('r_good').value = 100;
+            document.getElementById('r_normal').value = 20;
+
             qCount = 0; addQuestion();
         }
 
