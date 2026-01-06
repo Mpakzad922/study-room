@@ -45,6 +45,12 @@
         .bg-gem { background: #9b59b6; margin-right: 5px; }
         .bg-gold { background: #f1c40f; color: #333; }
 
+        /* نشانگر وضعیت آنلاین */
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 5px; }
+        .st-online { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .st-recent { background: #f39c12; }
+        .st-offline { background: #95a5a6; }
+
         /* مودال جزئیات */
         #detailModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 500; display: none; justify-content: center; align-items: flex-end; }
         .modal-content { background: #f8f9fa; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 25px 25px 0 0; padding: 25px; box-sizing: border-box; animation: slideUp 0.3s; }
@@ -282,22 +288,46 @@
         downloadAnchorNode.remove();
     }
 
-    // --- (1) لیست کاربران ---
+    // --- (1) لیست کاربران (با وضعیت آنلاین) ---
     function renderUsersList(users) {
         const container = document.getElementById('usersList');
         container.innerHTML = '';
         if(users.length === 0) { container.innerHTML = '<p style="text-align:center;color:#777">کاربری یافت نشد.</p>'; return; }
+        
+        const now = Date.now();
+
         users.forEach(u => {
             const div = document.createElement('div');
             div.className = 'card user-card';
             div.onclick = () => showUserDetail(u);
+            
             const role = u.parsedData.rank || 'نوآموز';
             const xp = u.parsedData.xp || 0;
-            const gem = u.parsedData.gem || 0; // الماس اضافه شد
-            div.innerHTML = `<div><div style="font-weight:bold; color:#2c3e50;">${u.n}</div><div style="font-size:0.8rem; color:#7f8c8d;">${u.u}</div></div><div style="text-align:left;"><span class="badge bg-gem">${gem} 💎</span><span class="badge bg-blue">${xp} XP</span><div style="font-size:0.7rem; color:#95a5a6;">${role}</div></div>`;
+            const gem = u.parsedData.gem || 0;
+            
+            // محاسبه وضعیت آنلاین (RESTORED FEATURE)
+            const lastTs = u.ts || 0;
+            const diff = (now - lastTs) / 1000 / 60; // دقیقه
+            let statusHtml = '';
+            
+            if(diff < 10) statusHtml = '<span class="status-dot st-online"></span> <span style="font-size:0.7rem; color:#2ecc71">آنلاین</span>';
+            else if(diff < 60) statusHtml = '<span class="status-dot st-recent"></span> <span style="font-size:0.7rem; color:#f39c12">همین الان</span>';
+            else statusHtml = `<span class="status-dot st-offline"></span> <span style="font-size:0.7rem; color:#95a5a6">${u.last || 'قدیمی'}</span>`;
+
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight:bold; color:#2c3e50;">${u.n} ${statusHtml}</div>
+                    <div style="font-size:0.8rem; color:#7f8c8d;">${u.u}</div>
+                </div>
+                <div style="text-align:left;">
+                    <span class="badge bg-gem">${gem} 💎</span>
+                    <span class="badge bg-blue">${xp} XP</span>
+                    <div style="font-size:0.7rem; color:#95a5a6; margin-top:5px;">${role}</div>
+                </div>`;
             container.appendChild(div);
         });
     }
+    
     function filterUsers() {
         const q = document.getElementById('searchBox').value.toLowerCase();
         renderUsersList(ALL_USERS.filter(u => u.n.includes(q) || u.u.toLowerCase().includes(q)));
