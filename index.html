@@ -31,12 +31,82 @@
         
         .gem-box { display: flex; align-items: center; gap: 5px; background: rgba(155, 89, 182, 0.3); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(155, 89, 182, 0.5); }
 
-        /* دیوار افتخار (جدید) */
-        .wall-of-fame { background: linear-gradient(135deg, #1e272e, #000); color: #f1c40f; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #f1c40f; position: relative; overflow: hidden; }
-        .wall-title { font-family: 'Cinzel Decorative', cursive; font-size: 1.2rem; margin-bottom: 10px; text-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
-        .wall-list { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 5px; scrollbar-width: none; }
-        .wall-list::-webkit-scrollbar { display: none; }
-        .wall-item { background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 10px; white-space: nowrap; font-size: 0.85rem; border: 1px solid rgba(241, 196, 15, 0.3); }
+        /* --- 🌟 دیوار افتخار (روبان مدال‌ها - نسخه افقی + بارش) --- */
+        .wall-of-fame { 
+            background: linear-gradient(to right, #2c3e50, #34495e); 
+            padding: 15px; 
+            border-radius: 15px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            text-align: right;
+            border: 2px solid #f1c40f; 
+            position: relative;
+            overflow: hidden; /* برای جلوگیری از بیرون زدن افکت بارش */
+        }
+        
+        /* افکت‌های بارش جشن */
+        .wall-particles {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1; /* زیر محتوا */
+            opacity: 0.6;
+        }
+        @keyframes subtleFall {
+            from { background-position: 0 0; }
+            to { background-position: 0 600px; }
+        }
+        .p1 { background-image: radial-gradient(rgba(241, 196, 15, 0.8) 1px, transparent 1px); background-size: 25px 25px; animation: subtleFall 25s linear infinite; }
+        .p2 { background-image: radial-gradient(rgba(255, 255, 255, 0.6) 1.5px, transparent 1.5px); background-size: 50px 50px; background-position: 25px 10px; animation: subtleFall 18s linear infinite; }
+        .p3 { background-image: radial-gradient(rgba(255, 255, 255, 0.9) 1px, transparent 1px); background-size: 80px 80px; background-position: -10px -20px; animation: subtleFall 12s linear infinite; opacity: 0.4; }
+
+        .wall-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px;
+            color: #f1c40f; 
+            position: relative; z-index: 2;
+        }
+        .wall-title { 
+            font-family: 'Cinzel Decorative', cursive; 
+            font-weight: bold; 
+            font-size: 1.1rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+        }
+        
+        .wall-scroll { 
+            display: flex; 
+            gap: 12px; 
+            overflow-x: auto; 
+            padding-bottom: 5px; 
+            scrollbar-width: none; 
+            -webkit-overflow-scrolling: touch; 
+            position: relative; z-index: 2;
+        }
+        .wall-scroll::-webkit-scrollbar { display: none; }
+
+        /* کارت نخبه */
+        .champion-card {
+            background: rgba(255, 255, 255, 0.95);
+            min-width: 110px;
+            padding: 12px 5px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-bottom: 4px solid #f1c40f;
+            flex-shrink: 0;
+            animation: slideInRight 0.5s ease-out;
+            cursor: default;
+        }
+        .champion-card:hover { transform: translateY(-3px); transition: 0.3s; }
+        @keyframes slideInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+
+        .champ-icon { font-size: 1.8rem; margin-bottom: 5px; display: block; }
+        .champ-name { font-size: 0.85rem; font-weight: bold; color: #2c3e50; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; margin: 0 auto; display: block; }
+        .champ-score { font-size: 0.7rem; color: #27ae60; font-weight: bold; background: #e8f5e9; padding: 2px 6px; border-radius: 10px; margin-top: 5px; display: inline-block; }
         
         /* لیست ویدیوها */
         .video-item { background: #fff; border: 2px solid #f1f2f6; border-radius: 15px; margin-bottom: 15px; padding: 15px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; text-align: right; position: relative; }
@@ -63,7 +133,7 @@
         .notif-item.type-success { background: #f0fdf4; border-right: 3px solid green; }
         .notif-item.type-info { background: #f0f8ff; border-right: 3px solid #3498db; }
 
-        /* --- 🌟 پلیر پیشرفته و استایل‌های قبلی --- */
+        /* پلیر پیشرفته */
         #playerContainer { position: relative; width: 100%; background: #000; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; }
         #playerContainer:fullscreen { width: 100vw; height: 100vh; border-radius: 0; aspect-ratio: unset; }
         #playerContainer:fullscreen video { height: 100%; width: 100%; object-fit: contain; }
@@ -172,11 +242,21 @@
         </div>
 
         <div class="wall-of-fame">
-            <div class="wall-title">🏆 دیوار افتخار (نخبگان)</div>
-            <div id="wallContainer" class="wall-list">
-                <small style="color:#aaa;">درحال بارگذاری...</small>
+            <div class="wall-particles p1"></div>
+            <div class="wall-particles p2"></div>
+            <div class="wall-particles p3"></div>
+
+            <div style="position:relative; z-index:2;">
+                <div class="wall-header">
+                    <div class="wall-title">🏆 نخبگان آخرین آزمون</div>
+                    <div id="examNameBadge" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:15px; color: white;">درحال بررسی...</div>
+                </div>
+                <div id="wallContainer" class="wall-scroll">
+                    <small style="color:rgba(255,255,255,0.7);">درحال دریافت لیست قهرمانان...</small>
+                </div>
             </div>
         </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
             <button onclick="window.location.href='azmoon.html'" style="background: #8e44ad; color: white; border: none; padding: 15px; border-radius: 15px; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);">
                 📝 آزمون آنلاین
@@ -243,7 +323,7 @@
     <script src="rank.js" onerror="alert('فایل rank.js یافت نشد! لطفاً فایل‌ها را بررسی کنید.')"></script>
 
     <script>
-        // 🔴🔴🔴 آدرس سرور (لیارا) - اینجا را حتما چک کن
+        // 🔴🔴🔴 آدرس سرور (لیارا)
         const API_URL = "https://chamran-api.liara.run";
         
         const DB_KEY = "chamran_db_vfinal_";
@@ -281,7 +361,7 @@
         function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
 
-        // --- 2. سیستم احراز هویت (آپدیت شده برای دریافت اعلانات) ---
+        // --- 2. سیستم احراز هویت ---
         async function checkAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
             if(savedUser) {
@@ -301,7 +381,7 @@
                         if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
                         if(typeof RankSystem !== 'undefined') {
                             RankSystem.init(data.jsonData);
-                            RankSystem.updateNotifications(data.notifications); // ذخیره اعلانات
+                            RankSystem.updateNotifications(data.notifications); // دریافت اعلانات
                         }
                         
                         document.getElementById('displayName').innerText = data.displayName;
@@ -309,7 +389,6 @@
                         showScreen('screen-library');
                         fetchPlaylist();
                         
-                        // دریافت دیوار افتخار
                         if(typeof RankSystem !== 'undefined') RankSystem.loadWallOfFame();
 
                     } else { throw new Error("Login failed"); }
@@ -374,7 +453,7 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
-        // --- 3. دریافت لیست دروس (آپدیت شده با برچسب جدید) ---
+        // --- 3. دریافت لیست دروس ---
         async function fetchPlaylist() {
             const listContainer = document.getElementById('video-list-container');
             listContainer.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spinner" style="margin:0 auto;"></div><p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها...</p></div>`;
@@ -401,7 +480,8 @@
                 const isCompleted = RankSystem.data.completed.includes(item.id.toString());
                 const icon = isCompleted ? '✅' : '▶️';
                 const hasFile = (item.attach && item.attach.length > 3);
-                // تگ جدید
+                
+                // برچسب جدید
                 const newTag = item.is_new ? `<div class="new-badge">🆕 جدید</div>` : '';
                 
                 const el = document.createElement('div');
@@ -412,13 +492,12 @@
             });
         }
 
-        // توابع اعلانات
+        // --- 4. نمایش اعلانات ---
         function showNotifications() {
             document.getElementById('notifModal').style.display = 'flex';
             document.getElementById('notifDot').style.display = 'none'; // مخفی کردن نقطه قرمز
             if(typeof RankSystem !== 'undefined') RankSystem.markNotifsAsRead();
             
-            // رندر لیست پیام‌ها
             const container = document.getElementById('notifListContainer');
             container.innerHTML = '';
             const list = RankSystem.notifications || [];
@@ -435,7 +514,7 @@
             }
         }
 
-        // --- 4. منطق پلیر (بدون تغییر) ---
+        // --- 5. منطق پلیر (بدون تغییر) ---
         function playVideo(item) {
             history.pushState({ page: 'player' }, "Player", "#player");
             activeVid = item;
