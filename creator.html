@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل ساخت و ویرایش محتوا (نسخه سرور محور 📡)</title>
+    <title>پنل ساخت و ویرایش محتوا (نسخه پیشرفته ⚙️)</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
         :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f4f6f9; --white: #fff; --blue: #2980b9; --danger: #e74c3c; --gold: #f1c40f; }
@@ -61,8 +61,10 @@
         /* تاریخچه */
         .history-card { background: white; border: 1px solid #eee; border-right: 5px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 3px 10px rgba(0,0,0,0.03); transition: 0.2s; }
         .history-card:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .tag-new { background: var(--danger); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 5px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        /* تیک جدید - چشمک‌زن */
+        .tag-new { background: var(--danger); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 15px; margin-right: 5px; animation: pulse 1.5s infinite; font-weight: bold; box-shadow: 0 2px 5px rgba(192, 57, 43, 0.4); }
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
 
         /* حالت ویرایش */
         .edit-mode-badge { background: #f39c12; color: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; display: none; font-weight: bold; animation: slideDown 0.3s; }
@@ -74,7 +76,7 @@
         .reward-inputs { display: flex; gap: 10px; flex-wrap: wrap; }
         .reward-item { flex: 1; min-width: 120px; }
         .reward-item label { font-size: 0.8rem; margin: 5px 0; color: #555; }
-        .reward-item input { text-align: center; direction: ltr; }
+        .reward-item input { text-align: center; direction: ltr; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -104,9 +106,9 @@
                 <option value="exam">📝 آزمون (سوالات)</option>
             </select>
 
-            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background: #fff0f0; padding: 10px; border-radius: 10px; border: 1px solid #ffcccc;">
-                <input type="checkbox" id="isNewContent" style="width: 20px; height: 20px;">
-                <label for="isNewContent" style="margin:0; color:var(--danger);">نمایش برچسب "جدید" 🆕</label>
+            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background: #fff0f0; padding: 15px; border-radius: 12px; border: 2px dashed #ffcccc;">
+                <input type="checkbox" id="isNewContent" style="width: 25px; height: 25px; cursor: pointer;">
+                <label for="isNewContent" style="margin:0; color:var(--danger); cursor: pointer;">🔥 نمایش برچسب "جدید" (چشمک‌زن)</label>
             </div>
 
             <div id="lessonForm">
@@ -135,15 +137,15 @@
                     <div class="reward-inputs">
                         <div class="reward-item">
                             <label>💎 فوق‌العاده (نمره ۲۰)</label>
-                            <input type="number" id="r_excellent" value="300" style="border-color:#8e44ad; color:#8e44ad; font-weight:bold;">
+                            <input type="number" id="r_excellent" value="300" style="border-color:#8e44ad; color:#8e44ad;">
                         </div>
                         <div class="reward-item">
                             <label>🥇 خیلی خوب (۱۷ تا ۱۹)</label>
-                            <input type="number" id="r_good" value="100" style="border-color:#27ae60; color:#27ae60; font-weight:bold;">
+                            <input type="number" id="r_good" value="100" style="border-color:#27ae60; color:#27ae60;">
                         </div>
                         <div class="reward-item">
                             <label>🙂 خوب (۱۰ تا ۱۶)</label>
-                            <input type="number" id="r_normal" value="20" style="border-color:#2980b9; color:#2980b9; font-weight:bold;">
+                            <input type="number" id="r_normal" value="20" style="border-color:#2980b9; color:#2980b9;">
                         </div>
                     </div>
                 </div>
@@ -268,7 +270,12 @@
             const res = await sendReq(payload);
             if(res.status === 'success') { 
                 alert(EDIT_MODE ? "✅ درس ویرایش شد!" : "✅ درس ذخیره شد!"); 
-                if(EDIT_MODE) cancelEdit(); else { document.getElementById('l_title').value=''; document.getElementById('l_link').value=''; document.getElementById('attach_container').innerHTML=''; }
+                if(EDIT_MODE) cancelEdit(); else { 
+                    document.getElementById('l_title').value=''; 
+                    document.getElementById('l_link').value=''; 
+                    document.getElementById('attach_container').innerHTML=''; 
+                    document.getElementById('isNewContent').checked = false; // ریست تیک
+                }
                 fetchHistory();
             } else { alert("❌ خطا: " + res.message); }
         }
@@ -385,7 +392,12 @@
             const res = await sendReq(payload);
             if(res.status === 'success') { 
                 alert(EDIT_MODE ? "✅ آزمون ویرایش شد!" : "✅ آزمون ذخیره شد!"); 
-                if(EDIT_MODE) cancelEdit(); else { document.getElementById('questions_area').innerHTML=''; qCount=0; addQuestion(); document.getElementById('e_title').value=''; }
+                if(EDIT_MODE) cancelEdit(); else { 
+                    document.getElementById('questions_area').innerHTML=''; 
+                    qCount=0; addQuestion(); 
+                    document.getElementById('e_title').value=''; 
+                    document.getElementById('isNewContent').checked = false; // ریست تیک
+                }
                 fetchHistory();
             } else { alert("❌ خطا: " + res.message); }
         }
@@ -408,13 +420,13 @@
             list.innerHTML = '';
             const q = document.getElementById('searchBox').value.toLowerCase();
 
-            // رندر درس‌ها
+            // رندر درس‌ها (با نمایش تیک جدید)
             ALL_DATA.lessons.forEach(l => {
                 if(l.title.toLowerCase().includes(q)) {
                     list.innerHTML += `
                         <div class="history-card" style="border-right-color: var(--accent);">
                             <div class="history-info">
-                                <strong>🎬 ${l.title}</strong> ${l.is_new ? '<span class="tag-new">جدید</span>':''}
+                                <strong>🎬 ${l.title}</strong> ${l.is_new ? '<span class="tag-new">جدید 🔥</span>':''}
                                 <br><span style="font-size:0.8rem; color:#777;">${l.date}</span>
                             </div>
                             <div>
@@ -425,14 +437,14 @@
                 }
             });
 
-            // رندر آزمون‌ها
+            // رندر آزمون‌ها (با نمایش تیک جدید)
             ALL_DATA.exams.forEach(e => {
                 if(e.title.toLowerCase().includes(q)) {
                     const safeData = JSON.stringify(e).replace(/'/g, "&#39;");
                     list.innerHTML += `
                         <div class="history-card" style="border-right-color: #8e44ad;">
                             <div class="history-info">
-                                <strong>📝 ${e.title}</strong> ${e.is_new ? '<span class="tag-new">جدید</span>':''}
+                                <strong>📝 ${e.title}</strong> ${e.is_new ? '<span class="tag-new">جدید 🔥</span>':''}
                                 <br><span style="font-size:0.8rem; color:#777;">${e.date}</span>
                             </div>
                             <div>
@@ -456,6 +468,7 @@
             document.getElementById('contentType').value = type;
             toggleForm();
 
+            // لود وضعیت تیک جدید
             document.getElementById('isNewContent').checked = item.is_new || false;
 
             if(type === 'lesson') {
@@ -505,9 +518,9 @@
             document.getElementById('questions_area').innerHTML = '';
             document.getElementById('btnSaveLesson').innerText = "💾 ذخیره درس";
             document.getElementById('btnSaveExam').innerText = "💾 ذخیره آزمون";
-            document.getElementById('isNewContent').checked = false;
             
-            // ریست امتیازها به پیش‌فرض
+            // ریست تیک جدید و امتیازها
+            document.getElementById('isNewContent').checked = false;
             document.getElementById('r_excellent').value = 300;
             document.getElementById('r_good').value = 100;
             document.getElementById('r_normal').value = 20;
@@ -521,7 +534,7 @@
             const payload = { action: action, admin_token: ADMIN_TOKEN };
             if(type === 'lesson') payload.lesson_id = id; else payload.exam_id = id;
             await sendReq(payload);
-            if(EDIT_ID == id) cancelEdit(); // اگر در حال ویرایش همین آیتم بودیم، لغو کن
+            if(EDIT_ID == id) cancelEdit(); 
             fetchHistory();
         }
 
