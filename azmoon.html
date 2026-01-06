@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سالن امتحانات چمران (نسخه امن)</title>
+    <title>سالن امتحانات چمران (نسخه الماس 💎)</title>
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <style>
         body { font-family: 'Vazirmatn', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; margin: 0; min-height: 100vh; user-select: none; }
-        .card { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; animation: fadeIn 0.5s; position: relative; z-index: 10; }
+        .card { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; margin-bottom: 20px; transition: 0.3s; animation: fadeIn 0.5s; position: relative; z-index: 10; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         h2 { color: #2c3e50; margin: 0 0 15px 0; }
@@ -16,31 +16,47 @@
         .btn-next { background: #2980b9; color: white; }
         .btn-finish { background: #27ae60; color: white; display: none; }
         .btn-back { background: #95a5a6; color: white; margin-top: 20px; }
-        
-        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .btn-review { background: #f39c12; color: white; margin-top: 15px; display: none; animation: popIn 0.5s; }
+        @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* لیست آزمون‌ها */
+        .exam-item { background: #fff; border: 2px solid #e1bee7; border-radius: 15px; padding: 15px; margin-bottom: 10px; text-align: right; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; position: relative; }
         .exam-item:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        
         .exam-info h4 { margin: 0; color: #4a148c; }
         .exam-info small { color: #7f8c8d; font-size: 0.85rem; }
         
-        #examArea, #reportCard { display: none; }
+        .new-badge { position: absolute; top: -8px; left: 10px; background: #e74c3c; color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        #examArea, #reportCard, #reviewArea { display: none; }
         .timer-box { font-size: 1.8rem; font-weight: bold; color: #c0392b; background: #fadbd8; padding: 5px 15px; border-radius: 10px; display: inline-block; margin-bottom: 10px; min-width: 80px; font-family: 'Vazirmatn'; }
         
+        /* گزینه‌ها */
         .option { display: flex; align-items: center; justify-content: start; background: #f8f9fa; border: 2px solid #e9ecef; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; transition: 0.2s; min-height: 40px; font-size: 1.1rem; }
         .option:hover { background: #e8f5e9; border-color: #a5d6a7; }
         .option.selected { background: #d1f2eb; border-color: #2ecc71; font-weight: bold; transform: scale(1.02); }
-        .option img { max-width: 100%; max-height: 150px; border-radius: 8px; margin: 5px 0; border: 1px solid #ddd; }
+        .option img { max-width: 100px; max-height: 100px; border-radius: 8px; margin: 5px; border: 1px solid #ddd; }
         
         #questionImage { width: 100%; max-height: 300px; object-fit: contain; border-radius: 10px; margin-bottom: 15px; display: none; border: 1px solid #eee; }
         
-        .score-circle { width: 130px; height: 130px; border-radius: 50%; border: 8px solid #2ecc71; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 20px auto; font-size: 2.5rem; color: #2ecc71; font-weight: bold; font-family: 'Vazirmatn'; transition: transform 0.5s; }
-        .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 1rem; }
+        /* 📊 نوار نمره کیفی (جدید) */
+        .score-container { margin: 30px 0; position: relative; padding-top: 20px; }
+        .score-bar { height: 15px; width: 100%; border-radius: 10px; background: linear-gradient(90deg, #e74c3c 0%, #f1c40f 50%, #2ecc71 80%, #f39c12 100%); position: relative; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .score-pointer { position: absolute; top: -10px; width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 15px solid #2c3e50; transform: translateX(50%); transition: left 1.5s cubic-bezier(0.22, 1, 0.36, 1); left: 0%; }
+        .score-text { font-size: 1.5rem; font-weight: bold; margin-top: 15px; color: #2c3e50; }
         
+        /* حالت مرور (Review) */
+        .review-q { text-align: right; border-bottom: 1px dashed #ccc; padding-bottom: 20px; margin-bottom: 20px; }
+        .review-q h4 { color: #2c3e50; margin-bottom: 10px; }
+        .r-opt { padding: 10px; border-radius: 8px; margin-bottom: 5px; background: #fff; border: 1px solid #eee; font-size: 0.95rem; display: flex; align-items: center; }
+        .r-opt.correct { background: #d4edda; border-color: #c3e6cb; color: #155724; } /* سبز */
+        .r-opt.wrong { background: #f8d7da; border-color: #f5c6cb; color: #721c24; } /* قرمز */
+        
+        .teacher-note { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 10px; margin-top: 10px; font-size: 0.9rem; display: flex; flex-direction: column; gap: 10px; }
+        .note-img { max-width: 100%; border-radius: 8px; border: 1px solid #ddd; }
+
         #loading { color: #7f8c8d; margin-top: 20px; font-weight: bold; }
         #errorBox { color: red; background: #fee; padding: 10px; border-radius: 10px; display: none; margin-top: 10px; font-size: 0.9rem; text-align: right; direction: ltr; }
-        .offline-notice { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-top: 15px; font-size: 0.8rem; display:none; }
-
-        /* انیمیشن آتش بازی */
         #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; display: none; }
     </style>
 </head>
@@ -74,31 +90,37 @@
     </div>
 
     <div id="reportCard" class="card">
-        <h2 style="color:#8e44ad;">📊 کارنامه آزمون</h2>
+        <h2 style="color:#8e44ad;">📊 نتیجه عملکرد</h2>
         <h3 id="reportTitle" style="color:#555; margin-bottom:20px;"></h3>
         
-        <div class="score-circle" id="scoreCircle">
-            <span id="scoreNum">0</span>
-            <span style="font-size:0.8rem; margin-top:-5px;">نمره</span>
+        <div class="score-container">
+            <div class="score-bar">
+                <div id="scorePointer" class="score-pointer"></div>
+            </div>
+            <div id="qualitativeScore" class="score-text">...</div>
         </div>
-        
-        <div class="stat-row"><span>✅ پاسخ صحیح:</span><span id="statCorrect">0</span></div>
-        <div class="stat-row"><span>❌ پاسخ غلط:</span><span id="statWrong">0</span></div>
-        <div class="stat-row"><span>⚪ بدون پاسخ:</span><span id="statEmpty">0</span></div>
         
         <div id="xpRewardMsg" style="background: #d4edda; color: #155724; padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 0.9rem; font-weight: bold; display:none; border: 2px solid #c3e6cb;">
-            درخواست ثبت نمره و پاداش به سرور ارسال شد. 📡
+            درخواست ثبت نتیجه به سرور ارسال شد. 📡
         </div>
 
+        <button id="btnReviewStart" class="btn btn-review" onclick="startReviewMode()">🔍 تحلیل و مرور آزمون</button>
         <button class="btn btn-back" onclick="goToHome()">بازگشت به کلاس</button>
+    </div>
+
+    <div id="reviewArea" class="card" style="max-width: 700px; text-align: right;">
+        <h2 style="text-align:center; color:#e67e22;">🧐 تحلیل آزمون</h2>
+        <p style="text-align:center; font-size:0.9rem; color:#777;">پاسخ‌های خود را با پاسخ صحیح و توضیحات استاد مقایسه کنید.</p>
+        <div id="reviewContent"></div>
+        <button class="btn btn-back" onclick="goToHome()">پایان مرور</button>
     </div>
 
     <script src="rank.js"></script>
 
     <script>
-        const API_URL = "https://chamran-api.liara.run"; // 🔴 آدرس نهایی سرور خودت را اینجا بزن
+        const API_URL = "https://chamran-api.liara.run"; // 🔴 آدرس سرور را چک کن
         const DB_KEY = "chamran_db_vfinal_"; 
-        const EXAM_STATE_KEY = "active_exam_state_v2"; // کلید ذخیره وضعیت آزمون
+        const EXAM_STATE_KEY = "active_exam_state_v2";
 
         function toPersianNum(n) {
             if (n === undefined || n === null) return "";
@@ -115,7 +137,7 @@
         let timeRemaining = 0;
         let isExamActive = false;
 
-        // --- 1. احراز هویت و بررسی وضعیت قبلی ---
+        // --- 1. احراز هویت ---
         function initAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
             if(!savedUser) { alert("لطفا ابتدا وارد کلاس شوید!"); window.location.href = 'index.html'; return; }
@@ -129,10 +151,7 @@
                     RankSystem.init(currentUser.jsonData);
                     performSilentSync(currentUser.username, currentUser.password);
                 }
-
-                // 🌟 چک کردن اگر آزمونی ناتمام مانده (ضد رفرش)
                 checkActiveSession();
-
             } catch(e) {
                 localStorage.removeItem(DB_KEY + 'creds');
                 window.location.href = 'index.html';
@@ -144,36 +163,29 @@
             if (savedState) {
                 try {
                     const state = JSON.parse(savedState);
-                    // محاسبه زمان باقی‌مانده واقعی
                     const elapsedSeconds = Math.floor((Date.now() - state.startTime) / 1000);
                     const realRemaining = state.duration - elapsedSeconds;
 
                     if (realRemaining <= 0) {
-                        // زمان تمام شده در حالی که کاربر نبوده
                         currentExamId = state.id;
                         currentQuestions = state.questions;
                         userAnswers = state.answers;
-                        localStorage.removeItem(EXAM_STATE_KEY); // پاک کردن وضعیت
+                        localStorage.removeItem(EXAM_STATE_KEY);
                         alert("⏰ زمان آزمون در غیاب شما به پایان رسید!");
-                        finishExamLogic(true); // پایان اجباری
+                        finishExamLogic(true);
                     } else {
-                        // بازیابی آزمون
                         document.getElementById('resumeAlert').style.display = 'block';
                         setTimeout(() => {
                             currentExamId = state.id;
-                            currentQuestions = state.questions; // سوالات هم از حافظه می آیند (مهم برای آفلاین)
+                            currentQuestions = state.questions;
                             userAnswers = state.answers || {};
-                            currentQIndex = 0; // برای راحتی از اول نشان میدهیم ولی جوابها هست
+                            currentQIndex = 0;
                             timeRemaining = realRemaining;
                             restoreExamUI();
                         }, 1000);
                     }
-                } catch(e) {
-                    localStorage.removeItem(EXAM_STATE_KEY);
-                }
-            } else {
-                loadExams(); // اگر آزمونی نبود، لیست را بگیر
-            }
+                } catch(e) { localStorage.removeItem(EXAM_STATE_KEY); }
+            } else { loadExams(); }
         }
 
         async function performSilentSync(u, p) {
@@ -209,8 +221,8 @@
         
         function processExamsData(serverExams) {
             examsMap = {};
-            serverExams.forEach(ex => {
-                examsMap[ex.id] = { id: ex.id, title: ex.title, duration: ex.time, password: ex.pass, questions: ex.questions };
+            serverExams.reverse().forEach(ex => { // نمایش جدیدترین‌ها اول
+                examsMap[ex.id] = { id: ex.id, title: ex.title, duration: ex.time, password: ex.pass, questions: ex.questions, is_new: ex.is_new };
             });
             renderExamList();
         }
@@ -227,21 +239,23 @@
                 const exam = examsMap[id];
                 const takenCloud = RankSystem.data.exams && RankSystem.data.exams[id];
                 const isLocked = (takenCloud !== undefined);
-                const scoreDisplay = takenCloud !== undefined ? takenCloud : 'ثبت شده';
                 
                 const btn = document.createElement('div');
                 btn.className = 'exam-item';
                 btn.style.borderColor = isLocked ? '#95a5a6' : '#e1bee7';
                 btn.style.background = isLocked ? '#f5f6fa' : '#fff';
                 
+                // برچسب جدید
+                const newTag = (!isLocked && exam.is_new) ? `<span class="new-badge">🆕 جدید</span>` : '';
+                
                 let btnHtml = '';
                 if(isLocked) {
-                    btnHtml = `<span style="color:#7f8c8d; font-size:0.9rem; font-weight:bold;">🔒 نمره: ${toPersianNum(scoreDisplay)}</span>`;
+                    btnHtml = `<span style="color:#27ae60; font-size:0.9rem; font-weight:bold;">✅ انجام شده</span>`;
                 } else {
                     const lockIcon = (exam.password && exam.password.length > 0) ? '🔑 ' : '';
                     btnHtml = `<button style="background:#27ae60; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;" onclick="checkAndStart('${id}')">${lockIcon}شروع آزمون</button>`;
                 }
-                btn.innerHTML = `<div class="exam-info"><h4>${exam.title}</h4><small>⏱️ ${toPersianNum(exam.duration)} دقیقه</small></div>${btnHtml}`;
+                btn.innerHTML = `${newTag}<div class="exam-info"><h4>${exam.title}</h4><small>⏱️ ${toPersianNum(exam.duration)} دقیقه</small></div>${btnHtml}`;
                 list.appendChild(btn);
             });
         }
@@ -258,7 +272,7 @@
             if(confirm(`آیا آماده شروع آزمون "${exam.title}" هستید؟`)) startExam(id);
         }
 
-        // --- 3. منطق شروع و ذخیره وضعیت ---
+        // --- 3. منطق آزمون ---
         function startExam(id) {
             isExamActive = true; 
             currentExamId = id;
@@ -267,14 +281,7 @@
             currentQIndex = 0;
             userAnswers = {};
             
-            // 💾 ذخیره وضعیت اولیه در لوکال استوریج (ضد رفرش)
-            const state = {
-                id: id,
-                startTime: Date.now(),
-                duration: timeRemaining,
-                questions: currentQuestions, // کپی سوالات برای آفلاین شدن
-                answers: {}
-            };
+            const state = { id: id, startTime: Date.now(), duration: timeRemaining, questions: currentQuestions, answers: {} };
             localStorage.setItem(EXAM_STATE_KEY, JSON.stringify(state));
 
             restoreExamUI();
@@ -294,15 +301,11 @@
         function startTimer() {
             const timerDiv = document.getElementById('timer');
             if(timerInterval) clearInterval(timerInterval);
-            
             timerInterval = setInterval(() => {
                 timeRemaining--;
                 const m = Math.floor(timeRemaining / 60);
                 const s = timeRemaining % 60;
                 timerDiv.innerText = toPersianNum(`${m}:${s < 10 ? '0'+s : s}`);
-                
-                // ذخیره زمان نیست چون با timestamp اولیه محاسبه میکنیم
-                // اما اگر زمان تمام شد:
                 if(timeRemaining <= 0) { 
                     clearInterval(timerInterval); 
                     alert("⏰ زمان تمام شد!"); 
@@ -312,11 +315,10 @@
         }
 
         function renderContent(content) {
-            if(content && (content.startsWith('http') || content.startsWith('data:image')) && 
-              (content.includes('.jpg') || content.includes('.png') || content.includes('.jpeg') || content.includes('uupload'))) {
+            if(content && (content.startsWith('http') || content.startsWith('/uploads') || content.startsWith('data:image'))) {
                 return `<img src="${content}" alt="option">`;
             }
-            return toPersianNum(content);
+            return toPersianNum(content || "");
         }
 
         function showQuestion() {
@@ -325,7 +327,7 @@
             document.getElementById('questionText').innerText = toPersianNum(q.q);
             
             const qImg = document.getElementById('questionImage');
-            if(q.img && q.img.length > 5) {
+            if(q.img && q.img.length > 3) {
                 qImg.src = q.img; qImg.style.display = 'block';
             } else { qImg.style.display = 'none'; }
 
@@ -349,7 +351,6 @@
             el.classList.add('selected');
             userAnswers[currentQIndex] = optIndex;
 
-            // 💾 آپدیت لحظه‌ای جواب در حافظه (ضد کرش)
             const saved = localStorage.getItem(EXAM_STATE_KEY);
             if(saved) {
                 const state = JSON.parse(saved);
@@ -359,7 +360,7 @@
         }
         function nextQuestion() { currentQIndex++; showQuestion(); }
 
-        // --- 4. پایان آزمون و ارسال امن ---
+        // --- 4. پایان آزمون (سیستم کیفی) ---
         function finishExam() { finishExamLogic(false); }
 
         function finishExamLogic(isForced) {
@@ -369,66 +370,127 @@
             document.getElementById('examArea').style.display = 'none';
             document.getElementById('reportCard').style.display = 'block';
             
-            // پاک کردن وضعیت موقت چون تمام شد
             localStorage.removeItem(EXAM_STATE_KEY);
-            // ثبت محلی که دوباره نتواند شرکت کند
             if(currentExamId) localStorage.setItem('taken_' + currentExamId, 'done');
 
-            let correct = 0; let wrong = 0; let empty = 0;
+            let correctCount = 0;
+            let wrongIndices = []; // لیست شماره سوالات غلط برای ادمین
+
             currentQuestions.forEach((q, idx) => {
                 const ans = userAnswers[idx];
                 const correctOption = q.c || q.correct;
-                if(!ans) empty++; else if(ans == correctOption) correct++; else wrong++;
+                if(ans == correctOption) {
+                    correctCount++;
+                } else {
+                    wrongIndices.push(idx + 1); // شماره سوال غلط
+                }
             });
             
-            const score = (correct / currentQuestions.length) * 20; 
-            const finalScore = parseFloat(score.toFixed(1));
+            // محاسبه درصد
+            const percent = Math.round((correctCount / currentQuestions.length) * 100);
             
-            // نمایش نتایج
-            document.getElementById('reportTitle').innerText = isForced ? "آزمون (پایان خودکار)" : "نتیجه نهایی";
-            document.getElementById('scoreNum').innerText = toPersianNum(finalScore);
-            document.getElementById('statCorrect').innerText = toPersianNum(correct);
-            document.getElementById('statWrong').innerText = toPersianNum(wrong);
-            document.getElementById('statEmpty').innerText = toPersianNum(empty);
-            
-            // 🎉 جشن اگر نمره خوب بود
-            if(finalScore >= 10) launchConfetti();
+            // تعیین رتبه کیفی
+            let quality = "";
+            let color = "";
+            if(percent === 100) { quality = "💎 عالی (نخبه)"; color = "#f39c12"; launchConfetti(); }
+            else if(percent >= 60) { quality = "🌿 خوب"; color = "#2ecc71"; }
+            else if(percent >= 40) { quality = "⚠️ قابل قبول"; color = "#f1c40f"; }
+            else { quality = "⛔ نیاز به تلاش بیشتر"; color = "#e74c3c"; }
 
-            // 🔒 ارسال امن به سرور (Claim Reward)
-            // به جای اینکه خودمان XP بدهیم، به سرور میگوییم این نمره را گرفتیم
+            // نمایش نتیجه
+            document.getElementById('reportTitle').innerText = isForced ? "پایان خودکار زمان" : "نتیجه نهایی";
+            document.getElementById('qualitativeScore').innerText = quality;
+            document.getElementById('qualitativeScore').style.color = color;
+            
+            // انیمیشن عقربه نوار
+            setTimeout(() => {
+                document.getElementById('scorePointer').style.left = percent + "%";
+            }, 500);
+
+            // نمایش دکمه مرور بعد از 3 ثانیه
+            setTimeout(() => {
+                document.getElementById('btnReviewStart').style.display = 'block';
+            }, 3000);
+
+            // محاسبه نمره برای سرور (هنوز نمره ۲۰ را به سرور می‌فرستیم تا ادمین دقیق ببیند)
+            const score20 = (correctCount / currentQuestions.length) * 20; 
+            const finalScore = parseFloat(score20.toFixed(1));
+
             document.getElementById('xpRewardMsg').style.display = 'block';
             
             if(typeof SyncManager !== 'undefined') {
                 SyncManager.addToQueue('claim_reward', {
                     reward_type: 'exam',
                     reward_id: currentExamId,
-                    exam_score: finalScore
+                    exam_score: finalScore,
+                    wrong_list: wrongIndices // 🆕 لیست غلط‌ها برای ادمین
                 });
                 
-                // یک گزارش هم می‌فرستیم
                 SyncManager.addToQueue('report', {
                     lesson: `آزمون: ${currentExamId}`,
-                    status: `پایان آزمون (نمره: ${finalScore})`,
-                    details: `درست:${correct} | غلط:${wrong}`,
+                    status: `پایان (${quality})`,
+                    details: `درصد: ${percent}%`,
                     device: getDeviceInfo()
                 });
             }
+        }
+
+        // --- 5. حالت مرور (Review Mode) ---
+        function startReviewMode() {
+            document.getElementById('reportCard').style.display = 'none';
+            document.getElementById('reviewArea').style.display = 'block';
+            
+            const cont = document.getElementById('reviewContent');
+            cont.innerHTML = '';
+            
+            currentQuestions.forEach((q, idx) => {
+                const userAns = userAnswers[idx];
+                const correctAns = q.c || q.correct;
+                
+                let optsHtml = '';
+                q.options.forEach((opText, opIdx) => {
+                    const i = opIdx + 1;
+                    let cls = 'r-opt';
+                    let icon = '';
+                    
+                    if(i == correctAns) { cls += ' correct'; icon = '✅'; }
+                    else if(i == userAns && i != correctAns) { cls += ' wrong'; icon = '❌'; }
+                    
+                    optsHtml += `<div class="${cls}"><span>${icon} گزینه ${toPersianNum(i)}: </span> ${renderContent(opText)}</div>`;
+                });
+
+                // بخش پاسخ تشریحی
+                let descHtml = '';
+                if(q.desc || q.desc_img) {
+                    descHtml = `<div class="teacher-note"><strong>💡 توضیحات استاد:</strong>`;
+                    if(q.desc) descHtml += `<div>${toPersianNum(q.desc)}</div>`;
+                    if(q.desc_img) descHtml += `<img src="${q.desc_img}" class="note-img">`;
+                    descHtml += `</div>`;
+                }
+
+                const qDiv = document.createElement('div');
+                qDiv.className = 'review-q';
+                qDiv.innerHTML = `
+                    <h4>سوال ${toPersianNum(idx+1)}:</h4>
+                    ${renderContent(q.q || "")}
+                    ${(q.img && q.img.length>3) ? `<br><img src="${q.img}" style="max-height:200px; border-radius:10px; margin:10px 0;">` : ''}
+                    <div style="margin-top:10px;">${optsHtml}</div>
+                    ${descHtml}
+                `;
+                cont.appendChild(qDiv);
+            });
         }
         
         function goToHome() { window.location.href = 'index.html'; }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
         
-        // --- Confetti ---
         function launchConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             canvas.style.display = 'block';
             const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             const particles = [];
-            for(let i=0; i<150; i++) {
-                particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height-canvas.height, vx: Math.random()*4-2, vy: Math.random()*4+2, c: `hsl(${Math.random()*360},100%,50%)` });
-            }
+            for(let i=0; i<150; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height-canvas.height, vx: Math.random()*4-2, vy: Math.random()*4+2, c: `hsl(${Math.random()*360},100%,50%)` });
             function draw() {
                 ctx.clearRect(0,0,canvas.width,canvas.height);
                 let active = false;
