@@ -332,32 +332,27 @@
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
             
             if(savedUser) {
-                // 🚀 FIX: لود آنی از حافظه قبل از درخواست سرور (حل مشکل تاخیر)
                 try {
                     const userData = JSON.parse(savedUser);
                     currentUser = userData;
                     if(userData.jsonData) {
-                        RankSystem.init(userData.jsonData); // هسته را با دیتای لوکال آپدیت کن
+                        RankSystem.init(userData.jsonData); 
                         document.getElementById('displayName').innerText = userData.displayName;
                         showScreen('screen-library');
-                        // لیست‌ها را هم از سرور نگیر فعلا، اگر کش شده‌اند نشان بده
-                        // اما برای اطمینان درخواست سرور را هم می‌فرستیم
                     }
                 } catch(e) {}
                 
-                // حالا درخواست بروزرسانی به سرور می‌دهیم (در پس‌زمینه)
                 try {
                     const creds = JSON.parse(savedUser);
                     if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
 
-                    const res = await fetch(`${API_URL}?t=${Date.now()}`, { // جلوگیری از کش
+                    const res = await fetch(`${API_URL}?t=${Date.now()}`, { 
                         method: 'POST', headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: 'login', username: creds.username, password: creds.password })
                     });
                     const data = await res.json();
                     
                     if(data.status === 'success') {
-                        // ذخیره جدیدترین دیتا
                         const updatedUser = { username: creds.username, password: creds.password, displayName: data.displayName, jsonData: data.jsonData };
                         localStorage.setItem(DB_KEY + 'creds', JSON.stringify(updatedUser));
                         
@@ -366,7 +361,6 @@
                         RankSystem.updateNotifications(data.notifications); 
                         
                         document.getElementById('displayName').innerText = data.displayName;
-                        // اگر هنوز صفحه لاگین بود (یعنی بار اول)، برو داخل
                         if(document.getElementById('screen-login').classList.contains('active')) showScreen('screen-library');
                         
                         fetchPlaylist(); 
@@ -375,7 +369,6 @@
 
                     } else { throw new Error("Login failed"); }
                 } catch(e) {
-                    // اگر نت نبود، با همان دیتای لوکال ادامه بده (آفلاین مود)
                     if(!currentUser) showScreen('screen-login');
                 }
             } else { showScreen('screen-login'); }
@@ -435,7 +428,6 @@
         // --- 3. مدیریت محتوا ---
         async function fetchPlaylist() {
             const listContainer = document.getElementById('video-list-container');
-            // اگر لیست خالی بود لودینگ نشان بده، اگر نه (شاید از قبل دیتایی هست) دست نزن
             if(!playlist.length) listContainer.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spinner" style="margin:0 auto;"></div><p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها...</p></div>`;
             try {
                 const res = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_lessons' }) });
@@ -481,7 +473,6 @@
             const container = document.getElementById('historyListContainer');
             container.innerHTML = '';
             
-            // 🚀 FIX: خواندن مستقیم از حافظه (حل مشکل تاخیر نمایش بعد از آزمون)
             const details = RankSystem.data.exam_details || {};
             const takenIds = Object.keys(details);
             
@@ -493,17 +484,23 @@
             takenIds.reverse(); 
 
             takenIds.forEach(eid => {
-                const examDetail = details[eid];
-                // اگر لیست آزمون‌ها هنوز لود نشده، اسمش را بگذار "آزمون شماره X"
+                // 🚀 FIX: حذف آزمون‌های پاک شده از لیست
                 const examInfo = allExamsList.find(e => String(e.id) === String(eid));
-                const title = examInfo ? examInfo.title : (examDetail.title || "آزمون ثبت شده");
+                if (!examInfo) return; // اگر آزمون در سرور نیست، نمایش نده
+
+                const examDetail = details[eid];
+                const title = examInfo.title;
                 const date = examDetail.date || "تاریخ نامشخص";
                 const score = parseFloat(examDetail.score || 0);
                 
-                let badgeColor = "#95a5a6"; 
-                if(score >= 19) badgeColor = "#2ecc71"; 
-                else if(score >= 15) badgeColor = "#f1c40f"; 
-                else badgeColor = "#e74c3c"; 
+                // 📊 نمایش کیفی نمرات
+                let quality = "نیاز به تلاش";
+                let badgeColor = "#e74c3c";
+                
+                if(score >= 20) { quality = "خیلی خوب (فوق‌العاده)"; badgeColor = "#8e44ad"; }
+                else if(score >= 17) { quality = "خیلی خوب"; badgeColor = "#2ecc71"; }
+                else if(score >= 12) { quality = "خوب"; badgeColor = "#2980b9"; }
+                else if(score >= 8) { quality = "قابل قبول"; badgeColor = "#f1c40f"; }
 
                 const div = document.createElement('div');
                 div.style.background = "white";
@@ -524,7 +521,7 @@
                     </div>
                     <div style="display:flex; align-items:center;">
                         <button onclick="goToReview('${eid}')" style="background: #ecf0f1; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-left: 10px; color: #2c3e50;">🔍 مرور</button>
-                        <div style="font-weight: bold; padding: 5px 10px; border-radius: 8px; font-size: 0.9rem; min-width: 30px; text-align: center; background:${badgeColor}; color:white;">${toPersianNum(score)}</div>
+                        <div style="font-weight: bold; padding: 5px 10px; border-radius: 8px; font-size: 0.8rem; text-align: center; background:${badgeColor}; color:white;">${quality}</div>
                     </div>
                 `;
                 container.appendChild(div);
@@ -532,7 +529,6 @@
         }
 
         function goToReview(examId) {
-            // ذخیره برای مرور
             window.location.href = `azmoon.html?mode=history_review&target=${examId}`;
         }
 
@@ -550,7 +546,6 @@
                 container.innerHTML = '<p style="color:#999; text-align:center;">پیام جدیدی نیست.</p>';
             } else {
                 list.forEach(n => {
-                    // ساپورت لایت باکس در متن اعلان
                     const content = n.text.replace(/(https?:\/\/[^\s]+)/g, (url) => {
                         if(url.match(/\.(jpeg|jpg|gif|png)$/) != null) return `<img src="${url}" onclick="openLightbox('${url}')" style="max-width:100%; border-radius:8px; margin-top:5px; cursor:zoom-in;">`;
                         return `<a href="${url}" target="_blank">${url}</a>`;
@@ -565,16 +560,13 @@
         }
 
         // --- 5. منطق پلیر (فیکس دکمه بازگشت موبایل) ---
-        
-        // 🚀 FIX: هندل کردن دکمه Back گوشی
         window.addEventListener('popstate', (event) => {
             if (document.getElementById('screen-player').classList.contains('active')) {
-                closePlayer(); // فقط پلیر را ببند
+                closePlayer(); 
             }
         });
 
         function playVideo(item) {
-            // اضافه کردن State به مرورگر تا دکمه Back کار کند
             history.pushState({ page: 'player' }, "Player", "#player");
             
             activeVid = item;
@@ -617,7 +609,6 @@
             renderList(); 
             showScreen('screen-library');
             
-            // اگر در URL هشتگ #player مانده بود پاکش کن (بدون رفرش)
             if(window.location.hash === '#player') {
                 history.replaceState(null, null, ' ');
             }
@@ -734,6 +725,19 @@
         container.addEventListener('mousemove', () => {
             document.getElementById('controlsBar').classList.remove('fade-out'); clearTimeout(fadeTimer); fadeTimer = setTimeout(() => { if(!vid.paused && !isDragging) document.getElementById('controlsBar').classList.add('fade-out'); }, 3000);
         });
+        
+        function launchConfetti() {
+            if(typeof window.launchConfetti === 'function') {
+                window.launchConfetti();
+            } else {
+                const c = document.getElementById('confetti-canvas');
+                const ctx = c.getContext('2d');
+                c.width = window.innerWidth; c.height = window.innerHeight;
+                const p = Array.from({length:100}, () => ({x:Math.random()*c.width, y:Math.random()*c.height-c.height, c:`hsl(${Math.random()*360},100%,50%)`, v:Math.random()*5+2}));
+                function draw(){ctx.clearRect(0,0,c.width,c.height);p.forEach(k=>{k.y+=k.v;ctx.fillStyle=k.c;ctx.beginPath();ctx.arc(k.x,k.y,5,0,Math.PI*2);ctx.fill();if(k.y>c.height)k.y=0;});requestAnimationFrame(draw);}
+                draw(); setTimeout(()=>c.style.display='none',3000);
+            }
+        }
     </script>
 </body>
 </html>
