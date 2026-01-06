@@ -77,6 +77,17 @@
         .reward-item { flex: 1; min-width: 120px; }
         .reward-item label { font-size: 0.8rem; margin: 5px 0; color: #555; }
         .reward-item input { text-align: center; direction: ltr; font-weight: bold; }
+        /* استایل دکمه‌های جابجایی */
+        .btn-move { 
+            background: #fff; 
+            border: 1px solid #ddd; 
+            padding: 5px 8px; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            font-size: 1rem; 
+            margin-left: 2px; 
+        }
+        .btn-move:hover { background: #f0f0f0; }
     </style>
 </head>
 <body>
@@ -420,8 +431,8 @@
             list.innerHTML = '';
             const q = document.getElementById('searchBox').value.toLowerCase();
 
-            // رندر درس‌ها (با نمایش تیک جدید)
-            ALL_DATA.lessons.forEach(l => {
+            // --- بخش درس‌ها (همراه با دکمه جابجایی) ---
+            ALL_DATA.lessons.forEach((l, index) => { 
                 if(l.title.toLowerCase().includes(q)) {
                     list.innerHTML += `
                         <div class="history-card" style="border-right-color: var(--accent);">
@@ -430,12 +441,34 @@
                                 <br><span style="font-size:0.8rem; color:#777;">${l.date}</span>
                             </div>
                             <div>
+                                <button class="btn-move" onclick="moveLesson('${l.id}', -1)" title="بالا">⬆️</button>
+                                <button class="btn-move" onclick="moveLesson('${l.id}', 1)" title="پایین">⬇️</button>
+                                
                                 <button class="btn-edit btn-action" onclick='loadForEdit("lesson", ${JSON.stringify(l)})'>✏️ ویرایش</button>
                                 <button class="btn-del btn-action" onclick="deleteItem('lesson','${l.id}')">🗑️ حذف</button>
                             </div>
                         </div>`;
                 }
             });
+
+            // --- بخش آزمون‌ها (بدون تغییر) ---
+            ALL_DATA.exams.forEach(e => {
+                if(e.title.toLowerCase().includes(q)) {
+                    const safeData = JSON.stringify(e).replace(/'/g, "&#39;");
+                    list.innerHTML += `
+                        <div class="history-card" style="border-right-color: #8e44ad;">
+                            <div class="history-info">
+                                <strong>📝 ${e.title}</strong> ${e.is_new ? '<span class="tag-new">جدید 🔥</span>':''}
+                                <br><span style="font-size:0.8rem; color:#777;">${e.date}</span>
+                            </div>
+                            <div>
+                                <button class="btn-edit btn-action" onclick='loadForEdit("exam", ${safeData})'>✏️ ویرایش</button>
+                                <button class="btn-del btn-action" onclick="deleteItem('exam','${e.id}')">🗑️ حذف</button>
+                            </div>
+                        </div>`;
+                }
+            });
+        }
 
             // رندر آزمون‌ها (با نمایش تیک جدید)
             ALL_DATA.exams.forEach(e => {
@@ -541,6 +574,34 @@
         async function sendReq(body) {
             const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
             return await r.json();
+        }
+        // 🔄 تابع جابجایی درس‌ها
+        async function moveLesson(id, direction) {
+            const list = ALL_DATA.lessons;
+            const index = list.findIndex(l => String(l.id) === String(id));
+            
+            if (index === -1) return;
+            if (direction === -1 && index === 0) return; 
+            if (direction === 1 && index === list.length - 1) return;
+
+            const temp = list[index];
+            list[index] = list[index + direction];
+            list[index + direction] = temp;
+
+            renderHistory();
+            await saveOrderToServer(list);
+        }
+
+        async function saveOrderToServer(newList) {
+            const listToSend = [...newList].reverse();
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    action: 'reorder_lessons', 
+                    admin_token: ADMIN_TOKEN, 
+                    new_list: listToSend 
+                })
+            });
         }
 
         addQuestion(); // شروع با یک سوال خالی
