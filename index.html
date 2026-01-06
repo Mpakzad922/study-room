@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>میز مطالعه هوشمند چمران (نسخه الماس 💎)</title>
+    <title>میز مطالعه هوشمند چمران (نسخه تاریخچه 📜)</title>
     
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
         @keyframes shinePanel { 0% {transform: translateX(-100%);} 100% {transform: translateX(100%);} }
         .rank-badge { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 8px; font-size: 0.75rem; margin-top: 5px; display: inline-block; }
 
-        /* بخش الماس و اعلانات (جدید) */
+        /* بخش الماس و اعلانات */
         .top-icons { display: flex; gap: 10px; align-items: center; }
         .icon-btn { position: relative; cursor: pointer; font-size: 1.4rem; transition: 0.3s; }
         .icon-btn:hover { transform: scale(1.1); }
@@ -31,7 +31,7 @@
         
         .gem-box { display: flex; align-items: center; gap: 5px; background: rgba(155, 89, 182, 0.3); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(155, 89, 182, 0.5); }
 
-        /* --- 🌟 دیوار افتخار (روبان مدال‌ها - نسخه افقی + بارش) --- */
+        /* --- دیوار افتخار (روبان مدال‌ها - افقی + بارش) --- */
         .wall-of-fame { 
             background: linear-gradient(to right, #2c3e50, #34495e); 
             padding: 15px; 
@@ -41,66 +41,26 @@
             text-align: right;
             border: 2px solid #f1c40f; 
             position: relative;
-            overflow: hidden; /* برای جلوگیری از بیرون زدن افکت بارش */
+            overflow: hidden; 
         }
         
-        /* افکت‌های بارش جشن */
         .wall-particles {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 1; /* زیر محتوا */
-            opacity: 0.6;
+            pointer-events: none; z-index: 1; opacity: 0.6;
         }
-        @keyframes subtleFall {
-            from { background-position: 0 0; }
-            to { background-position: 0 600px; }
-        }
+        @keyframes subtleFall { from { background-position: 0 0; } to { background-position: 0 600px; } }
         .p1 { background-image: radial-gradient(rgba(241, 196, 15, 0.8) 1px, transparent 1px); background-size: 25px 25px; animation: subtleFall 25s linear infinite; }
         .p2 { background-image: radial-gradient(rgba(255, 255, 255, 0.6) 1.5px, transparent 1.5px); background-size: 50px 50px; background-position: 25px 10px; animation: subtleFall 18s linear infinite; }
         .p3 { background-image: radial-gradient(rgba(255, 255, 255, 0.9) 1px, transparent 1px); background-size: 80px 80px; background-position: -10px -20px; animation: subtleFall 12s linear infinite; opacity: 0.4; }
 
-        .wall-header {
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 15px;
-            color: #f1c40f; 
-            position: relative; z-index: 2;
-        }
-        .wall-title { 
-            font-family: 'Cinzel Decorative', cursive; 
-            font-weight: bold; 
-            font-size: 1.1rem; 
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-        }
+        .wall-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: #f1c40f; position: relative; z-index: 2; }
+        .wall-title { font-family: 'Cinzel Decorative', cursive; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; gap: 5px; }
         
-        .wall-scroll { 
-            display: flex; 
-            gap: 12px; 
-            overflow-x: auto; 
-            padding-bottom: 5px; 
-            scrollbar-width: none; 
-            -webkit-overflow-scrolling: touch; 
-            position: relative; z-index: 2;
-        }
+        .wall-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; position: relative; z-index: 2; }
         .wall-scroll::-webkit-scrollbar { display: none; }
 
-        /* کارت نخبه */
-        .champion-card {
-            background: rgba(255, 255, 255, 0.95);
-            min-width: 110px;
-            padding: 12px 5px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            border-bottom: 4px solid #f1c40f;
-            flex-shrink: 0;
-            animation: slideInRight 0.5s ease-out;
-            cursor: default;
-        }
+        .champion-card { background: rgba(255, 255, 255, 0.95); min-width: 110px; padding: 12px 5px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); border-bottom: 4px solid #f1c40f; flex-shrink: 0; animation: slideInRight 0.5s ease-out; cursor: default; }
         .champion-card:hover { transform: translateY(-3px); transition: 0.3s; }
         @keyframes slideInRight { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
 
@@ -114,7 +74,6 @@
         .video-item.done { border-color: var(--success); background: #f0fdf4; }
         .video-icon { font-size: 1.5rem; background: #f1f2f6; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--primary); }
         
-        /* نشانگر جدید */
         .new-badge { position: absolute; top: -10px; left: 10px; background: var(--danger); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); animation: popIn 0.5s; }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
 
@@ -125,13 +84,25 @@
         .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; cursor: pointer; width: 100%; font-family: inherit; font-size: 1.1rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: 10px; }
         .btn-loading { opacity: 0.7; cursor: wait; }
 
-        /* مودال اعلانات */
-        #notifModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .notif-content { background: white; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; padding: 20px; border-radius: 20px; text-align: right; }
+        /* مودال عمومی (تاریخچه و اعلانات) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; padding: 20px; border-radius: 20px; text-align: right; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
         .notif-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; margin-bottom: 5px; }
         .notif-item.type-alert { background: #fff0f0; border-right: 3px solid red; }
         .notif-item.type-success { background: #f0fdf4; border-right: 3px solid green; }
         .notif-item.type-info { background: #f0f8ff; border-right: 3px solid #3498db; }
+
+        /* استایل کارت‌های تاریخچه (جدید) */
+        .history-list { display: flex; flex-direction: column; gap: 10px; }
+        .h-card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-right: 5px solid #ccc; transition: 0.2s; }
+        .h-card:active { transform: scale(0.98); }
+        .h-info { flex: 1; }
+        .h-title { font-weight: bold; color: #2c3e50; font-size: 0.95rem; margin-bottom: 3px; }
+        .h-meta { font-size: 0.75rem; color: #95a5a6; }
+        .h-score-badge { font-weight: bold; padding: 5px 10px; border-radius: 8px; font-size: 0.9rem; min-width: 30px; text-align: center; }
+        .h-action { background: #ecf0f1; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-right: 10px; color: #2c3e50; }
 
         /* پلیر پیشرفته */
         #playerContainer { position: relative; width: 100%; background: #000; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; }
@@ -165,7 +136,6 @@
         .offline-badge { position:fixed; bottom:10px; left:10px; background:orange; color:white; padding:8px 15px; border-radius:30px; font-size:0.8rem; display:none; z-index:2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
-        /* افکت امضا */
         #intro-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         #intro-overlay.move-down { top: 85%; transform: scale(0.6); opacity: 0; pointer-events: none; }
         .signature-container { text-align: center; direction: ltr; margin-top: 20px; }
@@ -197,11 +167,23 @@
 
     <div id="offlineBadge" class="offline-badge"></div>
 
-    <div id="notifModal" onclick="if(event.target.id === 'notifModal') this.style.display='none'">
-        <div class="notif-content">
+    <div id="notifModal" class="modal-overlay" onclick="if(event.target.classList.contains('modal-overlay')) this.style.display='none'">
+        <div class="modal-content">
             <h3 style="margin-top:0; color:var(--primary);">📬 پیام‌ها و اعلانات</h3>
             <div id="notifListContainer"></div>
             <button class="btn-main" onclick="document.getElementById('notifModal').style.display='none'" style="margin-top:15px; background:#ddd; color:#333;">بستن</button>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal-overlay" onclick="if(event.target.classList.contains('modal-overlay')) this.style.display='none'">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <h3 style="margin:0; color:var(--primary);">📜 پرونده آزمون‌ها</h3>
+                <button onclick="document.getElementById('historyModal').style.display='none'" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
+            </div>
+            <div id="historyListContainer" class="history-list">
+                <small style="color:#aaa; text-align:center; display:block;">درحال دریافت سوابق...</small>
+            </div>
         </div>
     </div>
 
@@ -242,29 +224,24 @@
         </div>
 
         <div class="wall-of-fame">
-            <div class="wall-particles p1"></div>
-            <div class="wall-particles p2"></div>
-            <div class="wall-particles p3"></div>
-
+            <div class="wall-particles p1"></div><div class="wall-particles p2"></div><div class="wall-particles p3"></div>
             <div style="position:relative; z-index:2;">
                 <div class="wall-header">
                     <div class="wall-title">🏆 نخبگان آخرین آزمون</div>
                     <div id="examNameBadge" style="font-size:0.75rem; background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:15px; color: white;">درحال بررسی...</div>
                 </div>
-                <div id="wallContainer" class="wall-scroll">
-                    <small style="color:rgba(255,255,255,0.7);">درحال دریافت لیست قهرمانان...</small>
-                </div>
+                <div id="wallContainer" class="wall-scroll"><small style="color:rgba(255,255,255,0.7);">درحال دریافت لیست قهرمانان...</small></div>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-            <button onclick="window.location.href='azmoon.html'" style="background: #8e44ad; color: white; border: none; padding: 15px; border-radius: 15px; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);">
-                📝 آزمون آنلاین
-            </button>
-            <button onclick="alert('🛍️ فروشگاه به زودی باز می‌شود!\nامتیاز و الماس جمع کنید.')" style="background: #f1c40f; color: #333; border: none; padding: 15px; border-radius: 15px; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3); font-weight:bold;">
-                🛒 فروشگاه جوایز
-            </button>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <button onclick="window.location.href='azmoon.html'" style="background: #8e44ad; color: white; border: none; padding: 15px; border-radius: 15px; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3);">📝 آزمون آنلاین</button>
+            <button onclick="alert('🛍️ فروشگاه به زودی باز می‌شود!\nامتیاز و الماس جمع کنید.')" style="background: #f1c40f; color: #333; border: none; padding: 15px; border-radius: 15px; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(241, 196, 15, 0.3); font-weight:bold;">🛒 فروشگاه جوایز</button>
         </div>
+        
+        <button onclick="openHistory()" style="width:100%; background: white; color: #2c3e50; border: 2px solid #ecf0f1; padding: 12px; border-radius: 15px; font-family: inherit; font-size: 1rem; cursor: pointer; margin-bottom: 20px; display:flex; align-items:center; justify-content:center; gap:10px;">
+            📜 پرونده و سوابق من
+        </button>
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:10px;">
             <h3 style="margin:0;">درس‌های من</h3>
@@ -280,33 +257,25 @@
 
     <div id="screen-player" class="card" style="padding:0; background:transparent; box-shadow:none; max-width:800px;">
         <div id="playerContainer">
-            
             <div id="cheatAlert" class="alert-box">⛔ جلو زدن فیلم مجاز نیست!</div>
-
             <div id="securityModal">
                 <div id="timerDisplay" class="timer-circle">۶۰</div>
                 <h3>🔒 حضور غیاب هوشمند</h3>
-                <p style="font-size: 0.9rem; color: #fff;">برای ادامه، حاصل جمع زیر را وارد کنید:</p>
                 <div id="mathQ" class="math-question">...</div>
                 <input type="tel" id="mathAns" placeholder="پاسخ؟" style="width: 150px; color:black; background: rgba(255,255,255,0.9);">
                 <button class="btn-main" onclick="checkSecurityAnswer()" style="width: 150px; background:white; color:var(--primary);">ثبت پاسخ ✅</button>
             </div>
-
             <video id="myVideo" playsinline disablePictureInPicture></video>
-
             <div class="custom-controls" id="controlsBar">
                 <button class="c-btn" id="playBtn" onclick="togglePlay()">▶️</button>
-                
                 <div class="progress-bar-container" id="progressBarContainer">
                     <div id="progressBar" class="progress-fill"></div>
                     <div id="progressThumb" class="progress-thumb"></div>
                 </div>
-
                 <span id="timeDisplay" style="color:white; font-size:0.8rem; margin:0 10px; min-width:50px;">00:00</span>
                 <button class="c-btn" onclick="toggleFullScreen()" title="تمام صفحه">⛶</button>
             </div>
         </div>
-
         <div style="padding: 15px; background: white; border-radius: 0 0 20px 20px; position:relative; z-index:10; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <button class="back-btn" onclick="closePlayer()">بازگشت</button>
@@ -323,14 +292,13 @@
     <script src="rank.js" onerror="alert('فایل rank.js یافت نشد! لطفاً فایل‌ها را بررسی کنید.')"></script>
 
     <script>
-        // 🔴🔴🔴 آدرس سرور (لیارا)
         const API_URL = "https://chamran-api.liara.run";
-        
         const DB_KEY = "chamran_db_vfinal_";
         const CHECK_INTERVAL = 300; 
         
         let currentUser = null;
         let playlist = [];
+        let allExamsList = []; // برای ذخیره لیست آزمون‌ها و پیدا کردن اسمشان
         let activeVid = null;
         let maxTime = 0;
         let isDone = false;
@@ -381,13 +349,14 @@
                         if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
                         if(typeof RankSystem !== 'undefined') {
                             RankSystem.init(data.jsonData);
-                            RankSystem.updateNotifications(data.notifications); // دریافت اعلانات
+                            RankSystem.updateNotifications(data.notifications); 
                         }
                         
                         document.getElementById('displayName').innerText = data.displayName;
                         document.getElementById('intro-overlay').style.display = 'none';
                         showScreen('screen-library');
-                        fetchPlaylist();
+                        fetchPlaylist(); // دریافت درس‌ها
+                        fetchExamsForHistory(); // دریافت لیست آزمون‌ها برای تاریخچه
                         
                         if(typeof RankSystem !== 'undefined') RankSystem.loadWallOfFame();
 
@@ -431,6 +400,7 @@
                     document.getElementById('displayName').innerText = data.displayName;
                     showScreen('screen-library');
                     fetchPlaylist();
+                    fetchExamsForHistory();
                     
                     if(typeof RankSystem !== 'undefined') RankSystem.loadWallOfFame();
 
@@ -453,22 +423,19 @@
             setTimeout(() => target.classList.add('show-content'), 50);
         }
 
-        // --- 3. دریافت لیست دروس ---
+        // --- 3. مدیریت محتوا ---
         async function fetchPlaylist() {
             const listContainer = document.getElementById('video-list-container');
             listContainer.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spinner" style="margin:0 auto;"></div><p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها...</p></div>`;
             try {
-                const res = await fetch(API_URL, {
-                    method: 'POST', headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: 'get_lessons' }) 
-                });
+                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_lessons' }) });
                 const result = await res.json();
                 if(result.status === 'success') {
-                    playlist = result.data.reverse(); // جدیدترین‌ها بالا باشند
+                    playlist = result.data.reverse(); 
                     renderList();
                 } else { throw new Error("Server Error"); }
             } catch (err) { 
-                listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#c0392b;"><p>⚠️ خطا در دریافت درس‌ها</p><button onclick="fetchPlaylist()" style="background:#2c3e50; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">🔄 تلاش مجدد</button></div>`;
+                listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#c0392b;"><p>⚠️ خطا در دریافت</p></div>`;
             }
         }
 
@@ -480,8 +447,6 @@
                 const isCompleted = RankSystem.data.completed.includes(item.id.toString());
                 const icon = isCompleted ? '✅' : '▶️';
                 const hasFile = (item.attach && item.attach.length > 3);
-                
-                // برچسب جدید
                 const newTag = item.is_new ? `<div class="new-badge">🆕 جدید</div>` : '';
                 
                 const el = document.createElement('div');
@@ -492,10 +457,78 @@
             });
         }
 
+        // --- 🌟 بخش تاریخچه و پرونده (جدید) ---
+        async function fetchExamsForHistory() {
+            try {
+                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
+                const result = await res.json();
+                if(result.status === 'success') { allExamsList = result.data; }
+            } catch(e) {}
+        }
+
+        function openHistory() {
+            document.getElementById('historyModal').style.display = 'flex';
+            const container = document.getElementById('historyListContainer');
+            container.innerHTML = '';
+            
+            // گرفتن جزئیات آزمون‌های کاربر
+            const details = RankSystem.data.exam_details || {};
+            const takenIds = Object.keys(details);
+            
+            if(takenIds.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#999; margin-top:20px;">هنوز در آزمونی شرکت نکرده‌اید.</p>';
+                return;
+            }
+
+            // مرتب‌سازی بر اساس تاریخ (اگر تاریخ نباشد، پیش‌فرض می‌ماند)
+            takenIds.reverse(); 
+
+            takenIds.forEach(eid => {
+                const examDetail = details[eid];
+                // پیدا کردن نام آزمون از لیست کلی
+                const examInfo = allExamsList.find(e => String(e.id) === String(eid));
+                const title = examInfo ? examInfo.title : "آزمون حذف شده";
+                const date = examDetail.date || "تاریخ نامشخص";
+                const score = parseFloat(examDetail.score || 0);
+                
+                // رنگ‌بندی نمره
+                let badgeColor = "#95a5a6"; // خاکستری
+                if(score >= 19) badgeColor = "#2ecc71"; // سبز
+                else if(score >= 15) badgeColor = "#f1c40f"; // زرد
+                else badgeColor = "#e74c3c"; // قرمز
+
+                const div = document.createElement('div');
+                div.className = 'h-card';
+                div.style.borderRightColor = badgeColor;
+                
+                // دکمه بازبینی
+                const reviewBtn = `<button class="h-action" onclick="goToReview('${eid}')">🔍 مرور</button>`;
+                
+                div.innerHTML = `
+                    <div class="h-info">
+                        <div class="h-title">${title}</div>
+                        <div class="h-meta">${date}</div>
+                    </div>
+                    <div style="display:flex; align-items:center;">
+                        ${reviewBtn}
+                        <div class="h-score-badge" style="background:${badgeColor}; color:white;">${toPersianNum(score)}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function goToReview(examId) {
+            // ذخیره اطلاعات لازم برای مرور در لوکال استوریج
+            // ما نیاز داریم به صفحه azmoon.html بفهمانیم که حالت مرور است
+            localStorage.setItem('review_target_id', examId);
+            window.location.href = 'azmoon.html?mode=history_review';
+        }
+
         // --- 4. نمایش اعلانات ---
         function showNotifications() {
             document.getElementById('notifModal').style.display = 'flex';
-            document.getElementById('notifDot').style.display = 'none'; // مخفی کردن نقطه قرمز
+            document.getElementById('notifDot').style.display = 'none'; 
             if(typeof RankSystem !== 'undefined') RankSystem.markNotifsAsRead();
             
             const container = document.getElementById('notifListContainer');
@@ -520,10 +553,8 @@
             activeVid = item;
             document.getElementById('videoTitle').innerText = item.title;
             isDone = RankSystem.data.completed.includes(item.id.toString());
-            
             vid.src = item.link;
             lastActivityTime = Date.now();
-            
             const dlContainer = document.getElementById('downloadContainer');
             dlContainer.innerHTML = ""; 
             if(item.attach && item.attach.length > 3) {
@@ -534,29 +565,15 @@
                     if(link.length > 5) dlContainer.innerHTML += `<a href="${link}" target="_blank" class="download-btn"><div style="display:flex;align-items:center;"><span class="dl-icon">📥</span><span class="dl-text">${name}</span></div><span class="dl-arrow">دریافت</span></a>`;
                 });
             }
-
             const serverLastTime = RankSystem.getLastPosition(item.id);
             const localMax = parseFloat(localStorage.getItem('local_max_' + item.id) || 0);
             maxTime = isDone ? 999999 : Math.max(localMax, serverLastTime);
-            
             let startPos = serverLastTime;
             nextCheckTime = (isDone ? 999999 : (maxTime + CHECK_INTERVAL));
-            
             showScreen('screen-player');
-            
-            if(isDone) {
-                 updateProgressUI(100);
-                 document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
-                 document.getElementById('viewPercent').innerText = "۱۰۰٪";
-            } else {
-                document.getElementById('viewStatus').innerText = "در حال تماشا...";
-                updateProgressUI(0);
-            }
-            
-            if(startPos > 5 && !isDone) {
-                if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = startPos; else vid.currentTime = 0;
-            } else vid.currentTime = 0;
-
+            if(isDone) { updateProgressUI(100); document.getElementById('viewStatus').innerText = "تکمیل شد! ✅"; document.getElementById('viewPercent').innerText = "۱۰۰٪"; } 
+            else { document.getElementById('viewStatus').innerText = "در حال تماشا..."; updateProgressUI(0); }
+            if(startPos > 5 && !isDone) { if(confirm("ادامه پخش از جای قبلی؟")) vid.currentTime = startPos; else vid.currentTime = 0; } else vid.currentTime = 0;
             SyncManager.addToQueue('report', { lesson: item.title, status: 'شروع درس', details: 'ورود به پلیر', device: getDeviceInfo() });
         }
 
@@ -581,9 +598,7 @@
             if (!document.fullscreenElement) {
                 if(container.requestFullscreen) container.requestFullscreen();
                 else if(container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-            } else {
-                if(document.exitFullscreen) document.exitFullscreen();
-            }
+            } else { if(document.exitFullscreen) document.exitFullscreen(); }
         }
 
         pContainer.addEventListener('mousedown', startDrag);
@@ -593,36 +608,21 @@
         document.addEventListener('mouseup', endDrag);
         document.addEventListener('touchend', endDrag);
 
-        function startDrag(e) {
-            isDragging = true;
-            vid.pause();
-            doDrag(e);
-        }
-
+        function startDrag(e) { isDragging = true; vid.pause(); doDrag(e); }
         function doDrag(e) {
             if (!isDragging) return;
             e.preventDefault();
             const rect = pContainer.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let percent = (clientX - rect.left) / rect.width;
-            if (percent < 0) percent = 0;
-            if (percent > 1) percent = 1;
-
+            if (percent < 0) percent = 0; if (percent > 1) percent = 1;
             let targetTime = percent * vid.duration;
-
-            if (targetTime > maxTime + 2 && !isDone) { 
-                targetTime = maxTime;
-                percent = maxTime / vid.duration;
-                document.getElementById('cheatAlert').style.display = 'block';
-                setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 1000);
-            }
+            if (targetTime > maxTime + 2 && !isDone) { targetTime = maxTime; percent = maxTime / vid.duration; document.getElementById('cheatAlert').style.display = 'block'; setTimeout(() => document.getElementById('cheatAlert').style.display = 'none', 1000); }
             updateProgressUI(percent * 100);
-            const m = Math.floor(targetTime / 60);
-            const s = Math.floor(targetTime % 60);
+            const m = Math.floor(targetTime / 60); const s = Math.floor(targetTime % 60);
             document.getElementById('timeDisplay').innerText = `${m}:${s < 10 ? '0'+s : s}`;
             pContainer.dataset.targetTime = targetTime;
         }
-
         function endDrag(e) {
             if (!isDragging) return;
             isDragging = false;
@@ -630,27 +630,15 @@
             vid.currentTime = targetTime;
             vid.play();
         }
-
-        function updateProgressUI(percent) {
-            pBar.style.width = percent + "%";
-            pThumb.style.left = percent + "%";
-        }
+        function updateProgressUI(percent) { pBar.style.width = percent + "%"; pThumb.style.left = percent + "%"; }
 
         vid.addEventListener('timeupdate', () => {
             if (isDragging) return;
             const percent = (vid.currentTime / vid.duration) * 100;
-            if(!isNaN(percent)) {
-                updateProgressUI(percent);
-                document.getElementById('viewPercent').innerText = toPersianNum(Math.floor(percent)) + "٪";
-            }
-            const m = Math.floor(vid.currentTime / 60);
-            const s = Math.floor(vid.currentTime % 60);
+            if(!isNaN(percent)) { updateProgressUI(percent); document.getElementById('viewPercent').innerText = toPersianNum(Math.floor(percent)) + "٪"; }
+            const m = Math.floor(vid.currentTime / 60); const s = Math.floor(vid.currentTime % 60);
             document.getElementById('timeDisplay').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-
-            if(!vid.seeking && vid.currentTime > maxTime) {
-                maxTime = vid.currentTime;
-                localStorage.setItem('local_max_' + activeVid.id, maxTime);
-            }
+            if(!vid.seeking && vid.currentTime > maxTime) { maxTime = vid.currentTime; localStorage.setItem('local_max_' + activeVid.id, maxTime); }
             RankSystem.savePosition(activeVid.id, vid.currentTime);
             if(!isDone && vid.currentTime > nextCheckTime) triggerSecurityCheck();
             if(vid.duration && percent >= 98 && !isDone) finishLesson();
@@ -663,7 +651,6 @@
             document.getElementById('mathQ').innerText = `${toPersianNum(n1)} + ${toPersianNum(n2)} = ؟`;
             document.getElementById('mathAns').value = "";
             document.getElementById('securityModal').style.display = 'flex';
-            
             let timeLeft = 60;
             document.getElementById('timerDisplay').innerText = toPersianNum(timeLeft);
             if(timerInterval) clearInterval(timerInterval);
@@ -677,39 +664,22 @@
         function checkSecurityAnswer() {
             function toEn(s) { return s.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)); }
             if(parseInt(toEn(document.getElementById('mathAns').value)) === window.securityResult) {
-                clearInterval(timerInterval);
-                document.getElementById('securityModal').style.display = 'none';
-                nextCheckTime = vid.currentTime + CHECK_INTERVAL; 
-                vid.play();
+                clearInterval(timerInterval); document.getElementById('securityModal').style.display = 'none'; nextCheckTime = vid.currentTime + CHECK_INTERVAL; vid.play();
             } else { document.getElementById('mathAns').style.borderColor = 'red'; }
         }
 
         function punishUser() {
-            document.getElementById('securityModal').style.display = 'none';
-            alert("⏰ زمان تمام شد! بازگشت به عقب.");
-            let penaltyTime = Math.max(0, vid.currentTime - 180); 
-            vid.currentTime = penaltyTime; 
-            maxTime = penaltyTime; 
-            localStorage.setItem('local_max_' + activeVid.id, maxTime);
-            SyncManager.addToQueue('sync', null, true); 
+            document.getElementById('securityModal').style.display = 'none'; alert("⏰ زمان تمام شد! بازگشت به عقب."); let penaltyTime = Math.max(0, vid.currentTime - 180); vid.currentTime = penaltyTime; maxTime = penaltyTime; localStorage.setItem('local_max_' + activeVid.id, maxTime); SyncManager.addToQueue('sync', null, true); 
         }
 
         function finishLesson() {
-            isDone = true;
-            vid.pause();
-            document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
-            SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id });
-            launchConfetti();
-            setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
+            isDone = true; vid.pause(); document.getElementById('viewStatus').innerText = "تکمیل شد! ✅"; SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id }); launchConfetti(); setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
         }
 
         let fadeTimer;
         container.addEventListener('mousemove', () => {
-            document.getElementById('controlsBar').classList.remove('fade-out');
-            clearTimeout(fadeTimer);
-            fadeTimer = setTimeout(() => { if(!vid.paused && !isDragging) document.getElementById('controlsBar').classList.add('fade-out'); }, 3000);
+            document.getElementById('controlsBar').classList.remove('fade-out'); clearTimeout(fadeTimer); fadeTimer = setTimeout(() => { if(!vid.paused && !isDragging) document.getElementById('controlsBar').classList.add('fade-out'); }, 3000);
         });
-
         window.addEventListener('popstate', () => { if (document.getElementById('screen-player').classList.contains('active')) closePlayer(); });
     </script>
 </body>
