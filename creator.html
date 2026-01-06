@@ -404,15 +404,18 @@
             } else { alert("❌ خطا: " + res.message); }
         }
 
-        // --- 6. مدیریت، تاریخچه و ویرایش ---
+        // --- 6. مدیریت، تاریخچه و ویرایش (اصلاح شده برای جابجایی بدون ریست) ---
         async function fetchHistory() {
             try {
                 const r1 = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'get_lessons'}) });
                 const r2 = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'get_exams'}) });
                 const d1 = await r1.json();
                 const d2 = await r2.json();
-                if(d1.status === 'success') ALL_DATA.lessons = d1.data.reverse();
-                if(d2.status === 'success') ALL_DATA.exams = d2.data.reverse();
+                
+                // 🟢 اینجا دیگر .reverse() نداریم تا ترتیب سرور حفظ شود
+                if(d1.status === 'success') ALL_DATA.lessons = d1.data;
+                if(d2.status === 'success') ALL_DATA.exams = d2.data;
+                
                 renderHistory();
             } catch(e) {}
         }
@@ -432,8 +435,8 @@
                                 <br><span style="font-size:0.8rem; color:#777;">${l.date}</span>
                             </div>
                             <div>
-                                <button class="btn-move" onclick="moveLesson('${l.id}', -1)" title="بالا">⬆️</button>
-                                <button class="btn-move" onclick="moveLesson('${l.id}', 1)" title="پایین">⬇️</button>
+                                <button class="btn-move" onclick="moveItem('lesson', '${l.id}', -1)" title="بالا">⬆️</button>
+                                <button class="btn-move" onclick="moveItem('lesson', '${l.id}', 1)" title="پایین">⬇️</button>
                                 
                                 <button class="btn-edit btn-action" onclick='loadForEdit("lesson", ${JSON.stringify(l)})'>✏️ ویرایش</button>
                                 <button class="btn-del btn-action" onclick="deleteItem('lesson','${l.id}')">🗑️ حذف</button>
@@ -442,8 +445,8 @@
                 }
             });
 
-            // رندر آزمون‌ها
-            ALL_DATA.exams.forEach(e => {
+            // رندر آزمون‌ها (با دکمه‌های جابجایی)
+            ALL_DATA.exams.forEach((e) => {
                 if(e.title.toLowerCase().includes(q)) {
                     const safeData = JSON.stringify(e).replace(/'/g, "&#39;");
                     list.innerHTML += `
@@ -453,11 +456,47 @@
                                 <br><span style="font-size:0.8rem; color:#777;">${e.date}</span>
                             </div>
                             <div>
+                                <button class="btn-move" onclick="moveItem('exam', '${e.id}', -1)" title="بالا">⬆️</button>
+                                <button class="btn-move" onclick="moveItem('exam', '${e.id}', 1)" title="پایین">⬇️</button>
+
                                 <button class="btn-edit btn-action" onclick='loadForEdit("exam", ${safeData})'>✏️ ویرایش</button>
                                 <button class="btn-del btn-action" onclick="deleteItem('exam','${e.id}')">🗑️ حذف</button>
                             </div>
                         </div>`;
                 }
+            });
+        }
+
+        // 🔄 تابع جابجایی هوشمند (برای هر دو نوع)
+        async function moveItem(type, id, direction) {
+            // تشخیص آرایه هدف
+            const list = type === 'lesson' ? ALL_DATA.lessons : ALL_DATA.exams;
+            const index = list.findIndex(i => String(i.id) === String(id));
+            
+            if (index === -1) return;
+            if (direction === -1 && index === 0) return; 
+            if (direction === 1 && index === list.length - 1) return;
+
+            // جابجایی
+            const temp = list[index];
+            list[index] = list[index + direction];
+            list[index + direction] = temp;
+
+            renderHistory();
+            
+            // ارسال به سرور
+            await saveOrderToServer(type, list);
+        }
+
+        async function saveOrderToServer(type, list) {
+            const action = type === 'lesson' ? 'reorder_lessons' : 'reorder_exams';
+            const res = await fetch(API_URL, {
+                method: 'POST', headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    action: action, 
+                    admin_token: ADMIN_TOKEN, 
+                    new_list: list 
+                })
             });
         }
 
@@ -495,10 +534,6 @@
                     document.getElementById('r_excellent').value = item.rewards.excellent || 300;
                     document.getElementById('r_good').value = item.rewards.good || 100;
                     document.getElementById('r_normal').value = item.rewards.normal || 20;
-                } else {
-                    document.getElementById('r_excellent').value = 300;
-                    document.getElementById('r_good').value = 100;
-                    document.getElementById('r_normal').value = 20;
                 }
 
                 document.getElementById('questions_area').innerHTML = '';
@@ -520,12 +555,7 @@
             document.getElementById('questions_area').innerHTML = '';
             document.getElementById('btnSaveLesson').innerText = "💾 ذخیره درس";
             document.getElementById('btnSaveExam').innerText = "💾 ذخیره آزمون";
-            
             document.getElementById('isNewContent').checked = false;
-            document.getElementById('r_excellent').value = 300;
-            document.getElementById('r_good').value = 100;
-            document.getElementById('r_normal').value = 20;
-
             qCount = 0; addQuestion();
         }
 
@@ -542,35 +572,6 @@
         async function sendReq(body) {
             const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
             return await r.json();
-        }
-
-        // 🔄 تابع جابجایی درس‌ها
-        async function moveLesson(id, direction) {
-            const list = ALL_DATA.lessons;
-            const index = list.findIndex(l => String(l.id) === String(id));
-            
-            if (index === -1) return;
-            if (direction === -1 && index === 0) return; 
-            if (direction === 1 && index === list.length - 1) return;
-
-            const temp = list[index];
-            list[index] = list[index + direction];
-            list[index + direction] = temp;
-
-            renderHistory();
-            await saveOrderToServer(list);
-        }
-
-        async function saveOrderToServer(newList) {
-            const listToSend = [...newList].reverse();
-            const res = await fetch(API_URL, {
-                method: 'POST', headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    action: 'reorder_lessons', 
-                    admin_token: ADMIN_TOKEN, 
-                    new_list: listToSend 
-                })
-            });
         }
 
         addQuestion(); // شروع با یک سوال خالی
