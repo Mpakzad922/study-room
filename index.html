@@ -12,7 +12,7 @@
         :root { --primary: #2c3e50; --accent: #e67e22; --bg: #ecf0f1; --success: #27ae60; --danger: #c0392b; --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); --gem: #9b59b6; }
         body { font-family: 'Vazirmatn', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; box-sizing: border-box; -webkit-tap-highlight-color: transparent; overflow-x: hidden; user-select: none; }
         
-        /* --- استایل‌های اصلی شما (حفظ شده) --- */
+        /* --- استایل‌های اصلی --- */
         .card { background: white; width: 100%; max-width: 500px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); margin-top: 15px; text-align: center; display: none; opacity: 0; transition: opacity 0.5s ease-in-out; }
         .card.show-content { opacity: 1; }
         .active { display: block; }
@@ -30,7 +30,7 @@
         
         .gem-box { display: flex; align-items: center; gap: 5px; background: rgba(155, 89, 182, 0.3); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; border: 1px solid rgba(155, 89, 182, 0.5); }
 
-        /* --- دیوار افتخار (استایل دقیق قبلی) --- */
+        /* --- دیوار افتخار --- */
         .wall-of-fame { 
             background: linear-gradient(to right, #2c3e50, #34495e); 
             padding: 15px; 
@@ -92,12 +92,12 @@
         .notif-item.type-success { background: #f0fdf4; border-right: 3px solid green; }
         .notif-item.type-info { background: #f0f8ff; border-right: 3px solid #3498db; }
 
-        /* لایت باکس (جدید برای زوم) */
+        /* لایت باکس */
         #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: none; justify-content: center; align-items: center; cursor: zoom-out; }
         #lightbox img { max-width: 95%; max-height: 95%; border-radius: 10px; box-shadow: 0 0 30px rgba(255,255,255,0.1); animation: zoomIn 0.3s; }
         @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* پلیر پیشرفته (بدون تغییر ظاهر) */
+        /* پلیر پیشرفته */
         #playerContainer { position: relative; width: 100%; background: #000; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); aspect-ratio: 16/9; }
         #playerContainer:fullscreen { width: 100vw; height: 100vh; border-radius: 0; aspect-ratio: unset; }
         #playerContainer:fullscreen video { height: 100%; width: 100%; object-fit: contain; }
@@ -129,7 +129,7 @@
         .offline-badge { position:fixed; bottom:10px; left:10px; background:orange; color:white; padding:8px 15px; border-radius:30px; font-size:0.8rem; display:none; z-index:2000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         
-        /* --- بخش امضای انیمیشن دار (بازگردانی شده) --- */
+        /* --- امضا و اینترو --- */
         #intro-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: all 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
         #intro-overlay.move-down { top: 85%; transform: scale(0.6); opacity: 0; pointer-events: none; }
         .signature-container { text-align: center; direction: ltr; margin-top: 20px; }
@@ -287,7 +287,7 @@
         </div>
     </div>
     
-    <script src="rank.js" onerror="alert('فایل rank.js یافت نشد! لطفاً فایل‌ها را بررسی کنید.')"></script>
+    <script src="rank.js" onerror="alert('فایل rank.js یافت نشد!')"></script>
 
     <script>
         const API_URL = "https://chamran-api.liara.run";
@@ -311,7 +311,7 @@
         const pThumb = document.getElementById('progressThumb');
         const pContainer = document.getElementById('progressBarContainer');
 
-        // --- 1. شروع برنامه (با انیمیشن اینترو) ---
+        // --- 1. شروع برنامه ---
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.getElementById('intro-overlay').classList.add('move-down');
@@ -327,16 +327,30 @@
         function toPersianNum(n) { return n.toString().replace(/\d/g, x => ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'][x]); }
         function getDeviceInfo() { return /Mobile|Android/i.test(navigator.userAgent) ? "📱 Mobile" : "💻 PC"; }
 
-        // --- 2. سیستم احراز هویت (متصل به سرور) ---
+        // --- 2. سیستم احراز هویت (با قابلیت لود آنی) ---
         async function checkAuth() {
             const savedUser = localStorage.getItem(DB_KEY + 'creds');
+            
             if(savedUser) {
+                // 🚀 FIX: لود آنی از حافظه قبل از درخواست سرور (حل مشکل تاخیر)
+                try {
+                    const userData = JSON.parse(savedUser);
+                    currentUser = userData;
+                    if(userData.jsonData) {
+                        RankSystem.init(userData.jsonData); // هسته را با دیتای لوکال آپدیت کن
+                        document.getElementById('displayName').innerText = userData.displayName;
+                        showScreen('screen-library');
+                        // لیست‌ها را هم از سرور نگیر فعلا، اگر کش شده‌اند نشان بده
+                        // اما برای اطمینان درخواست سرور را هم می‌فرستیم
+                    }
+                } catch(e) {}
+                
+                // حالا درخواست بروزرسانی به سرور می‌دهیم (در پس‌زمینه)
                 try {
                     const creds = JSON.parse(savedUser);
-                    document.getElementById('intro-overlay').style.display = 'flex';
-                    document.querySelector('.sig-name').innerHTML = "در حال اتصال...";
-                    
-                    const res = await fetch(API_URL, {
+                    if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
+
+                    const res = await fetch(`${API_URL}?t=${Date.now()}`, { // جلوگیری از کش
                         method: 'POST', headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ action: 'login', username: creds.username, password: creds.password })
                     });
@@ -344,29 +358,25 @@
                     
                     if(data.status === 'success') {
                         // ذخیره جدیدترین دیتا
-                        const userData = { username: creds.username, password: creds.password, displayName: data.displayName, jsonData: data.jsonData };
-                        localStorage.setItem(DB_KEY + 'creds', JSON.stringify(userData)); // فقط برای لاگین خودکار بعدی
+                        const updatedUser = { username: creds.username, password: creds.password, displayName: data.displayName, jsonData: data.jsonData };
+                        localStorage.setItem(DB_KEY + 'creds', JSON.stringify(updatedUser));
                         
-                        currentUser = userData;
-                        if(typeof SyncManager !== 'undefined') SyncManager.init(creds.username, creds.password);
-                        if(typeof RankSystem !== 'undefined') {
-                            RankSystem.init(data.jsonData);
-                            RankSystem.updateNotifications(data.notifications); 
-                        }
+                        currentUser = updatedUser;
+                        RankSystem.init(data.jsonData);
+                        RankSystem.updateNotifications(data.notifications); 
                         
                         document.getElementById('displayName').innerText = data.displayName;
-                        document.getElementById('intro-overlay').style.display = 'none';
-                        showScreen('screen-library');
+                        // اگر هنوز صفحه لاگین بود (یعنی بار اول)، برو داخل
+                        if(document.getElementById('screen-login').classList.contains('active')) showScreen('screen-library');
+                        
                         fetchPlaylist(); 
                         fetchExamsForHistory(); 
-                        
-                        if(typeof RankSystem !== 'undefined') RankSystem.loadWallOfFame();
+                        RankSystem.loadWallOfFame();
 
                     } else { throw new Error("Login failed"); }
                 } catch(e) {
-                    localStorage.removeItem(DB_KEY + 'creds');
-                    document.getElementById('intro-overlay').style.display = 'none';
-                    showScreen('screen-login');
+                    // اگر نت نبود، با همان دیتای لوکال ادامه بده (آفلاین مود)
+                    if(!currentUser) showScreen('screen-login');
                 }
             } else { showScreen('screen-login'); }
         }
@@ -394,17 +404,14 @@
                     currentUser = userData;
                     
                     if(typeof SyncManager !== 'undefined') SyncManager.init(u, p);
-                    if(typeof RankSystem !== 'undefined') {
-                        RankSystem.init(data.jsonData);
-                        RankSystem.updateNotifications(data.notifications);
-                    }
+                    RankSystem.init(data.jsonData);
+                    RankSystem.updateNotifications(data.notifications);
                     
                     document.getElementById('displayName').innerText = data.displayName;
                     showScreen('screen-library');
                     fetchPlaylist();
                     fetchExamsForHistory();
-                    
-                    if(typeof RankSystem !== 'undefined') RankSystem.loadWallOfFame();
+                    RankSystem.loadWallOfFame();
 
                 } else { msg.innerText = data.message || "خطا در ورود"; }
             } catch(e) { msg.innerText = "خطا در اتصال به سرور."; }
@@ -428,16 +435,17 @@
         // --- 3. مدیریت محتوا ---
         async function fetchPlaylist() {
             const listContainer = document.getElementById('video-list-container');
-            listContainer.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spinner" style="margin:0 auto;"></div><p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها...</p></div>`;
+            // اگر لیست خالی بود لودینگ نشان بده، اگر نه (شاید از قبل دیتایی هست) دست نزن
+            if(!playlist.length) listContainer.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spinner" style="margin:0 auto;"></div><p style="color:#7f8c8d; margin-top:10px;">در حال دریافت درس‌ها...</p></div>`;
             try {
-                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_lessons' }) });
+                const res = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_lessons' }) });
                 const result = await res.json();
                 if(result.status === 'success') {
                     playlist = result.data.reverse(); 
                     renderList();
-                } else { throw new Error("Server Error"); }
+                } 
             } catch (err) { 
-                listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#c0392b;"><p>⚠️ خطا در دریافت</p></div>`;
+                if(!playlist.length) listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#c0392b;"><p>⚠️ عدم دسترسی به اینترنت</p></div>`;
             }
         }
 
@@ -446,7 +454,6 @@
             list.innerHTML = "";
             if(!playlist || playlist.length === 0) { list.innerHTML = "<p style='text-align:center;'>📭 درسی یافت نشد.</p>"; return; }
             playlist.forEach(item => {
-                // چک کردن از روی دیتای RankSystem (سرور)
                 const isCompleted = RankSystem.data.completed.includes(item.id.toString());
                 const icon = isCompleted ? '✅' : '▶️';
                 const hasFile = (item.attach && item.attach.length > 3);
@@ -460,10 +467,10 @@
             });
         }
 
-        // --- 🌟 بخش تاریخچه و پرونده (با حفظ طراحی) ---
+        // --- 🌟 بخش تاریخچه و پرونده (اصلاح شده) ---
         async function fetchExamsForHistory() {
             try {
-                const res = await fetch(API_URL, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
+                const res = await fetch(`${API_URL}?t=${Date.now()}`, { method: 'POST', headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: 'get_exams' }) });
                 const result = await res.json();
                 if(result.status === 'success') { allExamsList = result.data; }
             } catch(e) {}
@@ -474,6 +481,7 @@
             const container = document.getElementById('historyListContainer');
             container.innerHTML = '';
             
+            // 🚀 FIX: خواندن مستقیم از حافظه (حل مشکل تاخیر نمایش بعد از آزمون)
             const details = RankSystem.data.exam_details || {};
             const takenIds = Object.keys(details);
             
@@ -486,8 +494,9 @@
 
             takenIds.forEach(eid => {
                 const examDetail = details[eid];
+                // اگر لیست آزمون‌ها هنوز لود نشده، اسمش را بگذار "آزمون شماره X"
                 const examInfo = allExamsList.find(e => String(e.id) === String(eid));
-                const title = examInfo ? examInfo.title : "آزمون حذف شده";
+                const title = examInfo ? examInfo.title : (examDetail.title || "آزمون ثبت شده");
                 const date = examDetail.date || "تاریخ نامشخص";
                 const score = parseFloat(examDetail.score || 0);
                 
@@ -496,7 +505,6 @@
                 else if(score >= 15) badgeColor = "#f1c40f"; 
                 else badgeColor = "#e74c3c"; 
 
-                // استایل خاص تاریخچه شما
                 const div = document.createElement('div');
                 div.style.background = "white";
                 div.style.border = "1px solid #eee";
@@ -508,7 +516,6 @@
                 div.style.boxShadow = "0 2px 5px rgba(0,0,0,0.05)";
                 div.style.borderRight = `5px solid ${badgeColor}`;
                 div.style.marginBottom = "10px";
-                div.style.transition = "0.2s";
                 
                 div.innerHTML = `
                     <div class="h-info">
@@ -526,8 +533,7 @@
 
         function goToReview(examId) {
             // ذخیره برای مرور
-            localStorage.setItem('review_target_id', examId);
-            window.location.href = 'azmoon.html?mode=history_review';
+            window.location.href = `azmoon.html?mode=history_review&target=${examId}`;
         }
 
         // --- 4. نمایش اعلانات ---
@@ -558,16 +564,25 @@
             }
         }
 
-        // --- 5. منطق پلیر (با اصلاحات امنیتی و حفظ دانلود) ---
+        // --- 5. منطق پلیر (فیکس دکمه بازگشت موبایل) ---
+        
+        // 🚀 FIX: هندل کردن دکمه Back گوشی
+        window.addEventListener('popstate', (event) => {
+            if (document.getElementById('screen-player').classList.contains('active')) {
+                closePlayer(); // فقط پلیر را ببند
+            }
+        });
+
         function playVideo(item) {
+            // اضافه کردن State به مرورگر تا دکمه Back کار کند
             history.pushState({ page: 'player' }, "Player", "#player");
+            
             activeVid = item;
             document.getElementById('videoTitle').innerText = item.title;
             isDone = RankSystem.data.completed.includes(item.id.toString());
             vid.src = item.link;
             lastActivityTime = Date.now();
             
-            // دانلودها با استایل شما
             const dlContainer = document.getElementById('downloadContainer');
             dlContainer.innerHTML = ""; 
             if(item.attach && item.attach.length > 3) {
@@ -579,7 +594,6 @@
                 });
             }
             
-            // 🛑 دریافت زمان از سرور (نه لوکال)
             const serverLastTime = RankSystem.getLastPosition(item.id);
             maxTime = isDone ? 999999 : serverLastTime;
             
@@ -602,6 +616,11 @@
             SyncManager.addToQueue('report', { lesson: activeVid ? activeVid.title : '?', status: 'خروج', details: `تا دقیقه ${Math.floor(vid.currentTime/60)}`, device: getDeviceInfo() });
             renderList(); 
             showScreen('screen-library');
+            
+            // اگر در URL هشتگ #player مانده بود پاکش کن (بدون رفرش)
+            if(window.location.hash === '#player') {
+                history.replaceState(null, null, ' ');
+            }
         }
 
         function togglePlay() {
@@ -658,10 +677,9 @@
             const m = Math.floor(vid.currentTime / 60); const s = Math.floor(vid.currentTime % 60);
             document.getElementById('timeDisplay').innerText = `${m}:${s < 10 ? '0'+s : s}`;
             
-            // ذخیره موقعیت در سرور (به جای لوکال)
             if(!vid.seeking && vid.currentTime > maxTime) { 
                 maxTime = vid.currentTime; 
-                RankSystem.savePosition(activeVid.id, vid.currentTime); // اتوماتیک به صف می‌رود
+                RankSystem.savePosition(activeVid.id, vid.currentTime); 
             }
             
             if(!isDone && vid.currentTime > nextCheckTime) triggerSecurityCheck();
@@ -692,15 +710,12 @@
             } else { document.getElementById('mathAns').style.borderColor = 'red'; }
         }
 
-        // ✅ تابع جریمه (با فیکس امنیتی سرور)
         function punishUser() {
             document.getElementById('securityModal').style.display = 'none'; 
             alert("⏰ زمان تمام شد! بازگشت به عقب."); 
             let penaltyTime = Math.max(0, vid.currentTime - 180); 
             vid.currentTime = penaltyTime; 
             maxTime = penaltyTime; 
-            
-            // 🛑 نکته مهم: اینجا پارامتر سوم true است تا سرور را مجبور به عقبگرد کند
             RankSystem.savePosition(activeVid.id, penaltyTime, true); 
         }
 
@@ -710,7 +725,6 @@
             launchConfetti(); setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
         }
 
-        // لایت باکس
         function openLightbox(src) {
             document.getElementById('lightboxImg').src = src;
             document.getElementById('lightbox').style.display = 'flex';
@@ -720,7 +734,6 @@
         container.addEventListener('mousemove', () => {
             document.getElementById('controlsBar').classList.remove('fade-out'); clearTimeout(fadeTimer); fadeTimer = setTimeout(() => { if(!vid.paused && !isDragging) document.getElementById('controlsBar').classList.add('fade-out'); }, 3000);
         });
-        window.addEventListener('popstate', () => { if (document.getElementById('screen-player').classList.contains('active')) closePlayer(); });
     </script>
 </body>
 </html>
