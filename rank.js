@@ -1,11 +1,11 @@
 // ********************************************
-// 🎮 فایل هسته: rank.js (نسخه کامل و دقیق - بازبینی شده ✅)
+// 🎮 فایل هسته: rank.js (نسخه نهایی با تمام جزئیات ✨)
 // ********************************************
 
-// 🔴 آدرس سرور 
+// 🔴 آدرس سرور (اگر در فایل HTML تعریف نشده باشد، از این استفاده می‌کند)
 const SERVER_URL = (typeof API_URL !== 'undefined') ? API_URL : "https://chamran-api.liara.run"; 
 
-// 🎨 استایل‌های پاپ‌آپ و انیمیشن‌ها (تزریق به صفحه)
+// 🎨 استایل‌های پاپ‌آپ و انیمیشن‌ها (تزریق به صفحه برای زیبایی)
 const xpPopupStyle = document.createElement('style');
 xpPopupStyle.innerHTML = `
     .xp-popup-overlay {
@@ -36,7 +36,7 @@ xpPopupStyle.innerHTML = `
 document.head.appendChild(xpPopupStyle);
 
 const RankSystem = {
-    // لیست مقام‌ها بر اساس XP (همان منطق قبلی)
+    // لیست مقام‌ها بر اساس XP
     ranks: [
         { min: 0, title: "🐣 نوآموز" },
         { min: 500, title: "🛡️ محافظ" },
@@ -59,16 +59,16 @@ const RankSystem = {
             
             this.data = {
                 xp: serverData.xp || 0,
-                gem: serverData.gem || 0,
+                gem: serverData.gem || 0, // دریافت الماس
                 rank: serverData.rank || "🐣 نوآموز",
                 completed: serverData.completed || [],
                 playback: serverData.playback || {},
                 exams: serverData.exams || {},
-                exam_details: serverData.exam_details || {}
+                exam_details: serverData.exam_details || {} // جزئیات برای مرور
             };
         }
         this.updateUI();
-        this.saveToLocal(); // ذخیره نسخه تازه در مرورگر
+        this.saveToLocal(); // ⭐️ ذخیره نسخه تازه در مرورگر
         
         // اگر در صفحه اصلی باشیم، لیست درس‌ها را آپدیت کن (برای تیک سبز)
         setTimeout(() => { 
@@ -76,7 +76,7 @@ const RankSystem = {
         }, 500);
     },
 
-    // ⭐️ تابع ذخیره آنی در حافظه مرورگر
+    // ⭐️ تابع جدید: ذخیره آنی در حافظه مرورگر (برای جلوگیری از پریدن اطلاعات)
     saveToLocal: function() {
         try {
             const key = 'chamran_db_vfinal_creds';
@@ -89,11 +89,12 @@ const RankSystem = {
         } catch(e) { console.error("Save Local Error", e); }
     },
 
-    // 2. مدیریت اعلانات
+    // 2. مدیریت اعلانات (Notifications)
     updateNotifications: function(notifList) {
         if (!notifList) return;
         this.notifications = notifList;
         
+        // بررسی پیام‌های جدید
         const lastSeen = parseInt(localStorage.getItem('last_seen_notif') || 0);
         const hasNew = notifList.some(n => n.id > lastSeen);
         
@@ -116,7 +117,7 @@ const RankSystem = {
         const badge = document.getElementById('examNameBadge');
         if(!wall) return;
         
-        // اضافه کردن پارامتر زمان برای جلوگیری از کش (?t=...)
+        // درخواست به سرور (با پارامتر زمان برای جلوگیری از کش)
         fetch(`${SERVER_URL}?t=${Date.now()}`, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
@@ -125,12 +126,14 @@ const RankSystem = {
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
+                // نمایش نام آخرین آزمون
                 if(badge) badge.innerText = data.examTitle || "هنوز آزمونی نیست";
 
                 if(data.data.length === 0) {
-                    wall.innerHTML = '<div style="color:rgba(255,255,255,0.9); font-size:0.9rem; padding:15px; width:100%; text-align:center;">هنوز کسی نمره کامل نگرفته!<br>تو اولین نفر باش 💪</div>';
+                    wall.innerHTML = '<div style="color:rgba(255,255,255,0.9); font-size:0.9rem; padding:15px; width:100%; text-align:center;">هنوز کسی در این آزمون نمره کامل نگرفته!<br>تو اولین نفر باش 💪</div>';
                 } else {
                     wall.innerHTML = '';
+                    // حلقه برای ساخت کارت‌ها
                     data.data.forEach((u) => {
                         const icons = ['🥇', '🎖️', '🌟', '👑', '💎']; 
                         const icon = icons[Math.floor(Math.random() * icons.length)];
@@ -139,7 +142,7 @@ const RankSystem = {
                         const parts = u.n.split(' ');
                         if(parts.length >= 2) displayName = `${parts[0]} ${parts[1]}`;
 
-                        // ساخت کارت‌ها (دقیقاً همان کلاس‌هایی که در CSS ایندکس تعریف شده)
+                        // ساخت HTML کارت
                         wall.innerHTML += `
                             <div class="champion-card">
                                 <div class="champ-icon">${icon}</div>
@@ -148,21 +151,47 @@ const RankSystem = {
                             </div>
                         `;
                     });
+                    
+                    // 🚀 شروع اسکرول خودکار (ویژگی جدید)
+                    this.startAutoScroll(wall);
                 }
             }
         })
         .catch(e => {
-            wall.innerHTML = '<small style="color:rgba(255,255,255,0.7)">خطا در دریافت</small>';
+            console.error(e);
+            wall.innerHTML = '<small style="color:rgba(255,255,255,0.7)">خطا در دریافت لیست</small>';
         });
     },
 
-    // 4. ذخیره موقعیت پخش فیلم (برای ادامه پخش)
+    // 🔄 تابع کمکی اسکرول خودکار (جدید)
+    startAutoScroll: function(element) {
+        let isHovered = false;
+        const speed = 0.5; // سرعت حرکت
+
+        // توقف حرکت هنگام لمس یا موس
+        element.addEventListener('mouseenter', () => isHovered = true);
+        element.addEventListener('mouseleave', () => isHovered = false);
+        element.addEventListener('touchstart', () => isHovered = true);
+        element.addEventListener('touchend', () => isHovered = false);
+
+        function step() {
+            if (!isHovered) {
+                // حرکت به سمت چپ (برای RTL مناسب است)
+                element.scrollLeft -= speed; 
+                // اگر به انتها رسید (اختیاری: می‌توانیم ریست کنیم یا نه)
+            }
+            requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+    },
+
+    // 4. ذخیره موقعیت پخش فیلم
     savePosition: function(id, time, forceSync = false) {
         const sId = id.toString();
         this.data.playback[sId] = Math.floor(time);
         this.saveToLocal(); // ذخیره محلی فوری
         
-        // هر 15 ثانیه به سرور بفرست تا ترافیک زیاد نشود
+        // هر 15 ثانیه ذخیره کن
         if(Math.floor(time) % 15 === 0 || forceSync) {
              SyncManager.addToQueue('sync', null, forceSync); 
         }
@@ -172,7 +201,7 @@ const RankSystem = {
         return this.data.playback[id.toString()] || 0; 
     },
 
-    // 5. بروزرسانی ظاهر
+    // 5. بروزرسانی ظاهر (XP و الماس)
     updateUI: function() {
         const xpEl = document.getElementById('user-xp');
         const gemEl = document.getElementById('user-gem');
@@ -183,7 +212,7 @@ const RankSystem = {
         if(rankEl) rankEl.innerText = this.data.rank;
     },
     
-    // ✨ پاپ‌آپ جدید و خیره‌کننده (Creative Popup)
+    // ✨ پاپ‌آپ جدید و خیره‌کننده (جایگزین آلرت ساده)
     showRewardPopup: function(xp, gem) {
         const div = document.createElement('div');
         div.className = 'xp-popup-overlay';
@@ -202,7 +231,7 @@ const RankSystem = {
             div.querySelector('.xp-popup-content').style.transform = 'scale(1)';
         });
 
-        // انیمیشن خروج
+        // انیمیشن خروج (بعد از 3 ثانیه)
         setTimeout(() => {
             div.style.opacity = '0';
             div.querySelector('.xp-popup-content').style.transform = 'scale(1.5)';
@@ -219,7 +248,7 @@ const RankSystem = {
 };
 
 // ********************************************
-// 📡 مدیر همگام‌سازی (Sync Manager) - با منطق صف
+// 📡 مدیر همگام‌سازی (Sync Manager)
 // ********************************************
 const SyncManager = {
     queue: [], 
@@ -230,6 +259,7 @@ const SyncManager = {
     init: function(user, pass) {
         this.username = user; 
         this.password = pass;
+        // بازیابی صف قبلی اگر مانده باشد
         this.queue = JSON.parse(localStorage.getItem('chamran_queue_vfinal') || "[]");
         this.processQueue();
         
@@ -321,7 +351,7 @@ const SyncManager = {
             item.jsonData = JSON.stringify(RankSystem.data); 
         }
         
-        // ارسال به سرور با پارامتر زمان (ضد کش)
+        // ارسال به سرور (با پارامتر زمان برای جلوگیری از کش)
         fetch(`${SERVER_URL}?t=${Date.now()}`, {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
@@ -338,6 +368,7 @@ const SyncManager = {
                     
                     // 🌟 نمایش پاپ‌آپ فقط اگر جایزه‌ای دریافت شده باشد
                     if (data.added && data.added > 0) {
+                        // چک می‌کنیم کاربر در حالت تمام صفحه نباشد
                         if(!document.fullscreenElement) {
                              RankSystem.showRewardPopup(data.added, data.addedGem);
                         }
@@ -351,11 +382,13 @@ const SyncManager = {
                 this.isSyncing = false;
                 if(this.queue.length > 0) setTimeout(() => this.processQueue(), 100);
             } else {
+                // مدیریت خطاها
                 if(data.message && data.message.includes('مسدود')) {
                     alert("⛔ حساب شما مسدود شده است.");
                     this.queue = []; 
                     this.saveQueue();
                 } else {
+                    // آیتم معیوب را رد کن
                     this.queue.shift();
                     this.saveQueue();
                 }
@@ -370,7 +403,7 @@ const SyncManager = {
     }
 };
 
-// 🌟 تابع جشن و پایکوبی (Confetti) - تقویت شده
+// 🌟 تابع جشن و پایکوبی (Confetti) - با زمان ۶ ثانیه
 function launchConfetti() {
     const c = document.getElementById('confetti-canvas');
     if(!c) return;
@@ -380,14 +413,14 @@ function launchConfetti() {
     c.height = window.innerHeight;
     
     const pieces = [];
-    for(let i=0; i<400; i++) { // تعداد ذرات بیشتر
+    for(let i=0; i<400; i++) { // تعداد ذرات بیشتر برای شکوه بیشتر
         pieces.push({
             x: Math.random() * c.width,
             y: Math.random() * c.height - c.height,
             rotation: Math.random() * 360,
             color: `hsl(${Math.random() * 360}, 100%, 50%)`,
             speed: Math.random() * 4 + 2,
-            size: Math.random() * 6 + 2
+            size: Math.random() * 6 + 2 // سایز متغیر
         });
     }
 
@@ -409,5 +442,5 @@ function launchConfetti() {
     setTimeout(() => {
         cancelAnimationFrame(animationId);
         c.style.display = 'none';
-    }, 7000); // ⏱️ زمان جشن: 7 ثانیه
+    }, 6000); // ⏱️ زمان جشن: دقیقاً ۶ ثانیه
 }
