@@ -164,26 +164,39 @@ const RankSystem = {
     },
 
     // 🔄 تابع کمکی اسکرول خودکار (جدید)
-    startAutoScroll: function(element) {
-        let isHovered = false;
-        const speed = 0.5; // سرعت حرکت
+    // 🔄 تابع اسکرول بی‌پایان (Infinite Marquee)
+startAutoScroll: function(element) {
+    // اگر محتوا کم بود، اسکرول نکن
+    if (element.scrollWidth <= element.clientWidth) return;
 
-        // توقف حرکت هنگام لمس یا موس
-        element.addEventListener('mouseenter', () => isHovered = true);
-        element.addEventListener('mouseleave', () => isHovered = false);
-        element.addEventListener('touchstart', () => isHovered = true);
-        element.addEventListener('touchend', () => isHovered = false);
+    // 🟢 کپی کردن محتوا برای ایجاد حالت بی‌پایان
+    const originalContent = element.innerHTML;
+    element.innerHTML += originalContent + originalContent; // سه بار تکرار برای اطمینان
 
-        function step() {
-            if (!isHovered) {
-                // حرکت به سمت چپ (برای RTL مناسب است)
-                element.scrollLeft -= speed; 
-                // اگر به انتها رسید (اختیاری: می‌توانیم ریست کنیم یا نه)
+    let isHovered = false;
+    const speed = 1; // سرعت حرکت (می‌توانی کم و زیاد کنی)
+
+    // توقف حرکت هنگام لمس یا موس
+    element.addEventListener('mouseenter', () => isHovered = true);
+    element.addEventListener('mouseleave', () => isHovered = false);
+    element.addEventListener('touchstart', () => isHovered = true);
+    element.addEventListener('touchend', () => isHovered = false);
+
+    function step() {
+        if (!isHovered) {
+            // حرکت به سمت چپ (برای RTL مقدار scrollLeft منفی می‌شود)
+            element.scrollLeft -= speed; 
+            
+            // 🟢 منطق ریست کردن برای چرخش مداوم
+            // وقتی به اندازه یک‌سوم (محتوای اصلی) رد شدیم، برگردیم اول
+            if (Math.abs(element.scrollLeft) >= (element.scrollWidth / 3)) {
+                element.scrollLeft = 0;
             }
-            requestAnimationFrame(step);
         }
         requestAnimationFrame(step);
-    },
+    }
+    requestAnimationFrame(step);
+},
 
     // 4. ذخیره موقعیت پخش فیلم
     savePosition: function(id, time, forceSync = false) {
