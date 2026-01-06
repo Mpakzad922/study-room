@@ -235,3 +235,45 @@ const SyncManager = {
         });
     }
 };
+// اضافه کردن به انتهای فایل rank.js
+function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    if(!canvas) return;
+    canvas.style.display = 'block';
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const pieces = [];
+    for(let i=0; i<300; i++) {
+        pieces.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            rotation: Math.random() * 360,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+            speed: Math.random() * 3 + 2
+        });
+    }
+
+    let animationId;
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            p.y += p.speed;
+            p.rotation += 2;
+            if(p.y > canvas.height) p.y = -10;
+        });
+        animationId = requestAnimationFrame(draw);
+    }
+    draw();
+    
+    // بعد از 4 ثانیه قطع شود
+    setTimeout(() => {
+        cancelAnimationFrame(animationId);
+        canvas.style.display = 'none';
+    }, 4000);
+}
