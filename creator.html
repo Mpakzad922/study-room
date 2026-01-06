@@ -70,23 +70,16 @@
         .edit-mode-badge { background: #f39c12; color: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 20px; display: none; font-weight: bold; animation: slideDown 0.3s; }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* 🆕 استایل باکس تنظیم امتیاز */
+        /* استایل باکس تنظیم امتیاز */
         .reward-config { background: #e8f6f3; padding: 15px; border-radius: 10px; border: 1px dashed #27ae60; margin: 20px 0; }
         .reward-config h4 { margin: 0 0 10px 0; color: #27ae60; border-bottom: 1px solid rgba(39, 174, 96, 0.2); padding-bottom: 5px; }
         .reward-inputs { display: flex; gap: 10px; flex-wrap: wrap; }
         .reward-item { flex: 1; min-width: 120px; }
         .reward-item label { font-size: 0.8rem; margin: 5px 0; color: #555; }
         .reward-item input { text-align: center; direction: ltr; font-weight: bold; }
+
         /* استایل دکمه‌های جابجایی */
-        .btn-move { 
-            background: #fff; 
-            border: 1px solid #ddd; 
-            padding: 5px 8px; 
-            cursor: pointer; 
-            border-radius: 5px; 
-            font-size: 1rem; 
-            margin-left: 2px; 
-        }
+        .btn-move { background: #fff; border: 1px solid #ddd; padding: 5px 8px; cursor: pointer; border-radius: 5px; font-size: 1rem; margin-left: 2px; }
         .btn-move:hover { background: #f0f0f0; }
     </style>
 </head>
@@ -285,7 +278,7 @@
                     document.getElementById('l_title').value=''; 
                     document.getElementById('l_link').value=''; 
                     document.getElementById('attach_container').innerHTML=''; 
-                    document.getElementById('isNewContent').checked = false; // ریست تیک
+                    document.getElementById('isNewContent').checked = false; 
                 }
                 fetchHistory();
             } else { alert("❌ خطا: " + res.message); }
@@ -297,7 +290,7 @@
             qCount++;
             const div = document.createElement('div');
             div.className = 'q-box';
-            const qId = `q_${Date.now()}_${Math.random()}`; // یونیک
+            const qId = `q_${Date.now()}_${Math.random()}`; 
 
             // مقادیر پیش‌فرض یا مقادیر ویرایش
             const qTxt = data ? data.q : '';
@@ -307,7 +300,6 @@
             const desc = data ? data.desc : '';
             const descImg = data ? data.desc_img : '';
 
-            // تشخیص عکس در گزینه‌ها
             const opVals = ops.map(op => {
                 const isUrl = op.startsWith('http') || op.startsWith('/uploads');
                 return { txt: isUrl ? '' : op, img: isUrl ? op : '' };
@@ -367,7 +359,6 @@
             const pass = document.getElementById('e_pass').value;
             const isNew = document.getElementById('isNewContent').checked;
             
-            // گرفتن مقادیر امتیاز
             const rEx = document.getElementById('r_excellent').value;
             const rGd = document.getElementById('r_good').value;
             const rNm = document.getElementById('r_normal').value;
@@ -396,7 +387,7 @@
             const payload = { 
                 action: action, admin_token: ADMIN_TOKEN, 
                 title: title, time: time, pass: pass, questions: questions, is_new: isNew,
-                rewards: { excellent: rEx, good: rGd, normal: rNm } // ارسال تنظیمات امتیاز
+                rewards: { excellent: rEx, good: rGd, normal: rNm }
             };
             if(EDIT_MODE) payload.exam_id = EDIT_ID;
 
@@ -407,7 +398,7 @@
                     document.getElementById('questions_area').innerHTML=''; 
                     qCount=0; addQuestion(); 
                     document.getElementById('e_title').value=''; 
-                    document.getElementById('isNewContent').checked = false; // ریست تیک
+                    document.getElementById('isNewContent').checked = false;
                 }
                 fetchHistory();
             } else { alert("❌ خطا: " + res.message); }
@@ -431,8 +422,8 @@
             list.innerHTML = '';
             const q = document.getElementById('searchBox').value.toLowerCase();
 
-            // --- بخش درس‌ها (همراه با دکمه جابجایی) ---
-            ALL_DATA.lessons.forEach((l, index) => { 
+            // رندر درس‌ها (همراه با دکمه جابجایی)
+            ALL_DATA.lessons.forEach((l) => { 
                 if(l.title.toLowerCase().includes(q)) {
                     list.innerHTML += `
                         <div class="history-card" style="border-right-color: var(--accent);">
@@ -451,26 +442,7 @@
                 }
             });
 
-            // --- بخش آزمون‌ها (بدون تغییر) ---
-            ALL_DATA.exams.forEach(e => {
-                if(e.title.toLowerCase().includes(q)) {
-                    const safeData = JSON.stringify(e).replace(/'/g, "&#39;");
-                    list.innerHTML += `
-                        <div class="history-card" style="border-right-color: #8e44ad;">
-                            <div class="history-info">
-                                <strong>📝 ${e.title}</strong> ${e.is_new ? '<span class="tag-new">جدید 🔥</span>':''}
-                                <br><span style="font-size:0.8rem; color:#777;">${e.date}</span>
-                            </div>
-                            <div>
-                                <button class="btn-edit btn-action" onclick='loadForEdit("exam", ${safeData})'>✏️ ویرایش</button>
-                                <button class="btn-del btn-action" onclick="deleteItem('exam','${e.id}')">🗑️ حذف</button>
-                            </div>
-                        </div>`;
-                }
-            });
-        }
-
-            // رندر آزمون‌ها (با نمایش تیک جدید)
+            // رندر آزمون‌ها
             ALL_DATA.exams.forEach(e => {
                 if(e.title.toLowerCase().includes(q)) {
                     const safeData = JSON.stringify(e).replace(/'/g, "&#39;");
@@ -501,7 +473,6 @@
             document.getElementById('contentType').value = type;
             toggleForm();
 
-            // لود وضعیت تیک جدید
             document.getElementById('isNewContent').checked = item.is_new || false;
 
             if(type === 'lesson') {
@@ -520,13 +491,11 @@
                 document.getElementById('e_time').value = item.time;
                 document.getElementById('e_pass').value = item.pass || '';
                 
-                // لود امتیازها (اگر وجود دارد)
                 if(item.rewards) {
                     document.getElementById('r_excellent').value = item.rewards.excellent || 300;
                     document.getElementById('r_good').value = item.rewards.good || 100;
                     document.getElementById('r_normal').value = item.rewards.normal || 20;
                 } else {
-                    // ریست اگر قبلا ذخیره نشده
                     document.getElementById('r_excellent').value = 300;
                     document.getElementById('r_good').value = 100;
                     document.getElementById('r_normal').value = 20;
@@ -552,7 +521,6 @@
             document.getElementById('btnSaveLesson').innerText = "💾 ذخیره درس";
             document.getElementById('btnSaveExam').innerText = "💾 ذخیره آزمون";
             
-            // ریست تیک جدید و امتیازها
             document.getElementById('isNewContent').checked = false;
             document.getElementById('r_excellent').value = 300;
             document.getElementById('r_good').value = 100;
@@ -575,6 +543,7 @@
             const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
             return await r.json();
         }
+
         // 🔄 تابع جابجایی درس‌ها
         async function moveLesson(id, direction) {
             const list = ALL_DATA.lessons;
