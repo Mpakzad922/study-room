@@ -724,10 +724,23 @@
         }
 
         function finishLesson() {
-            isDone = true; vid.pause(); document.getElementById('viewStatus').innerText = "تکمیل شد! ✅"; 
-            SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id }); 
-            launchConfetti(); setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
-        }
+    if(isDone) return; // جلوگیری از تکرار
+    isDone = true; 
+    vid.pause();
+    
+    // 🟢 اصلاح مهم: خروج از حالت تمام صفحه تا جشن دیده شود
+    if(document.fullscreenElement) document.exitFullscreen();
+    if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+
+    document.getElementById('viewStatus').innerText = "تکمیل شد! ✅";
+    SyncManager.addToQueue('claim_reward', { reward_type: 'lesson', reward_id: activeVid.id });
+    
+    // اجرای جشن با کمی تاخیر تا صفحه کامل لود شود
+    setTimeout(() => {
+        launchConfetti(); 
+        setTimeout(() => alert("🎉 تبریک! درس تکمیل شد."), 500);
+    }, 300);
+}
 
         function openLightbox(src) {
             document.getElementById('lightboxImg').src = src;
@@ -754,3 +767,4 @@
     </script>
 </body>
 </html>
+
